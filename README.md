@@ -194,6 +194,9 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 - [ ] -z, --exclusions  : Paths that you don't want to include
 - [ ] -s, --simultaneous: How many pages to visit at the same time
 
+## Credits
+- [**@MikeMeliz**](https://github.com/MikeMeliz) for intial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
+
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
 
