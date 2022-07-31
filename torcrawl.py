@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-TorCrawl.py is a python script to crawl and extract (regular or onion)
+DarkSpider is a python script to crawl and extract (regular or onion)
 webpages through TOR network.
 
 usage: python torcrawl.py [options]
@@ -51,7 +51,7 @@ from gooey import Gooey, GooeyParser
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 
-# TorCrawl Modules
+# DarkSpider Modules
 from modules.crawler import Crawler
 from modules.extractor import extractor
 
@@ -87,9 +87,9 @@ def connect_tor():
         )
 
 
-@Gooey(program_name="TorCrawl.py")
+@Gooey(program_name="DarkSpider")
 def main():
-    """Main method of TorCrawl application. Collects and parses arguments and
+    """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
 
     :return: None
@@ -97,7 +97,7 @@ def main():
 
     # Get arguments with argparse.
     parser = GooeyParser(
-        description="TorCrawl.py is a python script to crawl and extract "
+        description="DarkSpider.py is a python script to crawl and extract "
         "(regular or onion) webpages through TOR network."
     )
 

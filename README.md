@@ -1,14 +1,14 @@
 <!--
-  Title: TorCrawl.py
+  Title: DarkSpider
   Description: a python script to crawl and extract (regular or onion) webpages through TOR network.
   Author: MikeMeliz
   -->
-# TorCrawl.py
+# DarkSpider
 
 [![Version](https://img.shields.io/badge/version-1.2-green.svg?style=plastic)]() [![Python](https://img.shields.io/badge/python-v3-blue.svg?style=plastic)]() [![license](https://img.shields.io/github/license/PROxZIMA/DarkSpider.svg?style=plastic)]()
 
 ## Basic Information:
-TorCrawl.py is a python script to crawl and extract (regular or onion) webpages through TOR network.
+DarkSpider is a python script to crawl and extract (regular or onion) webpages through TOR network.
 
 - **Warning:** Crawling is not illegal, but violating copyright is. It’s always best to double check a website’s T&C before crawling them. Some websites set up what’s called robots.txt to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting robots.txt.
 - **Keep in mind:** Extracting and crawling through TOR network take some time. That's normal behaviour; you can find more information [here](https://www.torproject.org/docs/faq.html.en#WhySlow).
