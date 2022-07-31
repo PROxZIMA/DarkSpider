@@ -1,41 +1,39 @@
 #!/usr/bin/python
 import io
 import os
-import yara as _yara
 import urllib.error
 import urllib.parse
 import urllib.request
-from urllib.error import HTTPError
-from urllib.error import URLError
-from http.client import InvalidURL
-from http.client import IncompleteRead
+from http.client import IncompleteRead, InvalidURL
+from urllib.error import HTTPError, URLError
 
+import yara as _yara
 from bs4 import BeautifulSoup
 
 
 def text(response=None):
-    """ Removes all the garbage from the HTML and takes only text elements
+    """Removes all the garbage from the HTML and takes only text elements
     from the page.
 
     :param response: HTTP Response.
     :return: String: Text only stripped response.
     """
     soup = BeautifulSoup(response, features="lxml")
-    for s in soup(['script', 'style']):
+    for s in soup(["script", "style"]):
         s.decompose()
 
-    return ' '.join(soup.stripped_strings)
+    return " ".join(soup.stripped_strings)
 
 
 def check_yara(raw=None, yara=0):
-    """ Validates Yara Rule to categorize the site and check for keywords.
+    """Validates Yara Rule to categorize the site and check for keywords.
 
     :param raw: HTTP Response body.
     :param yara:  Integer: Keyword search argument.
     :return matches: List of yara rule matches.
     """
 
-    file_path = os.path.join('res/keywords.yar')
+    file_path = os.path.join("res/keywords.yar")
 
     if raw is not None:
         if yara == 1:
@@ -50,7 +48,7 @@ def check_yara(raw=None, yara=0):
 
 
 def cinex(input_file, out_path, yara=None):
-    """ Ingests the crawled links from the input_file,
+    """Ingests the crawled links from the input_file,
     scrapes the contents of the resulting web pages and writes the contents to
     the into out_path/{url_address}.
 
@@ -61,7 +59,7 @@ def cinex(input_file, out_path, yara=None):
     """
     file = io.TextIOWrapper
     try:
-        file = open(input_file, 'r')
+        file = open(input_file, "r")
     except IOError as err:
         print(f"Error: {err}\n## Can't open: {input_file}")
 
@@ -69,7 +67,7 @@ def cinex(input_file, out_path, yara=None):
 
         # Generate the name for every file.
         try:
-            page_name = line.rsplit('/', 1)
+            page_name = line.rsplit("/", 1)
             cl_page_name = str(page_name[1])
             cl_page_name = cl_page_name[:-1]
             if len(cl_page_name) == 0:
@@ -88,10 +86,10 @@ def cinex(input_file, out_path, yara=None):
                 full_match_keywords = check_yara(content, yara)
 
                 if len(full_match_keywords) == 0:
-                    print('No matches found.')
+                    print("No matches found.")
                     continue
 
-            with open(out_path + "/" + output_file, 'wb') as results:
+            with open(out_path + "/" + output_file, "wb") as results:
                 results.write(content)
             print(f"# File created on: {os.getcwd()}/{out_path}/{output_file}")
         except HTTPError as e:
@@ -109,14 +107,14 @@ def cinex(input_file, out_path, yara=None):
 
 
 def intermex(input_file, yara):
-    """ Input links from file and extract them into terminal.
+    """Input links from file and extract them into terminal.
 
     :param input_file: String: File name of links file.
     :param yara: Integer: Keyword search argument.
     :return: None
     """
     try:
-        with open(input_file, 'r') as file:
+        with open(input_file, "r") as file:
             for line in file:
                 content = urllib.request.urlopen(line).read()
                 if yara is not None:
@@ -132,7 +130,7 @@ def intermex(input_file, yara):
 
 
 def outex(website, output_file, out_path, yara):
-    """ Scrapes the contents of the provided web address and outputs the
+    """Scrapes the contents of the provided web address and outputs the
     contents to file.
 
     :param website: String: Url of web address to scrape.
@@ -152,7 +150,7 @@ def outex(website, output_file, out_path, yara):
             if len(full_match_keywords) == 0:
                 print(f"No matches in: {website}")
 
-        with open(output_file, 'wb') as file:
+        with open(output_file, "wb") as file:
             file.write(content)
         print(f"## File created on: {os.getcwd()}/{output_file}")
     except (HTTPError, URLError, InvalidURL) as err:
@@ -162,7 +160,7 @@ def outex(website, output_file, out_path, yara):
 
 
 def termex(website, yara):
-    """ Scrapes provided web address and prints the results to the terminal.
+    """Scrapes provided web address and prints the results to the terminal.
 
     :param website: String: URL of website to scrape.
     :param yara: Integer: Keyword search argument.
@@ -185,7 +183,7 @@ def termex(website, yara):
 
 
 def extractor(website, crawl, output_file, input_file, out_path, yara):
-    """ Extractor - scrapes the resulting website or discovered links.
+    """Extractor - scrapes the resulting website or discovered links.
 
     :param website: String: URL of website to scrape.
     :param crawl: Boolean: Cinex trigger.
