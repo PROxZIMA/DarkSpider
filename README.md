@@ -187,6 +187,13 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 ## Demo:
 ![peek 2018-12-08 16-11](https://user-images.githubusercontent.com/9204902/49687660-f72f8280-fb0e-11e8-981e-1bbeeac398cc.gif)
 
+## TODO:
+- [ ] Store links relation in one-to-may json dictionary format
+- [ ] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
+- [ ] Crawl images and scripts
+- [ ] -z, --exclusions  : Paths that you don't want to include
+- [ ] -s, --simultaneous: How many pages to visit at the same time
+
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
 
