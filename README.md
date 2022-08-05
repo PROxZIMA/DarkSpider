@@ -13,11 +13,7 @@ DarkSpider is a python script to crawl and extract (regular or onion) webpages t
 - **Warning:** Crawling is not illegal, but violating copyright is. It’s always best to double check a website’s T&C before crawling them. Some websites set up what’s called robots.txt to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting robots.txt.
 - **Keep in mind:** Extracting and crawling through TOR network take some time. That's normal behaviour; you can find more information [here](https://www.torproject.org/docs/faq.html.en#WhySlow).
 
-<p align="center"><img src ="https://media.giphy.com/media/RmfzOLuCJTApa/giphy.gif"></p>
-
 ### What makes it simple?
-
-If you are a terminal maniac you know that things have to be simple and clear. Passing output into other tools is necessary and accuracy is the key.
 
 With a single argument you can read an .onion webpage or a regular one through TOR Network and using pipes you can pass the output at any other tool you prefer.
 
@@ -26,7 +22,7 @@ $ torcrawl -u http://www.github.com/ | grep 'google-analytics'
     <meta-name="google-analytics" content="UA-XXXXXX- ">
 ```
 
-If you want to crawl the links of a webpage use the `-c` and **BAM** you got on a file all the inside links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
+If you want to crawl the links of a webpage use the `-c` and you got on a file all the inside links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
 
 ```shell
 $ torcrawl -v -u http://www.github.com/ -c -d 2 -p 2
@@ -196,6 +192,7 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 
 ## Credits
 - [**@MikeMeliz**](https://github.com/MikeMeliz) for intial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
+- A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
@@ -205,12 +202,6 @@ Feel free to contribute on this project! Just fork it, make any change on your f
 
 ## Changelog:
 ```
-v1.21:
-    * Fixed typos of delay (-d)
-    * Fixed TyperError and IndexError
-v1.2:
-    * Migrated to Python3
-    * Option to generate log file (-l)
-    * PEP8 Fixes
-    * Fix double folder generation (http:// domain.com)
+v1:
+    * Initial project setup
 ```
