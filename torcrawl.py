@@ -47,7 +47,13 @@ import socket
 import sys
 
 import socks  # noqa - pysocks
-from gooey import Gooey, GooeyParser
+
+try:
+    from gooey import Gooey, GooeyParser
+
+    GOOEY_AVAILABLE = True
+except ModuleNotFoundError:
+    GOOEY_AVAILABLE = False
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 
@@ -62,6 +68,10 @@ if IGNORE_COMMAND in sys.argv:
 
 if "-g" not in sys.argv and "--gui" not in sys.argv:
     sys.argv.append(IGNORE_COMMAND)
+elif not GOOEY_AVAILABLE:
+    print("## Gooey is not available!")
+    print("## Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument")
+    sys.exit(2)
 
 # Set socket and connection with TOR network
 def connect_tor():
