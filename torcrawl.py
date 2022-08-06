@@ -47,7 +47,13 @@ import socket
 import sys
 
 import socks  # noqa - pysocks
-from gooey import Gooey, GooeyParser
+
+try:
+    from gooey import Gooey, GooeyParser
+
+    GOOEY_AVAILABLE = True
+except ModuleNotFoundError:
+    GOOEY_AVAILABLE = False
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 
@@ -57,11 +63,21 @@ from modules.extractor import extractor
 
 IGNORE_COMMAND = "--ignore-gooey"
 
-if IGNORE_COMMAND in sys.argv:
+# Remove IGNORE_COMMAND if present in arguments.
+# We don't want to pass it to the argpaarse.
+try:
     sys.argv.remove(IGNORE_COMMAND)
+except ValueError:
+    pass
 
+# If GUI parameters are passed in arguments then handel Gooey unavailable error
 if "-g" not in sys.argv and "--gui" not in sys.argv:
-    sys.argv.append(IGNORE_COMMAND)
+    if GOOEY_AVAILABLE:
+        sys.argv.append(IGNORE_COMMAND)
+elif not GOOEY_AVAILABLE:
+    print("## Gooey is not available!")
+    print("## Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument")
+    sys.exit(2)
 
 # Set socket and connection with TOR network
 def connect_tor():
@@ -87,7 +103,16 @@ def connect_tor():
         )
 
 
-@Gooey(program_name="DarkSpider")
+def GooeyConditional(flag, **kwargs):
+    """Conditional decorator if GUI backend is available or not"""
+
+    def decorate(function):
+        return Gooey(function, **kwargs) if flag else function
+
+    return decorate
+
+
+@GooeyConditional(GOOEY_AVAILABLE, program_name="DarkSpider")
 def main():
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
@@ -95,19 +120,28 @@ def main():
     :return: None
     """
 
-    # Get arguments with argparse.
-    parser = GooeyParser(
-        description="DarkSpider.py is a python script to crawl and extract "
-        "(regular or onion) webpages through TOR network."
+    # Get arguments with GooeyParser if available else argparse.
+    description = (
+        "DarkSpider.py is a python script to crawl and extract "
+        + "(regular or onion) webpages through TOR network."
     )
+    if GOOEY_AVAILABLE:
+        parser = GooeyParser(description=description)
+    else:
+        parser = argparse.ArgumentParser(description=description)
 
     # GUI
+    gui_kwargs = {
+        "action": "store_true",
+        "help": "Open with GUI backend.",
+    }
+    if GOOEY_AVAILABLE:
+        gui_kwargs["gooey_options"] = {"visible": False}
+
     parser.add_argument(
         "-g",
         "--gui",
-        action="store_true",
-        help="Open with GUI backend.",
-        gooey_options={"visible": False},
+        **gui_kwargs,
     )
 
     # General
