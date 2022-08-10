@@ -1,11 +1,9 @@
 import os.path
 import shutil
-import sys
 import unittest
 import urllib.request
 from ast import literal_eval
 from collections import defaultdict
-from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -19,24 +17,11 @@ from modules.extractor import (
     termex,
     text,
 )
+from modules.helpers.helper import Capturing
 
 URL_1 = "http://info.cern.ch/"
 URL_2 = "http://info.cern.ch/hypertext/WWW/TheProject.html"
 URL_3 = "unknown_path"
-
-
-class Capturing(list):
-    """Capture stdout into a single buffer."""
-
-    def __enter__(self):
-        self._stdout = sys.stdout
-        sys.stdout = self._stringio = StringIO()
-        return self
-
-    def __exit__(self, *args):
-        self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio  # free up some memory
-        sys.stdout = self._stdout
 
 
 def mocked_urllib_open(*args, **kwargs):
