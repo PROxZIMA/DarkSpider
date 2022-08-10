@@ -45,6 +45,7 @@ def check_yara(raw=None, yara=0):
         if len(matches) != 0:
             print("found a match!")
         return matches
+    return None
 
 
 def cinex(input_file, out_path, yara=None):
@@ -63,7 +64,7 @@ def cinex(input_file, out_path, yara=None):
     except IOError as err:
         print(f"Error: {err}\n## Can't open: {input_file}")
 
-    for line in file:
+    for line in file.read().splitlines():
 
         # Generate the name for every file.
         try:
@@ -92,13 +93,13 @@ def cinex(input_file, out_path, yara=None):
             with open(out_path + "/" + output_file, "wb") as results:
                 results.write(content)
             print(f"# File created on: {os.getcwd()}/{out_path}/{output_file}")
-        except HTTPError as e:
-            print(f"Cinex Error: {e.code}, cannot access: {e.url}")
+        except HTTPError as err:
+            print(f"Cinex Error: {err.code}, cannot access: {err.url}")
             continue
-        except InvalidURL as e:
+        except InvalidURL as _:
             print(f"Invalid URL: {line} \n Skipping...")
             continue
-        except IncompleteRead as e:
+        except IncompleteRead as _:
             print(f"IncompleteRead on {line}")
             continue
         except IOError as err:
@@ -115,17 +116,19 @@ def intermex(input_file, yara):
     """
     try:
         with open(input_file, "r") as file:
-            for line in file:
+            for line in file.read().splitlines():
                 content = urllib.request.urlopen(line).read()
                 if yara is not None:
                     full_match_keywords = check_yara(raw=content, yara=yara)
 
-                    if len(full_match_keywords) == 0:
+                    if full_match_keywords is None or len(full_match_keywords) == 0:
                         print(f"No matches in: {line}")
                 print(content)
     except (HTTPError, URLError, InvalidURL) as err:
         print(f"Request Error: {err}")
     except IOError as err:
+        print(f"Error: {err}\n## Not valid file")
+    except Exception as err:
         print(f"Error: {err}\n## Not valid file")
 
 
@@ -171,7 +174,7 @@ def termex(website, yara):
         if yara is not None:
             full_match_keywords = check_yara(content, yara)
 
-            if len(full_match_keywords) == 0:
+            if full_match_keywords is None or len(full_match_keywords) == 0:
                 # No match.
                 print(f"No matches in: {website}")
                 return
