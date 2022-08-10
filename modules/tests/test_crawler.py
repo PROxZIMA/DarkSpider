@@ -9,9 +9,9 @@ class TestCrawlerFunctions(unittest.TestCase):
     """Unit test for Crawler module."""
 
     def setUp(self):
-        _website = url_canon("torcrawl.com", False)
+        _website = "http://info.cern.ch/"
         self.out_path = out_path = folder(extract_domain(_website), False)
-        self.crawler = Crawler(_website, 0, 1, out_path, False, False)
+        self.crawler = Crawler(_website, 1, 1, out_path, False, False)
 
     def tearDown(self):
         """Test Suite Teardown."""
@@ -23,7 +23,7 @@ class TestCrawlerFunctions(unittest.TestCase):
         Return True if the function successfully excludes the the provided
         failing links.
         """
-        _uri = "http://www.torcrawl.com"
+        _uri = "http://info.cern.ch/"
         failing_links = [
             "#",
             "tel:012-013-104-5",
@@ -45,7 +45,7 @@ class TestCrawlerFunctions(unittest.TestCase):
         Return True if the function successfully normalizes the provided
         failing links.
         """
-        _uri = "http://www.torcrawl.com/"
+        _uri = "http://info.cern.ch/"
         links = [
             [f"{_uri}sundance", f"{_uri}sundance"],
             ["/sundance", f"{_uri}sundance"],
@@ -62,7 +62,17 @@ class TestCrawlerFunctions(unittest.TestCase):
             )
 
     def test_crawl(self):
-        """Test Crawlwer.crawl functionality"""
-        # TODO: Test Crawler.crawl against live web application.
-        # Re-instantiate crawler with live application.
-        pass
+        """Test Crawlwer.crawl functionality
+
+        Return: List (ord_lst) - List of crawled links."""
+        result = self.crawler.crawl()
+        expected = [
+            "http://info.cern.ch/",
+            "http://info.cern.ch/hypertext/WWW/TheProject.html",
+        ]
+
+        self.assertEqual(
+            expected,
+            result,
+            f"Test Fail:: Canon returned = {result}, " f"expected {expected}",
+        )
