@@ -1,0 +1,47 @@
+{
+    "link1": [
+      "link2",
+      "link3",
+      "link4",
+      "link5"
+    ],
+    "link2": [
+      "link5",
+      "link6",
+      "link4"
+    ],
+    "link3": [
+      "link7",
+      "link2",
+      "link9"
+    ],
+    "link4": [
+      "link1"
+    ],
+    "link5": [
+      "link2",
+      "link6",
+      "link7",
+      "link8"
+    ],
+    "link6": [
+      "link5",
+      "link7",
+      "link8"
+    ],
+    "link7": [
+      "link3",
+      "link5",
+      "link6",
+      "link8"
+    ],
+    "link8": [
+      "link5",
+      "link6",
+      "link7"
+    ],
+    "link9": [
+      "link3"
+    ]
+
+  }
