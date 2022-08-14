@@ -104,4 +104,9 @@ class visualize_json:
 
 obj = visualize_json("demo.json")
 obj.bar_outdegree()
+obj.plot_outdegree()
+obj.bar_indegree()
+obj.plot_indegree()
+obj.visualize()
+
 
