@@ -20,8 +20,8 @@ class visualize_json:
         """Visualization of the graph."""
         
         nx.draw(self.G, with_labels=True,node_size=150,font_size=6,node_shape="o",node_color='blue',edge_color='red',alpha=0.4,width=2)
-        plt.show()
         plt.savefig('graph.png')
+        plt.show()
 
 
     def indegree(self):
@@ -40,8 +40,8 @@ class visualize_json:
         plt.ylabel('No. of Nodes')
         plt.xlabel('Indegree')
         plt.title('Indegree of the graph')
-        plt.show()
         plt.savefig('indegree_plot.png')
+        plt.show()
 
 
     def bar_indegree(self):
@@ -60,8 +60,9 @@ class visualize_json:
         plt.ylabel('Percentage of Nodes')
         plt.xlabel('Indegree')
         plt.title('Indegree of the graph')
-        plt.show()
         plt.savefig('indegree_bar.png')
+        plt.show()
+        
 
 
     def outdegree(self):
@@ -80,8 +81,9 @@ class visualize_json:
         plt.ylabel('No. of Nodes')
         plt.xlabel('Outdegree')
         plt.title('Outdegree of the graph')
-        plt.show()
         plt.savefig('outdegree_plot.png')
+        plt.show()
+        
 
     def bar_outdegree(self):
         """Bar Graph of the outdegree vs percentage of nodes of the graph."""
@@ -99,8 +101,8 @@ class visualize_json:
         plt.ylabel('Percentage of Nodes')
         plt.xlabel('Outdegree')
         plt.title('Outdegree of the graph')
-        plt.show()
         plt.savefig('outdegree_bar.png')
+        plt.show()
 
 obj = visualize_json("demo.json")
 obj.bar_outdegree()
