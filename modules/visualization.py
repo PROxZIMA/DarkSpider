@@ -104,11 +104,51 @@ class visualize_json:
         plt.savefig('outdegree_bar.png')
         plt.show()
 
+    def bar_eigenvector_centrality(self):
+        """Bar Graph of the eigenvector centrality vs percentage of nodes of the graph."""
+        eigenvector_centrality = nx.eigenvector_centrality(self.G)
+        eigenvector_centrality_counter = Counter(eigenvector_centrality.values())
+        sum1=0
+        arr1=[]
+        arr2=[]
+        for i in eigenvector_centrality_counter.values():
+            sum1=sum1+i
+        for i in eigenvector_centrality_counter.keys():
+            arr1.append(i)
+            arr2.append((eigenvector_centrality_counter[i]/sum1)*100)
+        plt.bar(arr1,arr2,width=0.01,color='blue')
+        plt.ylabel('Percentage of Nodes')
+        plt.xlabel('Eigenvector Centrality')
+        plt.title('Eigenvector Centrality of the graph')
+        plt.savefig('eigenvector_centrality_bar.png')
+        plt.show()
+    
+    def bar_pagerank(self):
+        """Bar Graph of the pagerank vs percentage of nodes of the graph."""
+        pagerank = nx.pagerank(self.G)
+        pagerank_counter = Counter(pagerank.values())
+        sum1=0
+        arr1=[]
+        arr2=[]
+        for i in pagerank_counter.values():
+            sum1=sum1+i
+        for i in pagerank_counter.keys():
+            arr1.append(i)
+            arr2.append((pagerank_counter[i]/sum1)*100)
+        plt.bar(arr1,arr2,width=0.001,color='blue')
+        plt.ylabel('Percentage of Nodes')
+        plt.xlabel('PageRank')
+        plt.title('PageRank of the graph')
+        plt.savefig('pagerank_bar.png')
+        plt.show()
+        
 obj = visualize_json("demo.json")
 obj.bar_outdegree()
 obj.plot_outdegree()
 obj.bar_indegree()
 obj.plot_indegree()
 obj.visualize()
+obj.bar_eigenvector_centrality()
+obj.bar_pagerank()
 
 
