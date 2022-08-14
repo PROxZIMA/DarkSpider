@@ -38,20 +38,20 @@ class Crawler:
             if self.external is True:
                 return False
             file_path = self.out_path + "/extlinks.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + "\n")
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
+                lst_file.write(str(link) + " \n")
             return True
         # Telephone Number
         elif link.startswith("tel:"):
             file_path = self.out_path + "/telephones.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + "\n")
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
+                lst_file.write(str(link) + " \n")
             return True
         # Mails
         elif link.startswith("mailto:"):
             file_path = self.out_path + "/mails.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + "\n")
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
+                lst_file.write(str(link) + " \n")
             return True
         # Type of files
         elif re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc)$", link, re.IGNORECASE):
@@ -83,8 +83,7 @@ class Crawler:
         cur_level = set()
         ord_lst_ind = 0
         log_path = self.out_path + "/log.txt"
-
-        if self.logs is True and os.access(log_path, os.W_OK) is False:
+        if self.logs is True and os.access(log_path, os.W_OK) is ~os.path.exists(log_path):
             print(f"## Unable to write to {self.out_path}/log.txt - Exiting")
             sys.exit(2)
 
@@ -108,6 +107,10 @@ class Crawler:
                     except HTTPError as error:
                         print(error)
                         continue
+                    # Keeps logs for every webpage visited.
+                    if self.logs:
+                        with open(log_path, "a+", encoding="UTF-8") as log_file:
+                            log_file.write(f"{str(item)} \n")
                 else:
                     try:
                         html_page = urllib.request.urlopen(self.website)
@@ -116,6 +119,10 @@ class Crawler:
                         print(error)
                         ord_lst_ind += 1
                         continue
+                    # Keeps logs for every webpage visited.
+                    if self.logs:
+                        with open(log_path, "w+", encoding="UTF-8") as log_file:
+                            log_file.write(f"{str(item)} \n")
 
                 try:
                     soup = BeautifulSoup(html_page, features="html.parser")
@@ -130,6 +137,17 @@ class Crawler:
                 for link in soup.findAll("a"):
                     link = link.get("href")
 
+                    if link == soup.findAll("a")[0].get("href") and index==0 and item == old_level[0]:
+                        #external links overwriting for rerun
+                        with open(self.out_path + "/extlinks.txt", "w+", encoding="UTF-8") as lst_file:
+                            lst_file.write('')
+                        #telephone numbers overwriting for rerun
+                        with open(self.out_path + "/telephones.txt", "w+", encoding="UTF-8") as lst_file:
+                            lst_file.write("")
+                        #mails overwriting for rerun
+                        with open(self.out_path + "/mails.txt", "w+", encoding="UTF-8") as lst_file:
+                            lst_file.write("")
+                        
                     if self.excludes(link):
                         continue
 
@@ -160,10 +178,10 @@ class Crawler:
                     time.sleep(float(self.c_pause))
 
                 # Keeps logs for every webpage visited.
-                if self.logs:
-                    it_code = html_page.getcode()
-                    with open(log_path, "w+", encoding="UTF-8") as log_file:
-                        log_file.write(f"[{str(it_code)}] {str(item)} \n")
+                # if self.logs:
+                #     it_code = html_page.getcode()
+                #     with open(log_path, "w+", encoding="UTF-8") as log_file:
+                #         log_file.write(f"[{str(it_code)}] {str(item)} \n")
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
