@@ -40,19 +40,19 @@ class Crawler:
                 return False
             file_path = self.out_path + "/extlinks.txt"
             with open(file_path, "a+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + " \n")
+                lst_file.write(str(link) + "\n")
             return True
         # Telephone Number
         elif link.startswith("tel:"):
             file_path = self.out_path + "/telephones.txt"
             with open(file_path, "a+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + " \n")
+                lst_file.write(str(link) + "\n")
             return True
         # Mails
         elif link.startswith("mailto:"):
             file_path = self.out_path + "/mails.txt"
             with open(file_path, "a+", encoding="UTF-8") as lst_file:
-                lst_file.write(str(link) + " \n")
+                lst_file.write(str(link) + "\n")
             return True
         # Type of files
         elif re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc)$", link, re.IGNORECASE):
@@ -114,7 +114,7 @@ class Crawler:
                     # Keeps logs for every webpage visited.
                     if self.logs:
                         with open(log_path, "a+", encoding="UTF-8") as log_file:
-                            log_file.write(f"{str(item)} \n")
+                            log_file.write(f"{str(item)}\n")
                 else:
                     try:
                         html_page = urllib.request.urlopen(self.website)
@@ -126,7 +126,7 @@ class Crawler:
                     # Keeps logs for every webpage visited.
                     if self.logs:
                         with open(log_path, "w+", encoding="UTF-8") as log_file:
-                            log_file.write(f"{str(item)} \n")
+                            log_file.write(f"{str(item)}\n")
 
                 try:
                     soup = BeautifulSoup(html_page, features="html.parser")

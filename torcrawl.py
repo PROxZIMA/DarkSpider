@@ -274,7 +274,7 @@ def main():
         lst = crawler.crawl()
         with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:
             for item in lst:
-                file.write(f"{item} \n")
+                file.write(f"{item}\n")
         print(f"## File created on {os.getcwd()}/{out_path}/links.txt")
         if args.extract:
             input_file = out_path + "/links.txt"
