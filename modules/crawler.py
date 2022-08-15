@@ -1,13 +1,11 @@
 #!/usr/bin/python
 import http.client
+import json
 import os
 import re
 import sys
-import time
 import urllib.request
-from urllib.error import HTTPError
 from urllib.parse import urljoin
-import json
 
 from bs4 import BeautifulSoup
 
@@ -84,7 +82,9 @@ class Crawler:
         cur_level = set()
         ord_lst_ind = 0
         log_path = self.out_path + "/log.txt"
-        if self.logs is True and os.access(log_path, os.W_OK) is ~os.path.exists(log_path):
+        if self.logs is True and os.access(log_path, os.W_OK) is ~os.path.exists(
+            log_path
+        ):
             print(f"## Unable to write to {self.out_path}/log.txt - Exiting")
             sys.exit(2)
 
@@ -94,8 +94,8 @@ class Crawler:
             f"second(s) delay."
         )
 
-        #Json dictionary
-        json_data = {} 
+        # Json dictionary
+        json_data = {}
         # Depth
         for index in range(0, int(self.c_depth)):
             cur_level_prev_step = set()
@@ -107,8 +107,8 @@ class Crawler:
                 if ord_lst_ind > 0:
                     try:
                         if item is not None:
-                            html_page = urllib.request.urlopen(item)
-                    except HTTPError as error:
+                            html_page = urllib.request.urlopen(item, timeout=10)
+                    except Exception as error:
                         print(error)
                         continue
                     # Keeps logs for every webpage visited.
@@ -117,9 +117,9 @@ class Crawler:
                             log_file.write(f"{str(item)}\n")
                 else:
                     try:
-                        html_page = urllib.request.urlopen(self.website)
+                        html_page = urllib.request.urlopen(self.website, timeout=10)
                         ord_lst_ind += 1
-                    except HTTPError as error:
+                    except Exception as error:
                         print(error)
                         ord_lst_ind += 1
                         continue
@@ -141,17 +141,27 @@ class Crawler:
                 for link in soup.findAll("a"):
                     link = link.get("href")
 
-                    if link == soup.findAll("a")[0].get("href") and index==0 and item == self.website:
-                        #external links overwriting for rerun
-                        with open(self.out_path + "/extlinks.txt", "w+", encoding="UTF-8") as lst_file:
-                            lst_file.write('')
-                        #telephone numbers overwriting for rerun
-                        with open(self.out_path + "/telephones.txt", "w+", encoding="UTF-8") as lst_file:
-                            lst_file.write('')
-                        #mails overwriting for rerun
-                        with open(self.out_path + "/mails.txt", "w+", encoding="UTF-8") as lst_file:
-                            lst_file.write('')
-                        
+                    if (
+                        link == soup.findAll("a")[0].get("href")
+                        and index == 0
+                        and item == self.website
+                    ):
+                        # external links overwriting for rerun
+                        with open(
+                            self.out_path + "/extlinks.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
+                        # telephone numbers overwriting for rerun
+                        with open(
+                            self.out_path + "/telephones.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
+                        # mails overwriting for rerun
+                        with open(
+                            self.out_path + "/mails.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
+
                     if self.excludes(link):
                         continue
 
@@ -178,12 +188,12 @@ class Crawler:
                     sys.stdout.flush()
 
                 # Pause time
-                time.sleep(float(self.c_pause))
+                # time.sleep(float(self.c_pause))
 
                 # Adding to json data
                 cur_level_prev_step = cur_level.difference(ord_lst_clone)
-                ord_lst_clone =  cur_level.union(ord_lst_clone)
-                if item[-1]== '/':
+                ord_lst_clone = cur_level.union(ord_lst_clone)
+                if item[-1] == "/":
                     item = item[:-1]
                 if item not in json_data.keys():
                     json_data[item] = list(cur_level_prev_step)
@@ -203,5 +213,6 @@ class Crawler:
         # Creating json
         json_path = self.out_path + "/network_structure.json"
         with open(json_path, "w", encoding="UTF-8") as lst_file:
-                json.dump(json_data, lst_file, indent = 4, sort_keys = False)
+            json.dump(json_data, lst_file, indent=2, sort_keys=False)
+
         return sorted(ord_lst)
