@@ -214,6 +214,13 @@ def main():
         help="The root directory which will contain the generated files",
     )
     parser.add_argument(
+        "-x",
+        "--external",
+        action="store_false",
+        default=True,
+        help="Exclude external links while crawling a webpage (Default: include all links)",
+    )
+    parser.add_argument(
         "-y",
         "--yara",
         type=int,
@@ -256,7 +263,13 @@ def main():
 
     if args.crawl:
         crawler = Crawler(
-            website, args.cdepth, args.cpause, out_path, args.log, args.verbose
+            website,
+            args.cdepth,
+            args.cpause,
+            out_path,
+            args.external,
+            args.log,
+            args.verbose,
         )
         lst = crawler.crawl()
         with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:

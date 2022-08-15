@@ -69,6 +69,7 @@ arg | Long | Description
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code
+-x  |--external| Exclude external links while crawling a webpage (Default: include all links)
 
 ## Usage:
 
