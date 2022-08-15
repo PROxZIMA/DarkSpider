@@ -7,6 +7,7 @@ import time
 import urllib.request
 from urllib.error import HTTPError
 from urllib.parse import urljoin
+import json
 
 from bs4 import BeautifulSoup
 
@@ -93,9 +94,12 @@ class Crawler:
             f"second(s) delay."
         )
 
+        #Json dictionary
+        json_data = {} 
         # Depth
         for index in range(0, int(self.c_depth)):
-
+            cur_level_prev_step = set()
+            ord_lst_clone = set()
             # For every element of list.
             for item in old_level:
                 html_page = http.client.HTTPResponse
@@ -137,16 +141,16 @@ class Crawler:
                 for link in soup.findAll("a"):
                     link = link.get("href")
 
-                    if link == soup.findAll("a")[0].get("href") and index==0 and item == old_level[0]:
+                    if link == soup.findAll("a")[0].get("href") and index==0 and item == self.website:
                         #external links overwriting for rerun
                         with open(self.out_path + "/extlinks.txt", "w+", encoding="UTF-8") as lst_file:
                             lst_file.write('')
                         #telephone numbers overwriting for rerun
                         with open(self.out_path + "/telephones.txt", "w+", encoding="UTF-8") as lst_file:
-                            lst_file.write("")
+                            lst_file.write('')
                         #mails overwriting for rerun
                         with open(self.out_path + "/mails.txt", "w+", encoding="UTF-8") as lst_file:
-                            lst_file.write("")
+                            lst_file.write('')
                         
                     if self.excludes(link):
                         continue
@@ -173,15 +177,16 @@ class Crawler:
                     sys.stdout.write("-- Results: " + str(len(ord_lst)) + "\r")
                     sys.stdout.flush()
 
-                # Pause time.
-                if float(self.c_pause) > 0:
-                    time.sleep(float(self.c_pause))
+                # Pause time
+                time.sleep(float(self.c_pause))
 
-                # Keeps logs for every webpage visited.
-                # if self.logs:
-                #     it_code = html_page.getcode()
-                #     with open(log_path, "w+", encoding="UTF-8") as log_file:
-                #         log_file.write(f"[{str(it_code)}] {str(item)} \n")
+                # Adding to json data
+                cur_level_prev_step = cur_level.difference(ord_lst_clone)
+                ord_lst_clone =  cur_level.union(ord_lst_clone)
+                if item[-1]== '/':
+                    item = item[:-1]
+                if item not in json_data.keys():
+                    json_data[item] = list(cur_level_prev_step)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
@@ -195,4 +200,8 @@ class Crawler:
                 f"## Step {index + 1} completed \n\t " f"with: {len(ord_lst)} result(s)"
             )
 
+        # Creating json
+        json_path = self.out_path + "/network_structure.json"
+        with open(json_path, "w", encoding="UTF-8") as lst_file:
+                json.dump(json_data, lst_file, indent = 4, sort_keys = False)
         return sorted(ord_lst)
