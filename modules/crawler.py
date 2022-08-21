@@ -87,7 +87,7 @@ class Crawler:
 
     def crawl(self):
         """Core of the crawler.
-        :return: List (ord_lst) - List of crawled links.
+        :return: Dict (json_data) - Dictionary of crawled links.
         """
         ord_lst = set([self.website])
         old_level = [self.website]
@@ -109,10 +109,14 @@ class Crawler:
         json_data = {}
         # Depth
         for index in range(0, int(self.c_depth)):
-            cur_level_prev_step = set()
-            ord_lst_clone = set()
             # For every element of list.
             for item in old_level:
+                # Don't crawl if already crawled
+                if item.rstrip("/") in json_data:
+                    continue
+
+                # Store the crawled link of an item
+                item_data = set()
                 html_page = http.client.HTTPResponse
                 try:
                     if item is not None:
@@ -135,33 +139,12 @@ class Crawler:
                 for link in soup.findAll("a"):
                     link = link.get("href")
 
-                    if (
-                        link == soup.findAll("a")[0].get("href")
-                        and index == 0
-                        and item == self.website
-                    ):
-                        # external links overwriting for rerun
-                        with open(
-                            self.out_path + "/extlinks.txt", "w+", encoding="UTF-8"
-                        ) as lst_file:
-                            lst_file.write("")
-                        # telephone numbers overwriting for rerun
-                        with open(
-                            self.out_path + "/telephones.txt", "w+", encoding="UTF-8"
-                        ) as lst_file:
-                            lst_file.write("")
-                        # mails overwriting for rerun
-                        with open(
-                            self.out_path + "/mails.txt", "w+", encoding="UTF-8"
-                        ) as lst_file:
-                            lst_file.write("")
-
                     if self.excludes(link):
                         continue
 
                     ver_link = self.canonical(item, link)
                     if ver_link is not None:
-                        cur_level.add(ver_link)
+                        item_data.add(ver_link)
 
                 # For each <area> tag.
                 for link in soup.findAll("area"):
@@ -172,7 +155,7 @@ class Crawler:
 
                     ver_link = self.canonical(item, link)
                     if ver_link is not None:
-                        cur_level.add(ver_link)
+                        item_data.add(ver_link)
 
                 # TODO: For images
                 # TODO: For scripts
@@ -184,13 +167,10 @@ class Crawler:
                 # Pause time
                 time.sleep(float(self.c_pause))
 
+                # Add item_data to crawled links.
+                cur_level = cur_level.union(item_data)
                 # Adding to json data
-                cur_level_prev_step = cur_level.difference(ord_lst_clone)
-                ord_lst_clone = cur_level.union(ord_lst_clone)
-                if item[-1] == "/":
-                    item = item[:-1]
-                if item not in json_data:
-                    json_data[item] = list(cur_level_prev_step)
+                json_data[item.rstrip("/")] = list(item_data)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
@@ -213,4 +193,4 @@ class Crawler:
                 for item in sorted(ord_lst):
                     file.write(f"{item}\n")
 
-        return sorted(ord_lst)
+        return json_data
