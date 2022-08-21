@@ -1,17 +1,28 @@
 #!/usr/bin/python
 import http.client
+import json
 import os
 import re
 import sys
 import time
 import urllib.request
-from urllib.error import HTTPError
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
 
 class Crawler:
+    """Crawl input link upto depth (c_depth) with a pause of c_pause seconds.
+
+    :param website: String: Website to crawl.
+    :param c_depth: Integer: Depth of the crawl.
+    :param c_pause: Integer: Pause after every iteration.
+    :param out_path: String: Output path to store extracted links.
+    :param external: Boolean: True if external links are to be crawled else False.
+    :param logs: Boolean: True if logs are to be written else False.
+    :param verbose: Boolean: True if crawl details are to be printed else False.
+    """
+
     def __init__(self, website, c_depth, c_pause, out_path, external, logs, verbose):
         self.website = website
         self.c_depth = c_depth
@@ -38,19 +49,19 @@ class Crawler:
             if self.external is True:
                 return False
             file_path = self.out_path + "/extlinks.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
                 lst_file.write(str(link) + "\n")
             return True
         # Telephone Number
         elif link.startswith("tel:"):
             file_path = self.out_path + "/telephones.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
                 lst_file.write(str(link) + "\n")
             return True
         # Mails
         elif link.startswith("mailto:"):
             file_path = self.out_path + "/mails.txt"
-            with open(file_path, "w+", encoding="UTF-8") as lst_file:
+            with open(file_path, "a+", encoding="UTF-8") as lst_file:
                 lst_file.write(str(link) + "\n")
             return True
         # Type of files
@@ -81,10 +92,10 @@ class Crawler:
         ord_lst = set([self.website])
         old_level = [self.website]
         cur_level = set()
-        ord_lst_ind = 0
         log_path = self.out_path + "/log.txt"
-
-        if self.logs is True and os.access(log_path, os.W_OK) is False:
+        if self.logs is True and os.access(log_path, os.W_OK) is ~os.path.exists(
+            log_path
+        ):
             print(f"## Unable to write to {self.out_path}/log.txt - Exiting")
             sys.exit(2)
 
@@ -94,41 +105,56 @@ class Crawler:
             f"second(s) delay."
         )
 
+        # Json dictionary
+        json_data = {}
         # Depth
         for index in range(0, int(self.c_depth)):
-
+            cur_level_prev_step = set()
+            ord_lst_clone = set()
             # For every element of list.
             for item in old_level:
                 html_page = http.client.HTTPResponse
-                # Check if is the first element
-                if ord_lst_ind > 0:
-                    try:
-                        if item is not None:
-                            html_page = urllib.request.urlopen(item)
-                    except HTTPError as error:
-                        print(error)
-                        continue
-                else:
-                    try:
-                        html_page = urllib.request.urlopen(self.website)
-                        ord_lst_ind += 1
-                    except HTTPError as error:
-                        print(error)
-                        ord_lst_ind += 1
-                        continue
+                try:
+                    if item is not None:
+                        html_page = urllib.request.urlopen(item, timeout=10)
+                except Exception as error:
+                    print(error)
+                    continue
+                # Keeps logs for every webpage visited.
+                if self.logs:
+                    with open(log_path, "a+", encoding="UTF-8") as log_file:
+                        log_file.write(f"{str(item)}\n")
 
                 try:
                     soup = BeautifulSoup(html_page, features="html.parser")
                 except Exception as _:
-                    print(
-                        f"## Soup Error Encountered:: to parse "
-                        f"ord_list # {ord_lst_ind}::{item}"
-                    )
+                    print(f"## Soup Error Encountered:: to parse :: {item}")
                     continue
 
                 # For each <a href=""> tag.
                 for link in soup.findAll("a"):
                     link = link.get("href")
+
+                    if (
+                        link == soup.findAll("a")[0].get("href")
+                        and index == 0
+                        and item == self.website
+                    ):
+                        # external links overwriting for rerun
+                        with open(
+                            self.out_path + "/extlinks.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
+                        # telephone numbers overwriting for rerun
+                        with open(
+                            self.out_path + "/telephones.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
+                        # mails overwriting for rerun
+                        with open(
+                            self.out_path + "/mails.txt", "w+", encoding="UTF-8"
+                        ) as lst_file:
+                            lst_file.write("")
 
                     if self.excludes(link):
                         continue
@@ -155,15 +181,16 @@ class Crawler:
                     sys.stdout.write("-- Results: " + str(len(ord_lst)) + "\r")
                     sys.stdout.flush()
 
-                # Pause time.
-                if float(self.c_pause) > 0:
-                    time.sleep(float(self.c_pause))
+                # Pause time
+                time.sleep(float(self.c_pause))
 
-                # Keeps logs for every webpage visited.
-                if self.logs:
-                    it_code = html_page.getcode()
-                    with open(log_path, "w+", encoding="UTF-8") as log_file:
-                        log_file.write(f"[{str(it_code)}] {str(item)} \n")
+                # Adding to json data
+                cur_level_prev_step = cur_level.difference(ord_lst_clone)
+                ord_lst_clone = cur_level.union(ord_lst_clone)
+                if item[-1] == "/":
+                    item = item[:-1]
+                if item not in json_data:
+                    json_data[item] = list(cur_level_prev_step)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
@@ -176,5 +203,14 @@ class Crawler:
             print(
                 f"## Step {index + 1} completed \n\t " f"with: {len(ord_lst)} result(s)"
             )
+
+            # Creating json
+            json_path = self.out_path + "/network_structure.json"
+            with open(json_path, "w", encoding="UTF-8") as lst_file:
+                json.dump(json_data, lst_file, indent=2, sort_keys=False)
+
+            with open(self.out_path + "/links.txt", "w+", encoding="UTF-8") as file:
+                for item in sorted(ord_lst):
+                    file.write(f"{item}\n")
 
         return sorted(ord_lst)
