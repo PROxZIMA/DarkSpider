@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from collections import Counter
 
 import matplotlib.pyplot as plt
@@ -130,7 +131,7 @@ class Visualization:
     @verbose
     def bar_eigenvector_centrality(self):
         """Bar Graph of the eigenvector centrality vs percentage of nodes of the graph."""
-        eigenvector_centrality = nx.eigenvector_centrality(self.G)
+        eigenvector_centrality = nx.eigenvector_centrality(self.G, max_iter=sys.maxsize)
         eigenvector_centrality_counter = Counter(eigenvector_centrality.values())
         total = sum(eigenvector_centrality_counter.values())
         evc_keys = eigenvector_centrality_counter.keys()
