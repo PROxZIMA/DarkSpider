@@ -170,7 +170,7 @@ class Crawler:
                 # Add item_data to crawled links.
                 cur_level = cur_level.union(item_data)
                 # Adding to json data
-                json_data[item.rstrip("/")] = list(item_data)
+                json_data[item] = list(item_data)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
