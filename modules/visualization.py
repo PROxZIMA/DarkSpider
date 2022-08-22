@@ -155,7 +155,7 @@ class Visualization:
         pagerank_percent = [
             (counter / total) * 100 for counter in pagerank_counter.values()
         ]
-        plt.bar(pagerank_keys, pagerank_percent, width=0.001, color="blue")
+        plt.bar(pagerank_keys, pagerank_percent, width=0.0001, color="blue")
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("PageRank")
         plt.title("PageRank of the graph")
