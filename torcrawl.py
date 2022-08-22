@@ -285,14 +285,16 @@ def main():
         print(f"## File created on {os.getcwd()}/{out_path}/links.txt")
 
         if args.visualize:
-            obj = Visualization(out_path + "/network_structure.json", out_path)
-            obj.visualize()
+            obj = Visualization(
+                out_path + "/network_structure.json", out_path, args.verbose
+            )
             obj.plot_indegree()
             obj.bar_indegree()
             obj.plot_outdegree()
             obj.bar_outdegree()
-            obj.bar_pagerank()
             obj.bar_eigenvector_centrality()
+            obj.bar_pagerank()
+            obj.visualize()
 
         if args.extract:
             input_file = out_path + "/links.txt"
