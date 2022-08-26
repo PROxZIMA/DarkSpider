@@ -194,6 +194,13 @@ def main():
         help="Set depth of crawl's travel. (Default: 1)",
     )
     parser.add_argument(
+        "-z",
+        "--exclusion",
+        type=str,
+        default="  ",
+        help="Paths that you don't want to include",
+    )
+    parser.add_argument(
         "-p",
         "--cpause",
         type=int,
@@ -270,6 +277,7 @@ def main():
             args.external,
             args.log,
             args.verbose,
+            args.exclusion
         )
         lst = crawler.crawl()
         with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:
