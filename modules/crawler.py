@@ -115,7 +115,7 @@ class Crawler:
             ord_lst_clone = set()
             # For every element of list.
             for item in old_level:
-                if re.search(self.exclusion, item, re.IGNORECASE):
+                if self.exclusion and re.search(self.exclusion, item, re.IGNORECASE):
                     continue
                 html_page = http.client.HTTPResponse
                 try:

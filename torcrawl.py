@@ -197,7 +197,6 @@ def main():
         "-z",
         "--exclusion",
         type=str,
-        default="  ",
         help="Paths that you don't want to include",
     )
     parser.add_argument(
