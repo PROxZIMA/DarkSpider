@@ -59,6 +59,7 @@ arg | Long | Description
 -u  |--url *.onion| URL of Webpage to crawl or extract
 -w  |--without| Without the use of Relay TOR
 -f  |--folder| The directory which will contain the generated files ([@guyo13](https://www.github.com/guyo13))
+-s  |--visualize| Visualize the graphs and insights from the crawled data
 **Extract**: | |
 -e  |--extract| Extract page's code to terminal or file. (Default: Terminal)
 -i  |--input filename| Input file with URL(s) (seperated by line)
@@ -198,11 +199,11 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 ![peek 2018-12-08 16-11](https://user-images.githubusercontent.com/9204902/49687660-f72f8280-fb0e-11e8-981e-1bbeeac398cc.gif)
 
 ## TODO:
-- [ ] Store links relation in one-to-may json dictionary format
+- [x] Store links relation in one-to-may json dictionary format
 - [ ] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
 - [ ] Crawl images and scripts
 - [ ] -z, --exclusions  : Paths that you don't want to include
-- [ ] -s, --simultaneous: How many pages to visit at the same time
+- [ ] -m, --simultaneous: How many pages to visit at the same time
 
 ## Credits
 - [**@MikeMeliz**](https://github.com/MikeMeliz) for intial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase

@@ -15,6 +15,7 @@ General:
 -v, --verbose      : Show more informations about the progress
 -u, --url *.onion  : URL of Webpage to crawl or extract
 -w, --without      : Without the use of Relay TOR
+-s, --visualize    : Visualize the graphs and insights from the crawled data
 
 Extract:
 -e, --extract           : Extract page's code to terminal or file.
@@ -35,6 +36,8 @@ Crawl:
 -f, --folder	  : The root directory which will contain the
                     generated files
 -l, --log         : Log file with visited URLs and their response code.
+-x, --external    : Exclude external links while crawling a webpage
+                    (Default: include all links)
 
 GitHub: github.com/MikeMeliz/TorCrawl.py
 License: GNU General Public License v3.0
@@ -60,6 +63,7 @@ from modules.checker import check_ip, check_tor, extract_domain, folder, url_can
 # DarkSpider Modules
 from modules.crawler import Crawler
 from modules.extractor import extractor
+from modules.visualization import Visualization
 
 IGNORE_COMMAND = "--ignore-gooey"
 
@@ -150,6 +154,12 @@ def main():
         "--verbose",
         action="store_true",
         help="Show more information about the progress",
+    )
+    parser.add_argument(
+        "-s",
+        "--visualize",
+        action="store_true",
+        help="Visualize the graphs and insights from the crawled data",
     )
     parser.add_argument(
         "-u", "--url", type=str, help="URL of webpage to crawl or extract"
@@ -278,11 +288,21 @@ def main():
             args.verbose,
             args.exclusion,
         )
-        lst = crawler.crawl()
-        with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:
-            for item in lst:
-                file.write(f"{item}\n")
+        json_data = crawler.crawl()
         print(f"## File created on {os.getcwd()}/{out_path}/links.txt")
+
+        if args.visualize:
+            obj = Visualization(
+                out_path + "/network_structure.json", out_path, args.verbose
+            )
+            obj.plot_indegree()
+            obj.bar_indegree()
+            obj.plot_outdegree()
+            obj.bar_outdegree()
+            obj.bar_eigenvector_centrality()
+            obj.bar_pagerank()
+            obj.visualize()
+
         if args.extract:
             input_file = out_path + "/links.txt"
             extractor(website, args.crawl, args.output, input_file, out_path, args.yara)
