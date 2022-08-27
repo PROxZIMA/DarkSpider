@@ -24,7 +24,9 @@ class Crawler:
     :param exclusion: re String: Paths that you don't want to include.
     """
 
-    def __init__(self, website, c_depth, c_pause, out_path, external, logs, verbose, exclusion):
+    def __init__(
+        self, website, c_depth, c_pause, out_path, external, logs, verbose, exclusion
+    ):
         self.website = website
         self.c_depth = c_depth
         self.c_pause = c_pause
@@ -42,6 +44,9 @@ class Crawler:
         """
         # BUG: For NoneType Exceptions, got to find a solution here
         if link is None:
+            return True
+        # Excludes links that matches the regex path.
+        if self.exclusion and re.search(self.exclusion, link, re.IGNORECASE):
             return True
         # Links
         elif "#" in link:
@@ -103,8 +108,8 @@ class Crawler:
 
         print(
             f"## Crawler started from {self.website} with "
-            f"{str(self.c_depth)} depth crawl, and {str(self.c_pause)} "
-            f"second(s) delay."
+            f"{str(self.c_depth)} depth crawl, {'' if self.exclusion else 'and '}{str(self.c_pause)} "
+            f"second(s) delay. Excluding {self.exclusion if self.exclusion else 'no'} links."
         )
 
         # Json dictionary
@@ -115,8 +120,6 @@ class Crawler:
             ord_lst_clone = set()
             # For every element of list.
             for item in old_level:
-                if self.exclusion and re.search(self.exclusion, item, re.IGNORECASE):
-                    continue
                 html_page = http.client.HTTPResponse
                 try:
                     if item is not None:
