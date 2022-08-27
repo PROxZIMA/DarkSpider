@@ -67,6 +67,7 @@ arg | Long | Description
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
+-z  |--exclusion| Regex path that is ignored while crawling (Default: None)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code
 -x  |--external| Exclude external links while crawling a webpage (Default: include all links)
@@ -136,6 +137,18 @@ $ python torcrawl.py -v -u http://www.github.com/ -c -d 2 -p 5
 ## Crawler Started from http://www.github.com with step 2 and wait 5
 ## Step 1 completed with: 11 results
 ## Step 2 completed with: 112 results
+## File created on /script/path/links.txt
+```
+
+Crawl the webpage with depth 1 (1 clicks), 1 seconds pause and exclude links that match `.*\.blog`:
+
+```shell
+$ python torcrawl.py -v -u http://www.github.com/ -c -d 1 -p 1 -z ".*\.blog"
+## TOR is ready!
+## URL: http://www.github.com/
+## Your IP: *.*.*.*
+## Crawler Started from http://www.github.com with step 1 and wait 1. Excluding .*\.blog links.
+## Step 1 completed with: 9 results
 ## File created on /script/path/links.txt
 ```
 ### As Both:
