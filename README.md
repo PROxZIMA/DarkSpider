@@ -68,7 +68,7 @@ arg | Long | Description
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
--z  |--exclusion| Regex path that is ignored while crawling (Default: None)
+-z  |--exclusion "regexp"| Regex path that is ignored while crawling (Default: None)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code
 -x  |--external| Exclude external links while crawling a webpage (Default: include all links)
