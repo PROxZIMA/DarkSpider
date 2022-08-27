@@ -28,7 +28,7 @@ Extract:
 Crawl:
 -c, --crawl       : Crawl website (Default output on /links.txt)
 -d, --cdepth      : Set depth of crawl's travel (Default: 1)
--z, --exclusions  : Paths that you don't want to include (TODO)
+-z, --exclusions  : Paths that you don't want to include
 -s, --simultaneous: How many pages to visit at the same time (TODO)
 -p, --pause       : The length of time the crawler will pause
                     (Default: 0)
@@ -201,6 +201,12 @@ def main():
         help="The length of time the crawler will pause. (Default: 1 second)",
     )
     parser.add_argument(
+        "-z",
+        "--exclusion",
+        type=str,
+        help="Regex path that is ignored while crawling",
+    )
+    parser.add_argument(
         "-l",
         "--log",
         action="store_true",
@@ -270,6 +276,7 @@ def main():
             args.external,
             args.log,
             args.verbose,
+            args.exclusion,
         )
         lst = crawler.crawl()
         with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:
