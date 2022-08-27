@@ -200,9 +200,9 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 
 ## TODO:
 - [x] Store links relation in one-to-may json dictionary format
-- [ ] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
+- [x] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
 - [ ] Crawl images and scripts
-- [ ] -z, --exclusions  : Paths that you don't want to include
+- [x] -z, --exclusions  : Paths that you don't want to include
 - [ ] -m, --simultaneous: How many pages to visit at the same time
 
 ## Credits
@@ -211,6 +211,8 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
+
+[![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider)](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
 
 ## License:
 “GPL” stands for “General Public License”. Using the GNU GPL will require that all the released improved versions be free software. [source & more](https://www.gnu.org/licenses/gpl-faq.html)
