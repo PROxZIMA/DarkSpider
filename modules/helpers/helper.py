@@ -36,4 +36,5 @@ def verbose(func):
         plt.grid()
         return func(*args, **kwargs)
 
+    wrapper.__doc__ = func.__doc__
     return wrapper
