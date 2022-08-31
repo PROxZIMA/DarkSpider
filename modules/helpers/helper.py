@@ -1,3 +1,4 @@
+import os
 import sys
 from io import StringIO
 
@@ -33,8 +34,14 @@ def verbose(func):
         if args[0].verbose:
             print(f"## {func.__doc__}...")
         plt.cla()
+        plt.figure(figsize=(12, 6))
         plt.grid()
-        return func(*args, **kwargs)
+        ret = func(*args, **kwargs)
+        plt.savefig(
+            os.path.join(args[0].out_path, f"{func.__name__}.png"), bbox_inches="tight"
+        )
+        return ret
 
     wrapper.__doc__ = func.__doc__
+    wrapper.__name__ = func.__name__
     return wrapper
