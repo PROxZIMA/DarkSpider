@@ -54,6 +54,7 @@ class TestCheckerFunctions(unittest.TestCase):
     """Unit test for Extractor module."""
 
     def setUp(self):
+        """Test Case Setup."""
         self.out_path = folder("torcrawl", False)
         self.inp_path = "links.txt"
 
@@ -63,7 +64,7 @@ class TestCheckerFunctions(unittest.TestCase):
             f.write(URL_3)
 
     def tearDown(self):
-        """Test Suite Teardown."""
+        """Test Case Teardown."""
         # Remove input file.
         os.remove(self.inp_path)
         # Remove test folder.
@@ -75,7 +76,6 @@ class TestCheckerFunctions(unittest.TestCase):
         Removes all the garbage from the HTML and takes only text elements from the page.
         """
         expected = """http://info.cern.ch http://info.cern.ch - home of the first website From here you can: Browse the first website Browse the first website using the line-mode browser simulator Learn about the birth of the web Learn about CERN, the physics laboratory where the web was born"""
-
         content = urllib.request.urlopen(URL_1, timeout=10).read()
         result = text(response=content)
         self.assertEqual(
@@ -274,9 +274,6 @@ class TestCheckerFunctions(unittest.TestCase):
         scrapes the contents of the resulting web pages and writes the contents to
         the into out_path/{url_address}.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
             f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/TheProject.htm",
@@ -316,9 +313,6 @@ class TestCheckerFunctions(unittest.TestCase):
         scrapes the contents of the resulting web pages and writes the contents to
         the into out_path/{url_address}.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             "found a match!",
             f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
@@ -347,9 +341,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """intermex unit test.
         Input links from file and extract them into terminal.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             mocked_urllib_open(URL_1).read(),
             mocked_urllib_open(URL_2).read(),
@@ -372,9 +363,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """intermex unit test.
         Input links from file and extract them into terminal.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             "found a match!",
             mocked_urllib_open(URL_1).read(),
@@ -400,9 +388,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """intermex unit test.
         Input links from file and extract them into terminal.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             "Error: [Errno 2] No such file or directory: 'unknown_path'",
             "## Not valid file",
@@ -421,9 +406,6 @@ class TestCheckerFunctions(unittest.TestCase):
         Scrapes the contents of the provided web address and outputs the
         contents to file.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm"
         ]
@@ -450,9 +432,6 @@ class TestCheckerFunctions(unittest.TestCase):
         Scrapes the contents of the provided web address and outputs the
         contents to file.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             "found a match!",
             f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
@@ -480,9 +459,6 @@ class TestCheckerFunctions(unittest.TestCase):
         Scrapes the contents of the provided web address and outputs the
         contents to file.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             "found a match!",
             f"Error: [Errno 21] Is a directory: '{self.out_path}/'",
@@ -502,9 +478,6 @@ class TestCheckerFunctions(unittest.TestCase):
         Scrapes the contents of the provided web address and outputs the
         contents to file.
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             f"Error: [Errno 21] Is a directory: '{self.out_path}/'",
             f" Can't write on file: {self.out_path}/",
@@ -522,9 +495,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """termex unit test.
         Scrapes provided web address and prints the results to the terminal
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             mocked_urllib_open(URL_1).read(),
         ]
@@ -542,9 +512,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """termex unit test.
         Scrapes provided web address and prints the results to the terminal
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [f"No matches in: {URL_2}"]
 
         with Capturing() as result:
@@ -559,9 +526,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """termex unit test.
         Scrapes provided web address and prints the results to the terminal
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = ["None"]
 
         with Capturing() as result:
@@ -576,9 +540,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """termex unit test.
         Scrapes provided web address and prints the results to the terminal
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [f"No matches in: {URL_3}"]
 
         with Capturing() as result:
@@ -593,9 +554,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """extractor unit test.
         Extractor - scrapes the resulting website or discovered links
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
             f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/TheProject.htm",
@@ -615,9 +573,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """extractor unit test.
         Extractor - scrapes the resulting website or discovered links
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             mocked_urllib_open(URL_1).read(),
             mocked_urllib_open(URL_2).read(),
@@ -641,9 +596,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """extractor unit test.
         Extractor - scrapes the resulting website or discovered links
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm"
         ]
@@ -661,9 +613,6 @@ class TestCheckerFunctions(unittest.TestCase):
         """extractor unit test.
         Extractor - scrapes the resulting website or discovered links
         """
-
-        shutil.rmtree(self.out_path, ignore_errors=True)
-        folder(self.out_path, False)
         expected = [
             mocked_urllib_open(URL_1).read(),
         ]

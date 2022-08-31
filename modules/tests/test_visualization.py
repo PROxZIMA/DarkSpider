@@ -30,12 +30,14 @@ def test_plots(self, _func):
 class TestVisualizationFunctions(unittest.TestCase):
     """Unit test for Visualization module."""
 
-    def setUp(self):
-        self._website = "http://info.cern.ch/"
-        self.out_path = out_path = folder(extract_domain(self._website), False)
+    @classmethod
+    def setUpClass(cls):
+        """Test Suite Setup."""
+        cls._website = "http://info.cern.ch/"
+        cls.out_path = out_path = folder(extract_domain(cls._website), False)
 
-        self.crawler = Crawler(
-            website=self._website,
+        cls.crawler = Crawler(
+            website=cls._website,
             c_depth=2,
             c_pause=1,
             out_path=out_path,
@@ -46,18 +48,19 @@ class TestVisualizationFunctions(unittest.TestCase):
         )
 
         with Capturing() as _:
-            self.crawler.crawl()
+            cls.crawler.crawl()
 
-        self.obj = Visualization(
+        cls.obj = Visualization(
             json_file=out_path + "/network_structure.json",
             out_path=out_path,
             verbose=True,
         )
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """Test Suite Teardown."""
         # Remove test folder.
-        shutil.rmtree(self.out_path)
+        shutil.rmtree(cls.out_path)
 
     def test_indegree_plot(self):
         """Test visualization.indegree_plot function.

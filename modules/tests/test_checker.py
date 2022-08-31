@@ -11,7 +11,8 @@ class TestCheckerFunctions(unittest.TestCase):
     """Unit test for Checker module."""
 
     @classmethod
-    def setUp(cls) -> None:
+    def setUpClass(cls) -> None:
+        """Test Suite Setup."""
         pass
 
     @classmethod

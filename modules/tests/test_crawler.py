@@ -10,11 +10,13 @@ from modules.helpers.helper import Capturing
 class TestCrawlerFunctions(unittest.TestCase):
     """Unit test for Crawler module."""
 
-    def setUp(self):
-        self._website = "http://info.cern.ch/"
-        self.out_path = out_path = folder(extract_domain(self._website), False)
-        self.crawler = Crawler(
-            website=self._website,
+    @classmethod
+    def setUpClass(cls):
+        """Test Suite Setup."""
+        cls._website = "http://info.cern.ch/"
+        cls.out_path = out_path = folder(extract_domain(cls._website), False)
+        cls.crawler = Crawler(
+            website=cls._website,
             c_depth=1,
             c_pause=1,
             out_path=out_path,
@@ -23,15 +25,16 @@ class TestCrawlerFunctions(unittest.TestCase):
             verbose=False,
             exclusion=None,
         )
-        self.crawler_ex = copy(self.crawler)
-        self.crawler_ex.external = True
+        cls.crawler_ex = copy(cls.crawler)
+        cls.crawler_ex.external = True
         # Exclude links with subdomain='home.web'
-        self.crawler_ex.exclusion = ".*//home\.web.*"
+        cls.crawler_ex.exclusion = ".*//home\.web.*"
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         """Test Suite Teardown."""
         # Remove test folder.
-        shutil.rmtree(self.out_path)
+        shutil.rmtree(cls.out_path)
 
     def test_excludes(self):
         """Test crawler.excludes function.
