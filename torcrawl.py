@@ -289,7 +289,7 @@ def main():
             args.exclusion,
         )
         json_data = crawler.crawl()
-        print(f"## File created on {os.getcwd()}/{out_path}/links.txt")
+        print(f"## File created on {os.getcwd()}/{out_path}/network_structure.json")
 
         if args.visualize:
             obj = Visualization(
