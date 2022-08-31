@@ -49,10 +49,10 @@ class Crawler:
         if self.exclusion and re.search(self.exclusion, link, re.IGNORECASE):
             return True
         # Links
-        elif "#" in link:
+        if "#" in link:
             return True
         # External links
-        elif link.startswith("http") and not link.startswith(self.website):
+        if link.startswith("http") and not link.startswith(self.website):
             if self.external is True:
                 return False
             file_path = self.out_path + "/extlinks.txt"
@@ -60,19 +60,19 @@ class Crawler:
                 lst_file.write(str(link) + "\n")
             return True
         # Telephone Number
-        elif link.startswith("tel:"):
+        if link.startswith("tel:"):
             file_path = self.out_path + "/telephones.txt"
             with open(file_path, "a+", encoding="UTF-8") as lst_file:
                 lst_file.write(str(link) + "\n")
             return True
         # Mails
-        elif link.startswith("mailto:"):
+        if link.startswith("mailto:"):
             file_path = self.out_path + "/mails.txt"
             with open(file_path, "a+", encoding="UTF-8") as lst_file:
                 lst_file.write(str(link) + "\n")
             return True
         # Type of files
-        elif re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc)$", link, re.IGNORECASE):
+        if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc)$", link, re.IGNORECASE):
             return True
 
     def canonical(self, base, href):
