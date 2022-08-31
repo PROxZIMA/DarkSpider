@@ -31,7 +31,7 @@ class Crawler:
         self.c_depth = c_depth
         self.c_pause = c_pause
         self.out_path = out_path
-        self.external = external
+        self.external = rf"{external}"
         self.logs = logs
         self.verbose = verbose
         self.exclusion = exclusion
