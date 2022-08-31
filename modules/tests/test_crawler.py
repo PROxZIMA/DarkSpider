@@ -87,7 +87,7 @@ class TestCrawlerFunctions(unittest.TestCase):
             self.assertEqual(
                 expected,
                 result,
-                f"Test Fail:: Canon returned = {result}, " f"expected {link[1]}",
+                f"Test Fail:: Canon returned = {result}, expected {link[1]}",
             )
 
     def test_crawl(self):
@@ -119,10 +119,10 @@ class TestCrawlerFunctions(unittest.TestCase):
         self.assertCountEqual(
             expected,
             result,
-            f"Test Fail:: Crawler returned = {result}, " f"expected {expected}",
+            f"Test Fail:: Crawler returned = {result}, expected {expected}",
         )
         self.assertCountEqual(
             expected_ex,
             result_ex,
-            f"Test Fail:: Crawler returned = {result_ex}, " f"expected {expected_ex}",
+            f"Test Fail:: Crawler returned = {result_ex}, expected {expected_ex}",
         )

@@ -187,9 +187,7 @@ class Crawler:
             old_level = list(clean_cur_level)
             # Reset cur_level
             cur_level = set()
-            print(
-                f"## Step {index + 1} completed \n\t " f"with: {len(ord_lst)} result(s)"
-            )
+            print(f"## Step {index + 1} completed \n\t with: {len(ord_lst)} result(s)")
 
             # Creating json
             json_path = self.out_path + "/network_structure.json"
