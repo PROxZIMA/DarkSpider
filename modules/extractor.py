@@ -60,7 +60,7 @@ def cinex(input_file, out_path, yara=None):
     """
     file = io.TextIOWrapper
     try:
-        file = open(input_file, "r")
+        file = open(input_file, "r", encoding="UTF-8")
     except IOError as err:
         print(f"Error: {err}\n## Can't open: {input_file}")
 
@@ -115,7 +115,7 @@ def intermex(input_file, yara):
     :return: None
     """
     try:
-        with open(input_file, "r") as file:
+        with open(input_file, "r", encoding="UTF-8") as file:
             for line in file.read().splitlines():
                 content = urllib.request.urlopen(line).read()
                 if yara is not None:
@@ -129,7 +129,7 @@ def intermex(input_file, yara):
     except IOError as err:
         print(f"Error: {err}\n## Not valid file")
     except Exception as err:
-        print(f"Error: {err}\n## Not valid file")
+        print(f"Error: {err}")
 
 
 def outex(website, output_file, out_path, yara):
