@@ -295,12 +295,12 @@ def main():
             obj = Visualization(
                 out_path + "/network_structure.json", out_path, args.verbose
             )
-            obj.plot_indegree()
-            obj.bar_indegree()
-            obj.plot_outdegree()
-            obj.bar_outdegree()
-            obj.bar_eigenvector_centrality()
-            obj.bar_pagerank()
+            obj.indegree_plot()
+            obj.indegree_bar()
+            obj.outdegree_plot()
+            obj.outdegree_bar()
+            obj.eigenvector_centrality_bar()
+            obj.pagerank_bar()
             obj.visualize()
 
         if args.extract:
