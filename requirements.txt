@@ -1,6 +1,8 @@
-pysocks
 beautifulsoup4>=4.7.1
-requests>=2.21.0
-yara
+Gooey>=1.0.7
+matplotlib>=3.5.0
+networkx>=2.8
+seaborn>=0.11.1
+pysocks>=1.7.1
+yara==1.7.7
 lxml
-Gooey
