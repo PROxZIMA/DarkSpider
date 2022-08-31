@@ -5,6 +5,8 @@ from collections import Counter
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import seaborn as sns
+from matplotlib.ticker import MultipleLocator
 
 from modules.helpers.helper import verbose
 
@@ -47,7 +49,6 @@ class Visualization:
             alpha=0.4,
             width=0.5,
         )
-        plt.savefig(os.path.join(self.out_path, "graph.png"))
 
     def indegree(self):
         """Indegree of the graph."""
@@ -58,94 +59,109 @@ class Visualization:
         return dict(self.G.out_degree())
 
     @verbose
-    def plot_indegree(self):
+    def indegree_plot(self):
         """Scatter Plot of the indegree vs nodes of the graph."""
         indegree = self.indegree()
         indegree_counter = Counter(indegree.values())
         indegree_counter.pop(0, None)
         indegree_values = indegree_counter.values()
         indegree_keys = indegree_counter.keys()
-        plt.scatter(indegree_keys, indegree_values, color="red")
+        sns.scatterplot(x=indegree_keys, y=indegree_values, color="orangered")
         plt.ylabel("No. of Nodes")
         plt.xlabel("Indegree")
         plt.title("Indegree of the graph")
-        plt.savefig(os.path.join(self.out_path, "indegree_plot.png"))
 
     @verbose
-    def bar_indegree(self):
+    def indegree_bar(self):
         """Bar Graph of the indegree vs percentage of nodes of the graph."""
         indegree = self.indegree()
         indegree_counter = Counter(indegree.values())
         total = sum(indegree_counter.values())
-        indegree_keys = indegree_counter.keys()
-        indegree_percent = [
-            (counter / total) * 100 for counter in indegree_counter.values()
-        ]
-        plt.bar(indegree_keys, indegree_percent, width=0.1, color="blue")
+
+        indegree_keys, indegree_percent = [], []
+        for k, v in sorted(indegree_counter.items()):
+            indegree_keys.append(k)
+            indegree_percent.append((v / total) * 100)
+
+        ax = sns.barplot(x=indegree_keys, y=indegree_percent, color="cornflowerblue")
+        ax.set_xlim(-1, min(50, len(indegree_keys)))
+        ax.xaxis.set_major_locator(
+            MultipleLocator(base=min(50, max(len(indegree_keys), 5)) // 5)
+        )
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("Indegree")
         plt.title("Indegree of the graph")
-        plt.savefig(os.path.join(self.out_path, "indegree_bar.png"))
 
     @verbose
-    def plot_outdegree(self):
+    def outdegree_plot(self):
         """Scatter Plot of the outdegree vs nodes of the graph."""
         outdegree = self.outdegree()
         outdegree_counter = Counter(outdegree.values())
         outdegree_counter.pop(0, None)
         outdegree_values = outdegree_counter.values()
         outdegree_keys = outdegree_counter.keys()
-        plt.scatter(outdegree_keys, outdegree_values, color="red")
+        sns.scatterplot(x=outdegree_keys, y=outdegree_values, color="limegreen")
         plt.ylabel("No. of Nodes")
         plt.xlabel("Outdegree")
         plt.title("Outdegree of the graph")
-        plt.savefig(os.path.join(self.out_path, "outdegree_plot.png"))
 
     @verbose
-    def bar_outdegree(self):
+    def outdegree_bar(self):
         """Bar Graph of the outdegree vs percentage of nodes of the graph."""
         outdegree = self.outdegree()
         outdegree_counter = Counter(outdegree.values())
         total = sum(outdegree_counter.values())
-        outdegree_keys = outdegree_counter.keys()
-        outdegree_percent = [
-            (counter / total) * 100 for counter in outdegree_counter.values()
-        ]
-        plt.bar(outdegree_keys, outdegree_percent, width=10, color="blue")
+
+        outdegree_keys, outdegree_percent = [], []
+        for k, v in sorted(outdegree_counter.items()):
+            outdegree_keys.append(k)
+            outdegree_percent.append((v / total) * 100)
+
+        ax = sns.barplot(x=outdegree_keys, y=outdegree_percent, color="cornflowerblue")
+        ax.set_xlim(-1, min(50, len(outdegree_keys)) + 1)
+        ax.xaxis.set_major_locator(
+            MultipleLocator(base=min(50, max(len(outdegree_keys), 5)) // 5)
+        )
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("Outdegree")
         plt.title("Outdegree of the graph")
-        plt.savefig(os.path.join(self.out_path, "outdegree_bar.png"))
 
     @verbose
-    def bar_eigenvector_centrality(self):
+    def eigenvector_centrality_bar(self):
         """Bar Graph of the eigenvector centrality vs percentage of nodes of the graph."""
         eigenvector_centrality = nx.eigenvector_centrality(self.G, max_iter=sys.maxsize)
         eigenvector_centrality_counter = Counter(eigenvector_centrality.values())
         total = sum(eigenvector_centrality_counter.values())
-        evc_keys = eigenvector_centrality_counter.keys()
-        evc_percent = [
-            (counter / total) * 100
-            for counter in eigenvector_centrality_counter.values()
-        ]
-        plt.bar(evc_keys, evc_percent, width=0.01, color="blue")
+
+        evc_keys, evc_percent = [], []
+        for k, v in sorted(eigenvector_centrality_counter.items()):
+            evc_keys.append(k)
+            evc_percent.append((v / total) * 100)
+
+        ax = sns.barplot(x=evc_keys, y=evc_percent, color="cornflowerblue")
+        ax.set_xticklabels(map(lambda x: f"{x:.2E}", evc_keys))
+        ax.xaxis.set_major_locator(MultipleLocator(base=max(len(evc_keys), 5) // 5))
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("Eigenvector Centrality")
         plt.title("Eigenvector Centrality of the graph")
-        plt.savefig(os.path.join(self.out_path, "eigenvector_centrality_bar.png"))
 
     @verbose
-    def bar_pagerank(self):
+    def pagerank_bar(self):
         """Bar Graph of the pagerank vs percentage of nodes of the graph."""
         pagerank = nx.pagerank(self.G)
         pagerank_counter = Counter(pagerank.values())
         total = sum(pagerank_counter.values())
-        pagerank_keys = pagerank_counter.keys()
-        pagerank_percent = [
-            (counter / total) * 100 for counter in pagerank_counter.values()
-        ]
-        plt.bar(pagerank_keys, pagerank_percent, width=0.0001, color="blue")
+
+        pagerank_keys, pagerank_percent = [], []
+        for k, v in sorted(pagerank_counter.items()):
+            pagerank_keys.append(k)
+            pagerank_percent.append((v / total) * 100)
+
+        ax = sns.barplot(x=pagerank_keys, y=pagerank_percent, color="cornflowerblue")
+        ax.set_xticklabels(map(lambda x: f"{x:.2E}", pagerank_keys))
+        ax.xaxis.set_major_locator(
+            MultipleLocator(base=max(len(pagerank_keys), 5) // 5)
+        )
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("PageRank")
         plt.title("PageRank of the graph")
-        plt.savefig(os.path.join(self.out_path, "pagerank_bar.png"))
