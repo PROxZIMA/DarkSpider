@@ -6,18 +6,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import networkx as nx
 
-
-def verbose(func):
-    """Verbose decorator"""
-
-    def wrapper(*args, **kwargs):
-        if args[0].verbose:
-            print(f"## {func.__doc__}...")
-        plt.cla()
-        plt.grid()
-        return func(*args, **kwargs)
-
-    return wrapper
+from modules.helpers.helper import verbose
 
 
 class Visualization:

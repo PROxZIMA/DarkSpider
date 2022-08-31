@@ -23,11 +23,11 @@ rule keyword_search
         score = 90
 
     strings:
-        $a = "Keyword1" fullword wide ascii nocase
-        $b = "Keyword Two" wide ascii nocase
-        $c = "kw 3" ascii
-        $d = "KEYWORD four" nocase
-        $e = "google-" nocase
+        $a = "website" fullword wide ascii nocase
+        $b = "physics laboratory" wide ascii nocase
+        $c = "<h1>http://" ascii
+        $d = "ABOUT cern" nocase
+        $e = "info.cern.ch" nocase
 
     condition:
         any of them
