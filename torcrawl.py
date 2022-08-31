@@ -15,6 +15,7 @@ General:
 -v, --verbose      : Show more informations about the progress
 -u, --url *.onion  : URL of Webpage to crawl or extract
 -w, --without      : Without the use of Relay TOR
+-s, --visualize    : Visualize the graphs and insights from the crawled data
 
 Extract:
 -e, --extract           : Extract page's code to terminal or file.
@@ -28,13 +29,15 @@ Extract:
 Crawl:
 -c, --crawl       : Crawl website (Default output on /links.txt)
 -d, --cdepth      : Set depth of crawl's travel (Default: 1)
--z, --exclusions  : Paths that you don't want to include (TODO)
--s, --simultaneous: How many pages to visit at the same time (TODO)
+-z, --exclusions  : Paths that you don't want to include
+-m, --simultaneous: How many pages to visit at the same time (TODO)
 -p, --pause       : The length of time the crawler will pause
                     (Default: 0)
 -f, --folder	  : The root directory which will contain the
                     generated files
 -l, --log         : Log file with visited URLs and their response code.
+-x, --external    : Exclude external links while crawling a webpage
+                    (Default: include all links)
 
 GitHub: github.com/MikeMeliz/TorCrawl.py
 License: GNU General Public License v3.0
@@ -47,21 +50,38 @@ import socket
 import sys
 
 import socks  # noqa - pysocks
-from gooey import Gooey, GooeyParser
+
+try:
+    from gooey import Gooey, GooeyParser
+
+    GOOEY_AVAILABLE = True
+except ModuleNotFoundError:
+    GOOEY_AVAILABLE = False
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 
 # DarkSpider Modules
 from modules.crawler import Crawler
 from modules.extractor import extractor
+from modules.visualization import Visualization
 
 IGNORE_COMMAND = "--ignore-gooey"
 
-if IGNORE_COMMAND in sys.argv:
+# Remove IGNORE_COMMAND if present in arguments.
+# We don't want to pass it to the argpaarse.
+try:
     sys.argv.remove(IGNORE_COMMAND)
+except ValueError:
+    pass
 
+# If GUI parameters are passed in arguments then handel Gooey unavailable error
 if "-g" not in sys.argv and "--gui" not in sys.argv:
-    sys.argv.append(IGNORE_COMMAND)
+    if GOOEY_AVAILABLE:
+        sys.argv.append(IGNORE_COMMAND)
+elif not GOOEY_AVAILABLE:
+    print("## Gooey is not available!")
+    print("## Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument")
+    sys.exit(2)
 
 # Set socket and connection with TOR network
 def connect_tor():
@@ -87,7 +107,16 @@ def connect_tor():
         )
 
 
-@Gooey(program_name="DarkSpider")
+def GooeyConditional(flag, **kwargs):
+    """Conditional decorator if GUI backend is available or not"""
+
+    def decorate(function):
+        return Gooey(function, **kwargs) if flag else function
+
+    return decorate
+
+
+@GooeyConditional(GOOEY_AVAILABLE, program_name="DarkSpider")
 def main():
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
@@ -95,19 +124,28 @@ def main():
     :return: None
     """
 
-    # Get arguments with argparse.
-    parser = GooeyParser(
-        description="DarkSpider.py is a python script to crawl and extract "
-        "(regular or onion) webpages through TOR network."
+    # Get arguments with GooeyParser if available else argparse.
+    description = (
+        "DarkSpider.py is a python script to crawl and extract "
+        + "(regular or onion) webpages through TOR network."
     )
+    if GOOEY_AVAILABLE:
+        parser = GooeyParser(description=description)
+    else:
+        parser = argparse.ArgumentParser(description=description)
 
     # GUI
+    gui_kwargs = {
+        "action": "store_true",
+        "help": "Open with GUI backend.",
+    }
+    if GOOEY_AVAILABLE:
+        gui_kwargs["gooey_options"] = {"visible": False}
+
     parser.add_argument(
         "-g",
         "--gui",
-        action="store_true",
-        help="Open with GUI backend.",
-        gooey_options={"visible": False},
+        **gui_kwargs,
     )
 
     # General
@@ -116,6 +154,12 @@ def main():
         "--verbose",
         action="store_true",
         help="Show more information about the progress",
+    )
+    parser.add_argument(
+        "-s",
+        "--visualize",
+        action="store_true",
+        help="Visualize the graphs and insights from the crawled data",
     )
     parser.add_argument(
         "-u", "--url", type=str, help="URL of webpage to crawl or extract"
@@ -167,6 +211,12 @@ def main():
         help="The length of time the crawler will pause. (Default: 1 second)",
     )
     parser.add_argument(
+        "-z",
+        "--exclusion",
+        type=str,
+        help="Regex path that is ignored while crawling",
+    )
+    parser.add_argument(
         "-l",
         "--log",
         action="store_true",
@@ -178,6 +228,13 @@ def main():
         "--folder",
         type=str,
         help="The root directory which will contain the generated files",
+    )
+    parser.add_argument(
+        "-x",
+        "--external",
+        action="store_false",
+        default=True,
+        help="Exclude external links while crawling a webpage (Default: include all links)",
     )
     parser.add_argument(
         "-y",
@@ -222,13 +279,30 @@ def main():
 
     if args.crawl:
         crawler = Crawler(
-            website, args.cdepth, args.cpause, out_path, args.log, args.verbose
+            website,
+            args.cdepth,
+            args.cpause,
+            out_path,
+            args.external,
+            args.log,
+            args.verbose,
+            args.exclusion,
         )
-        lst = crawler.crawl()
-        with open(out_path + "/links.txt", "w+", encoding="UTF-8") as file:
-            for item in lst:
-                file.write(f"{item}\n")
+        json_data = crawler.crawl()
         print(f"## File created on {os.getcwd()}/{out_path}/links.txt")
+
+        if args.visualize:
+            obj = Visualization(
+                out_path + "/network_structure.json", out_path, args.verbose
+            )
+            obj.plot_indegree()
+            obj.bar_indegree()
+            obj.plot_outdegree()
+            obj.bar_outdegree()
+            obj.bar_eigenvector_centrality()
+            obj.bar_pagerank()
+            obj.visualize()
+
         if args.extract:
             input_file = out_path + "/links.txt"
             extractor(website, args.crawl, args.output, input_file, out_path, args.yara)

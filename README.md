@@ -13,11 +13,7 @@ DarkSpider is a python script to crawl and extract (regular or onion) webpages t
 - **Warning:** Crawling is not illegal, but violating copyright is. It’s always best to double check a website’s T&C before crawling them. Some websites set up what’s called robots.txt to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting robots.txt.
 - **Keep in mind:** Extracting and crawling through TOR network take some time. That's normal behaviour; you can find more information [here](https://www.torproject.org/docs/faq.html.en#WhySlow).
 
-<p align="center"><img src ="https://media.giphy.com/media/RmfzOLuCJTApa/giphy.gif"></p>
-
 ### What makes it simple?
-
-If you are a terminal maniac you know that things have to be simple and clear. Passing output into other tools is necessary and accuracy is the key.
 
 With a single argument you can read an .onion webpage or a regular one through TOR Network and using pipes you can pass the output at any other tool you prefer.
 
@@ -26,7 +22,7 @@ $ torcrawl -u http://www.github.com/ | grep 'google-analytics'
     <meta-name="google-analytics" content="UA-XXXXXX- ">
 ```
 
-If you want to crawl the links of a webpage use the `-c` and **BAM** you got on a file all the inside links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
+If you want to crawl the links of a webpage use the `-c` and you got on a file all the inside links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
 
 ```shell
 $ torcrawl -v -u http://www.github.com/ -c -d 2 -p 2
@@ -63,6 +59,7 @@ arg | Long | Description
 -u  |--url *.onion| URL of Webpage to crawl or extract
 -w  |--without| Without the use of Relay TOR
 -f  |--folder| The directory which will contain the generated files ([@guyo13](https://www.github.com/guyo13))
+-s  |--visualize| Visualize the graphs and insights from the crawled data
 **Extract**: | |
 -e  |--extract| Extract page's code to terminal or file. (Default: Terminal)
 -i  |--input filename| Input file with URL(s) (seperated by line)
@@ -71,8 +68,10 @@ arg | Long | Description
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
+-z  |--exclusion "regexp"| Regex path that is ignored while crawling (Default: None)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code
+-x  |--external| Exclude external links while crawling a webpage (Default: include all links)
 
 ## Usage:
 
@@ -141,6 +140,18 @@ $ python torcrawl.py -v -u http://www.github.com/ -c -d 2 -p 5
 ## Step 2 completed with: 112 results
 ## File created on /script/path/links.txt
 ```
+
+Crawl the webpage with depth 1 (1 clicks), 1 seconds pause and exclude links that match `.*\.blog`:
+
+```shell
+$ python torcrawl.py -v -u http://www.github.com/ -c -d 1 -p 1 -z ".*\.blog"
+## TOR is ready!
+## URL: http://www.github.com/
+## Your IP: *.*.*.*
+## Crawler Started from http://www.github.com with step 1 and wait 1. Excluding .*\.blog links.
+## Step 1 completed with: 9 results
+## File created on /script/path/links.txt
+```
 ### As Both:
 You can crawl a page and also extract the webpages into a folder with a single command:
 
@@ -188,29 +199,26 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 ![peek 2018-12-08 16-11](https://user-images.githubusercontent.com/9204902/49687660-f72f8280-fb0e-11e8-981e-1bbeeac398cc.gif)
 
 ## TODO:
-- [ ] Store links relation in one-to-may json dictionary format
-- [ ] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
+- [x] Store links relation in one-to-may json dictionary format
+- [x] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
 - [ ] Crawl images and scripts
-- [ ] -z, --exclusions  : Paths that you don't want to include
-- [ ] -s, --simultaneous: How many pages to visit at the same time
+- [x] -z, --exclusions  : Paths that you don't want to include
+- [ ] -m, --simultaneous: How many pages to visit at the same time
 
 ## Credits
 - [**@MikeMeliz**](https://github.com/MikeMeliz) for intial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
+- A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
+
+[![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider)](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
 
 ## License:
 “GPL” stands for “General Public License”. Using the GNU GPL will require that all the released improved versions be free software. [source & more](https://www.gnu.org/licenses/gpl-faq.html)
 
 ## Changelog:
 ```
-v1.21:
-    * Fixed typos of delay (-d)
-    * Fixed TyperError and IndexError
-v1.2:
-    * Migrated to Python3
-    * Option to generate log file (-l)
-    * PEP8 Fixes
-    * Fix double folder generation (http:// domain.com)
+v1:
+    * Initial project setup
 ```
