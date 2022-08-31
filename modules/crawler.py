@@ -84,10 +84,6 @@ class Crawler:
         # Already formatted
         if href.startswith("http"):
             return href
-        # For request the referenced resource using whatever protocol
-        # is being used to load the current page
-        if href.startswith("//"):
-            return ("https:" if base.startswith("https") else "http:") + href
 
         # For relative paths
         return urljoin(base, href)
