@@ -155,7 +155,8 @@ class TestCheckerFunctions(unittest.TestCase):
         }
 
         content = urllib.request.urlopen(URL_1, timeout=10).read()
-        result = check_yara(raw=content, yara=0)
+        with Capturing() as _:
+            result = check_yara(raw=content, yara=0)
         self.assertEqual(
             expected, result, f"Test Fail:: expected = {expected}, got {result}"
         )
@@ -221,7 +222,8 @@ class TestCheckerFunctions(unittest.TestCase):
         }
 
         content = urllib.request.urlopen(URL_1, timeout=10).read()
-        result = check_yara(raw=content, yara=1)
+        with Capturing() as _:
+            result = check_yara(raw=content, yara=1)
         self.assertEqual(
             expected, result, f"Test Fail:: expected = {expected}, got {result}"
         )
