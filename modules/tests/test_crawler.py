@@ -2,7 +2,7 @@ import shutil
 import unittest
 from copy import copy
 
-from modules.checker import extract_domain, folder, url_canon
+from modules.checker import extract_domain, folder
 from modules.crawler import Crawler
 from modules.helpers.helper import Capturing
 
