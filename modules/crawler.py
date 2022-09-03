@@ -160,8 +160,27 @@ class Crawler:
                     if ver_link is not None:
                         item_data.add(ver_link)
 
-                # TODO: For images
-                # TODO: For scripts
+               # For each <script> tag   
+                for link in soup.findAll("script"):
+                    link = link.get("src")
+
+                    if self.excludes(link):
+                        continue
+            
+                    ver_link = self.canonical(item, link)
+                    if ver_link is not None:
+                        item_data.add(ver_link)
+
+                # For each <link> tag
+                for link in soup.findAll("link"):
+                    link = link.get("href")
+
+                    if self.excludes(link):
+                        continue
+
+                    ver_link = self.canonical(item, link)
+                    if ver_link is not None:
+                        item_data.add(ver_link)
 
                 if self.verbose:
                     sys.stdout.write("-- Results: " + str(len(ord_lst)) + "\r")
