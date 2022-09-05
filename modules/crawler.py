@@ -115,7 +115,9 @@ class Crawler:
             # For every element of list.
             for item in old_level:
                 # Don't crawl if already crawled
-                if item.rstrip("/") in json_data:
+                if (item in json_data) or (
+                    item != item.rstrip("/") and item.rstrip("/") in json_data
+                ):
                     continue
 
                 # Store the crawled link of an item
@@ -160,13 +162,13 @@ class Crawler:
                     if ver_link is not None:
                         item_data.add(ver_link)
 
-               # For each <script> tag   
+                # For each <script> tag
                 for link in soup.findAll("script"):
                     link = link.get("src")
 
                     if self.excludes(link):
                         continue
-            
+
                     ver_link = self.canonical(item, link)
                     if ver_link is not None:
                         item_data.add(ver_link)
