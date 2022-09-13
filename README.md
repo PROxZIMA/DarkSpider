@@ -204,7 +204,7 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 - [x] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
 - [x] Crawl images and scripts
 - [x] -z, --exclusions  : Paths that you don't want to include
-- [ ] -t, --thread: How many pages to visit at the same time
+- [x] -t, --thread: How many pages to visit at the same time
 
 ## Credits
 - [**@MikeMeliz**](https://github.com/MikeMeliz) for initial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
