@@ -21,6 +21,7 @@ class TestCrawlerFunctions(unittest.TestCase):
             c_pause=1,
             out_path=out_path,
             external=False,
+            thread=1,
             logs=False,
             verbose=False,
             exclusion=None,

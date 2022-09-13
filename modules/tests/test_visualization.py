@@ -42,6 +42,7 @@ class TestVisualizationFunctions(unittest.TestCase):
             c_pause=1,
             out_path=out_path,
             external=True,
+            thread=1,
             logs=False,
             verbose=False,
             exclusion=None,
@@ -51,7 +52,7 @@ class TestVisualizationFunctions(unittest.TestCase):
             cls.crawler.crawl()
 
         cls.obj = Visualization(
-            json_file=out_path + "/network_structure.json",
+            json_file=os.path.join(out_path, cls.crawler.network_file),
             out_path=out_path,
             verbose=True,
         )
