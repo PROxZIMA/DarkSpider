@@ -11,7 +11,7 @@
 DarkSpider is a python script to crawl and extract (regular or onion) webpages through TOR network.
 
 - **Warning:** Crawling is not illegal, but violating copyright is. It’s always best to double check a website’s T&C before crawling them. Some websites set up what’s called robots.txt to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting robots.txt.
-- **Keep in mind:** Extracting and crawling through TOR network take some time. That's normal behaviour; you can find more information [here](https://www.torproject.org/docs/faq.html.en#WhySlow).
+- **Keep in mind:** Extracting and crawling through TOR network take some time. That's normal behavior; you can find more information [here](https://www.torproject.org/docs/faq.html.en#WhySlow).
 
 ### What makes it simple?
 
@@ -40,7 +40,7 @@ To install this script, you need to clone that repository:
 
 `git clone https://github.com/PROxZIMA/DarkSpider.git`
 
-You'll also need to install dependecies:
+You'll also need to install dependencies:
 
 `pip install -r requirements.txt`
 
@@ -55,20 +55,21 @@ arg | Long | Description
 **General**: | |
 -h  |--help| Help
 -g  |--gui| Open with GUI backend.
--v  |--verbose| Show more informations about the progress
+-v  |--verbose| Show more information about the progress
 -u  |--url *.onion| URL of Webpage to crawl or extract
 -w  |--without| Without the use of Relay TOR
 -f  |--folder| The directory which will contain the generated files ([@guyo13](https://www.github.com/guyo13))
 -s  |--visualize| Visualize the graphs and insights from the crawled data
 **Extract**: | |
 -e  |--extract| Extract page's code to terminal or file. (Default: Terminal)
--i  |--input filename| Input file with URL(s) (seperated by line)
+-i  |--input filename| Input file with URL(s) (separated by line)
 -o  |--output [filename]| Output page(s) to file(s) (for one page)
 -y  |--yara | Perform yara keyword search (0 = search entire html object. 1 = search only text).
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
 -z  |--exclusion "regexp"| Regex path that is ignored while crawling (Default: None)
+-t  |--thread number| How many pages to visit (Threads) at the same time (Default: 16)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code
 -x  |--external| Exclude external links while crawling a webpage (Default: include all links)
@@ -117,7 +118,7 @@ $ python torcrawl.py -i links.txt
 
 ### As Crawler:
 Crawl the links of the webpage without the use of TOR,
-also show verbose output (really helpfull):
+also show verbose output (really helpful):
 
 ```shell
 $ python torcrawl.py -v -w -u http://www.github.com/ -c
@@ -201,18 +202,20 @@ Use ```-y 0``` for raw html searching and ```-y 1``` for text search only.*
 ## TODO:
 - [x] Store links relation in one-to-may json dictionary format
 - [x] Plot the graphical network of the generated json using [`NetworkX`](https://networkx.org/) package.
-- [ ] Crawl images and scripts
+- [x] Crawl images and scripts
 - [x] -z, --exclusions  : Paths that you don't want to include
-- [ ] -m, --simultaneous: How many pages to visit at the same time
+- [ ] -t, --thread: How many pages to visit at the same time
 
 ## Credits
-- [**@MikeMeliz**](https://github.com/MikeMeliz) for intial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
+- [**@MikeMeliz**](https://github.com/MikeMeliz) for initial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
 - A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
 ## Contributors:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
 
-[![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider)](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider "Contributors")](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
+
+[![Stats](https://repobeats.axiom.co/api/embed/6bcd62cf68bef8f509296f236f21b39f6af128a6.svg "Repobeats analytics image")](https://github.com/PROxZIMA/DarkSpider/pulse)
 
 ## License:
 “GPL” stands for “General Public License”. Using the GNU GPL will require that all the released improved versions be free software. [source & more](https://www.gnu.org/licenses/gpl-faq.html)
