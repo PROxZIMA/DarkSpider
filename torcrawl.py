@@ -23,21 +23,22 @@ Extract:
 -i, --input filename    : Input file with URL(s) (seperated by line)
 -o, --output [filename] : Output page(s) to file(s) (for one page)
 -y, --yara              : Yara keyword search page categorisation
-                        read in from /res folder. 0 search whole html object.
-                        1 search only the text.
+                          read in from /res folder. 0 search whole html object.
+                          1 search only the text.
 
 Crawl:
--c, --crawl       : Crawl website (Default output on /links.txt)
--d, --cdepth      : Set depth of crawl's travel (Default: 1)
--z, --exclusions  : Paths that you don't want to include
--m, --simultaneous: How many pages to visit at the same time (TODO)
--p, --pause       : The length of time the crawler will pause
-                    (Default: 0)
--f, --folder	  : The root directory which will contain the
-                    generated files
--l, --log         : Log file with visited URLs and their response code.
--x, --external    : Exclude external links while crawling a webpage
-                    (Default: include all links)
+-c, --crawl               : Crawl website (Default output on /links.txt)
+-d, --cdepth              : Set depth of crawl's travel (Default: 1)
+-z, --exclusions "regexp" : Paths that you don't want to include
+-t, --thread number       : How many pages to visit (Threads) at the same time
+                            (Default: 16)
+-p, --pause               : The length of time the crawler will pause
+                            (Default: 0)
+-f, --folder	          : The root directory which will contain the
+                            generated files
+-l, --log                 : Log file with visited URLs and their response code.
+-x, --external            : Exclude external links while crawling a webpage
+                            (Default: include all links)
 
 GitHub: github.com/MikeMeliz/TorCrawl.py
 License: GNU General Public License v3.0
@@ -82,29 +83,6 @@ elif not GOOEY_AVAILABLE:
     print("## Gooey is not available!")
     print("## Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument")
     sys.exit(2)
-
-# Set socket and connection with TOR network
-def connect_tor():
-    """Connect to TOR via DNS resolution through a socket.
-    :return: None or HTTPError.
-    """
-    try:
-        port = 9050
-        # Set socks proxy and wrap the urllib module
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", port)
-        socket.socket = socks.socksocket
-
-        # Perform DNS resolution through the socket
-        def getaddrinfo(*args):  # noqa
-            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (args[0], args[1]))]
-
-        socket.getaddrinfo = getaddrinfo  # noqa
-    except socks.HTTPError as err:
-        error = sys.exc_info()[0]
-        print(
-            f"Error: {error} \n## Cannot establish connection with TOR\n"
-            f"HTTPError: {err}"
-        )
 
 
 def GooeyConditional(flag, **kwargs):
@@ -206,8 +184,8 @@ def main():
     parser.add_argument(
         "-p",
         "--cpause",
-        type=int,
-        default=1,
+        type=float,
+        default=0,
         help="The length of time the crawler will pause. (Default: 1 second)",
     )
     parser.add_argument(
@@ -215,6 +193,13 @@ def main():
         "--exclusion",
         type=str,
         help="Regex path that is ignored while crawling",
+    )
+    parser.add_argument(
+        "-t",
+        "--thread",
+        type=int,
+        default=16,
+        help="How many pages to visit (Threads) at the same time (Default: 1)",
     )
     parser.add_argument(
         "-l",
@@ -257,10 +242,18 @@ def main():
     if args.yara not in [0, 1]:
         parser.error("argument -y/--yara: expected argument 0 or 1.")
 
+    if args.cdepth < 1:
+        parser.error("argument -d/--cdepth: expected argument greater than 1.")
+
+    if args.cpause < 0:
+        parser.error("argument -p/--cpause: expected argument greater than 0.")
+
+    if args.thread < 1:
+        parser.error("argument -t/--thread: expected argument greater than 1.")
+
     # Connect to TOR
     if args.without is False:
         check_tor(args.verbose)
-        connect_tor()
 
     if args.verbose:
         check_ip()
@@ -284,16 +277,17 @@ def main():
             args.cpause,
             out_path,
             args.external,
+            args.thread,
             args.log,
             args.verbose,
             args.exclusion,
         )
         json_data = crawler.crawl()
-        print(f"## File created on {os.getcwd()}/{out_path}/network_structure.json")
+        print(f"## File created on {os.path.join(out_path, crawler.network_file)}")
 
         if args.visualize:
             obj = Visualization(
-                out_path + "/network_structure.json", out_path, args.verbose
+                os.path.join(out_path, crawler.network_file), out_path, args.verbose
             )
             obj.indegree_plot()
             obj.indegree_bar()
@@ -301,10 +295,10 @@ def main():
             obj.outdegree_bar()
             obj.eigenvector_centrality_bar()
             obj.pagerank_bar()
-            obj.visualize()
+            # obj.visualize()
 
         if args.extract:
-            input_file = out_path + "/links.txt"
+            input_file = os.path.join(out_path, "links.txt")
             extractor(website, args.crawl, args.output, input_file, out_path, args.yara)
     else:
         extractor(
