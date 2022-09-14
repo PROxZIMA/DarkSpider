@@ -185,16 +185,24 @@ def termex(website, yara):
         return
 
 
-def extractor(website, crawl, output_file, input_file, out_path, yara):
+def extractor(
+    website: str,
+    proxies: dict[str, str],
+    crawl: bool,
+    output_file: str,
+    input_file: str,
+    out_path: str,
+    yara: int,
+):
     """Extractor - scrapes the resulting website or discovered links.
 
-    :param website: String: URL of website to scrape.
-    :param crawl: Boolean: Cinex trigger.
-        If used iteratively scrape the urls from input_file.
-    :param output_file: String: Filename of resulting output from scrape.
-    :param input_file: String: Filename of crawled/discovered URLs
-    :param out_path: String: Dir path for output files.
-    :param yara: Integer: keyword search option.
+    :param str website: URL of website to scrape.
+    :param dict[str, str] proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+    :param bool crawl: Cinex trigger. If used iteratively scrape the urls from input_file.
+    :param str output_file: Filename of resulting output from scrape.
+    :param str input_file: Filename of crawled/discovered URLs
+    :param str out_path: Dir path for output files.
+    :param int yara: keyword search option.
     :return: None
     """
     # TODO: Return output to torcrawl.py

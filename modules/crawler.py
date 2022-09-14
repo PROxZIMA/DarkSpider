@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import json
+import logging
 import os
 import re
 import sys
@@ -8,64 +9,65 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from threading import Lock
+from typing import Union
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 from requests.models import Response
 
+from modules.helpers.helper import get_requests_header, traceback_name
+
 warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
 requests.urllib3.disable_warnings()
 
 
 class Crawler:
-    """Crawl input link upto depth (c_depth) with a pause of c_pause seconds.
+    """Crawl input link upto depth (c_depth) with a pause of c_pause seconds using multiple threads.
 
-    :param website: String: Website to crawl.
-    :param proxies: Dictionary: Dictionary mapping protocol or protocol and host to the URL of the proxy.
-    :param c_depth: Integer: Depth of the crawl.
-    :param c_pause: Float: Pause after every iteration.
-    :param out_path: String: Output path to store extracted links.
-    :param external: Boolean: True if external links are to be crawled else False.
-    :param thread: Integer: Number pages to visit (Threads) at the same time.
-    :param logs: Boolean: True if logs are to be written else False.
-    :param verbose: Boolean: True if crawl details are to be printed else False.
-    :param exclusion: re String: Paths that you don't want to include.
+    :param str website: Website to crawl.
+    :param dict[str, str] proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+    :param dict[str, any] c_params: Dictionary mapping
+                                    {
+                                        int c_depth: Depth of the crawl,
+                                        float c_pause: Pause after every iteration
+                                    }
+    :param str out_path: Output path to store extracted links.
+    :param bool external: True if external links are to be crawled else False.
+    :param re str exclusion: Paths that you don't want to include.
+    :param int thread: Number pages to visit (Threads) at the same time.
+    :param dict[str, bool] logging: Dictionary mapping
+                                    {
+                                        bool logs: True if logs are to be written else False,
+                                        bool verbose: True if crawl details are to be printed else False
+                                    }
     """
 
     network_file = "network_structure.json"
-    __header = {
-        "Accept-Encoding": "identity",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-    }
-    __port = 9050
-    __proxies = {
-        "http": f"socks5h://127.0.0.1:{__port}",
-        "https": f"socks5h://127.0.0.1:{__port}",
-    }
+    __headers = get_requests_header()
 
     def __init__(
         self,
-        website,
-        c_depth,
-        c_pause,
-        out_path,
-        external,
-        thread,
-        logs,
-        verbose,
-        exclusion,
+        website: str,
+        proxies: dict[str, str],
+        c_params: dict[str, Union[int, float]],
+        out_path: str,
+        external: bool,
+        exclusion: str,
+        thread: int,
+        logging_: dict[str, bool],
     ):
         self.website = website
-        self.c_depth = c_depth
-        self.c_pause = c_pause
+        self.proxies = proxies
+        self.c_depth = c_params["c_depth"]
+        self.c_pause = c_params["c_pause"]
         self.out_path = out_path
         self.external = external
-        self.thread = thread
-        self.logs = logs
-        self.log_path = os.path.join(self.out_path, "log.txt")
-        self.verbose = verbose
         self.exclusion = rf"{exclusion}" if exclusion else None
+        self.thread = thread
+        self.logs = logging_["log"]
+        self.log_path = os.path.join(self.out_path, "log.txt")
+        self.verbose = logging_["verbose"]
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__lock = Lock()
         self.__files = {
@@ -82,6 +84,13 @@ class Crawler:
             "network_structure": os.path.join(self.out_path, self.network_file),
             "links": os.path.join(self.out_path, "links.txt"),
         }
+
+    def __get_tor_session(self):
+        session = requests.Session()
+        session.proxies = self.proxies
+        session.headers.update(self.__headers)
+        session.verify = False
+        return session
 
     def excludes(self, link):
         """Excludes links that are not required.
@@ -129,37 +138,34 @@ class Crawler:
         # For relative paths
         return urljoin(base, href)
 
-    def __get_tor_session(self):
-        session = requests.Session()
-        session.proxies = self.__proxies
-        session.headers.update(self.__header)
-        session.verify = False
-        return session
-
-    def __crawl_link(self, item, session):
+    def __crawl_link(self, item, session) -> tuple[str, list[str]]:
         # Store the crawled link of an item
         item_data = set()
         html_page = Response
 
         try:
             if item is not None:
-                # html_page = urllib.request.urlopen(item, timeout=10)
-                html_page = session.get(item, allow_redirects=True, timeout=10).text
+                html_page = session.get(item, allow_redirects=True, timeout=10)
         except Exception as error:
+            print(
+                f"## Request Error :: {item} :: {traceback_name(error)}{' :: ' + error if self.logs else ''}"
+            )
+            # Keeps logs for every webpage visited.
             if self.logs:
-                print(error)
+                with self.__lock:
+                    self.__files["log_file"].write(f"{str(item)}\n")
             return item, item_data
 
-        # Keeps logs for every webpage visited.
-        if self.logs:
-            with self.__lock:
-                self.__files["log_file"].write(f"{str(item)}\n")
-
         try:
-            soup = BeautifulSoup(html_page, features="html.parser")
-        except Exception as _:
+            soup = BeautifulSoup(html_page.text, features="html.parser")
+        except Exception as error:
+            print(
+                f"## Soup Parse Error :: {item} :: {traceback_name(error)}{' :: ' + error if self.logs else ''}"
+            )
+            # Keeps logs for every webpage visited.
             if self.logs:
-                print(f"## Soup Error Encountered:: to parse :: {item}")
+                with self.__lock:
+                    self.__files["log_file"].write(f"{str(item)}\n")
             return item, item_data
 
         # For each <a href=""> tag.
@@ -237,7 +243,7 @@ class Crawler:
             futures = [
                 self.__executor.submit(self.__crawl_link, item=item, session=session)
                 for item in old_level
-                if item not in json_data
+                if item.rstrip("/") not in json_data
             ]
 
             for future in as_completed(futures):

@@ -45,3 +45,29 @@ def verbose(func):
     wrapper.__doc__ = func.__doc__
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def get_requests_header():
+    """Get requests header"""
+    return {
+        "Accept-Encoding": "identity",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+    }
+
+
+def get_tor_proxies(without, port=9050):
+    """Get Tor proxies"""
+    if without:
+        return None
+    return {
+        "http": f"socks5h://127.0.0.1:{port}",
+        "https": f"socks5h://127.0.0.1:{port}",
+    }
+
+
+def traceback_name(error):
+    """Get traceback name"""
+    module = error.__class__.__module__
+    if module is None or module == str.__class__.__module__:
+        return error.__class__.__name__
+    return module + "." + error.__class__.__name__

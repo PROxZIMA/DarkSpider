@@ -47,10 +47,9 @@ License: GNU General Public License v3.0
 
 import argparse
 import os
-import socket
 import sys
 
-import socks  # noqa - pysocks
+from modules.helpers.helper import get_tor_proxies
 
 try:
     from gooey import Gooey, GooeyParser
@@ -199,7 +198,7 @@ def main():
         "--thread",
         type=int,
         default=16,
-        help="How many pages to visit (Threads) at the same time (Default: 1)",
+        help="How many pages to visit (Threads) at the same time (Default: 16)",
     )
     parser.add_argument(
         "-l",
@@ -255,8 +254,10 @@ def main():
     if args.without is False:
         check_tor(args.verbose)
 
+    proxies = get_tor_proxies(without=args.without)
+
     if args.verbose:
-        check_ip()
+        check_ip(proxies=proxies)
         print(("## URL: " + args.url))
 
     website = ""
@@ -272,15 +273,14 @@ def main():
 
     if args.crawl:
         crawler = Crawler(
-            website,
-            args.cdepth,
-            args.cpause,
-            out_path,
-            args.external,
-            args.thread,
-            args.log,
-            args.verbose,
-            args.exclusion,
+            website=website,
+            proxies=proxies,
+            c_params={"c_depth": args.cdepth, "c_pause": args.cpause},
+            out_path=out_path,
+            external=args.external,
+            exclusion=args.exclusion,
+            thread=args.thread,
+            logging_={"log": args.log, "verbose": args.verbose},
         )
         json_data = crawler.crawl()
         print(f"## File created on {os.path.join(out_path, crawler.network_file)}")
@@ -299,10 +299,24 @@ def main():
 
         if args.extract:
             input_file = os.path.join(out_path, "links.txt")
-            extractor(website, args.crawl, args.output, input_file, out_path, args.yara)
+            extractor(
+                website,
+                proxies,
+                args.crawl,
+                args.output,
+                input_file,
+                out_path,
+                args.yara,
+            )
     else:
         extractor(
-            website, args.crawl, args.output, args.input or "", out_path, args.yara
+            website,
+            proxies,
+            args.crawl,
+            args.output,
+            args.input or "",
+            out_path,
+            args.yara,
         )
 
 

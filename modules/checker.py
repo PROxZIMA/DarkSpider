@@ -4,14 +4,15 @@ import os
 import re
 import subprocess
 import sys
-from json import load
-from urllib.error import HTTPError
 from urllib.parse import urlparse
-from urllib.request import urlopen
+
+import requests
+
+from modules.helpers.helper import get_requests_header, traceback_name
 
 
 def url_canon(website, verbose):
-    """ URL normalisation/canonicalization
+    """URL normalisation/canonicalization
 
     :param website: String - URL of website.
     :param verbose: Boolean - Verbose logging switch.
@@ -29,7 +30,7 @@ def url_canon(website, verbose):
 
 
 def extract_domain(url, remove_http=True):
-    """ Parses the provided 'url' to provide only the netloc or
+    """Parses the provided 'url' to provide only the netloc or
     scheme + netloc parts of the provided url.
 
     :param url: String - Url to parse.
@@ -46,7 +47,7 @@ def extract_domain(url, remove_http=True):
 
 # Create output path
 def folder(website, verbose):
-    """ Creates an output path for the findings.
+    """Creates an output path for the findings.
 
     :param website: String - URL of website to crawl.
     :param verbose: Boolean - Logging level.
@@ -68,30 +69,33 @@ def check_tor(verbose):
     :param verbose: Boolean -'verbose' logging argument.
     :return: None
     """
-    check_for_tor = subprocess.check_output(['ps', '-e'])
+    check_for_tor = subprocess.check_output(["ps", "-e"])
 
     def find_whole_word(word):
-        return re.compile(r'\b({0})\b'.format(word),
-                          flags=re.IGNORECASE).search
+        return re.compile(r"\b({0})\b".format(word), flags=re.IGNORECASE).search
 
-    if find_whole_word('tor')(str(check_for_tor)):
+    if find_whole_word("tor")(str(check_for_tor)):
         if verbose:
             print("## TOR is ready!")
     else:
         print("## TOR is NOT running!")
-        print('## Enable tor with \'service tor start\' or add -w argument')
+        print("## Enable tor with 'service tor start' or add -w argument")
         sys.exit(2)
 
 
-def check_ip():
-    """ Checks users IP from external resource.
+def check_ip(proxies):
+    """Checks users IP from external resource.
     :return: None or HTTPError
     """
-    addr = 'https://api.ipify.org/?format=json'
+    addr = "https://api.ipify.org/?format=json"
+    headers = get_requests_header()
     try:
-        my_ip = load(urlopen(addr))['ip']
-        print(f'## Your IP: {my_ip}')
-    except HTTPError as err:
-        error = sys.exc_info()[0]
-        print(f"Error: {error} \n## IP cannot be obtained. \n## Is {addr} up? "
-              f"\n## HTTPError: {err}")
+        my_ip = requests.get(
+            addr, headers=headers, proxies=proxies, timeout=10, verify=False
+        ).json()["ip"]
+        print(f"## Your IP: {my_ip}")
+    except Exception as err:
+        print(
+            f"Error: {traceback_name(err)} \n## IP cannot be obtained. \n## Is {addr} up? "
+            f"\n## Exception: {err}"
+        )
