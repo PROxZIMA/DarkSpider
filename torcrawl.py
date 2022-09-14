@@ -62,7 +62,7 @@ from modules.checker import check_ip, check_tor, extract_domain, folder, url_can
 
 # DarkSpider Modules
 from modules.crawler import Crawler
-from modules.extractor import extractor
+from modules.extractor import Extractor
 from modules.visualization import Visualization
 
 IGNORE_COMMAND = "--ignore-gooey"
@@ -299,25 +299,27 @@ def main():
 
         if args.extract:
             input_file = os.path.join(out_path, "links.txt")
-            extractor(
-                website,
-                proxies,
-                args.crawl,
-                args.output,
-                input_file,
-                out_path,
-                args.yara,
+            extractor = Extractor(
+                website=website,
+                proxies=proxies,
+                crawl=args.crawl,
+                output_file=args.output,
+                input_file=input_file,
+                out_path=out_path,
+                yara=args.yara,
             )
+            extractor.extract()
     else:
-        extractor(
-            website,
-            proxies,
-            args.crawl,
-            args.output,
-            args.input or "",
-            out_path,
-            args.yara,
+        extractor = Extractor(
+            website=website,
+            proxies=proxies,
+            crawl=args.crawl,
+            output_file=args.output,
+            input_file=input_file or "",
+            out_path=out_path,
+            yara=args.yara,
         )
+        extractor.extract()
 
 
 # Stub to call main method.
