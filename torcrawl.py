@@ -22,7 +22,7 @@ Extract:
                           (Defualt: terminal)
 -i, --input filename    : Input file with URL(s) (seperated by line)
 -o, --output [filename] : Output page(s) to file(s) (for one page)
--y, --yara              : Yara keyword search page categorisation
+-y, --yara 0|1          : Yara keyword search page categorisation
                           read in from /res folder. 0 search whole html object.
                           1 search only the text.
 
@@ -315,7 +315,7 @@ def main():
             proxies=proxies,
             crawl=args.crawl,
             output_file=args.output,
-            input_file=input_file or "",
+            input_file=args.input or "",
             out_path=out_path,
             yara=args.yara,
         )

@@ -27,6 +27,7 @@ class Extractor:
     """
 
     __headers = get_requests_header()
+    __yara_rules = _yara.compile("res/keywords.yar")
 
     def __init__(
         self,
@@ -53,9 +54,9 @@ class Extractor:
 
     def __get_tor_session(self):
         session = requests.Session()
-        # session.proxies = self.proxies
-        # session.headers.update(self.__headers)
-        # session.verify = False
+        session.proxies = self.proxies
+        session.headers.update(self.__headers)
+        session.verify = False
         return session
 
     def __text(self, response=None):
@@ -74,26 +75,24 @@ class Extractor:
     def __check_yara(self, raw=None, yara=0):
         """Validates Yara Rule to categorize the site and check for keywords.
 
-        :param raw: HTTP Response body.
         :param yara:  Integer: Keyword search argument.
+        :param raw:   HTTP Response body.
         :return matches: List of yara rule matches.
         """
+        if raw is None:
+            return None
 
-        file_path = os.path.join("res/keywords.yar")
+        if yara == 1:
+            raw = self.__text(response=raw).lower()
 
-        if raw is not None:
-            if yara == 1:
-                raw = self.__text(response=raw).lower()
+        matches = self.__yara_rules.match(data=raw)
 
-            file = os.path.join(file_path)
-            rules = _yara.compile(file)
-            matches = rules.match(data=raw)
-            if len(matches) != 0:
-                print("found a match!")
-            return matches
-        return None
+        if len(matches) != 0:
+            print("found a match!")
 
-    def __cinex(self, input_file, out_path, yara=None):
+        return matches
+
+    def __cinex(self, input_file, out_path, yara):
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents to
         the into out_path/{url_address}.
@@ -129,12 +128,11 @@ class Extractor:
                     line, allow_redirects=True, timeout=10
                 ).text
 
-                if yara is not None:
-                    full_match_keywords = self.__check_yara(content, yara)
+                full_match_keywords = self.__check_yara(content, yara)
 
-                    if len(full_match_keywords) == 0:
-                        print("No matches found.")
-                        continue
+                if len(full_match_keywords) == 0:
+                    print("No matches found.")
+                    continue
 
                 with open(
                     os.path.join(out_path, output_file), "w+", encoding="UTF-8"
@@ -167,11 +165,10 @@ class Extractor:
                     content = self.__session.get(
                         line, allow_redirects=True, timeout=10
                     ).text
-                    if yara is not None:
-                        full_match_keywords = self.__check_yara(raw=content, yara=yara)
+                    full_match_keywords = self.__check_yara(raw=content, yara=yara)
 
-                        if full_match_keywords is None or len(full_match_keywords) == 0:
-                            print(f"No matches in: {line}")
+                    if full_match_keywords is None or len(full_match_keywords) == 0:
+                        print(f"No matches in: {line}")
                     print(content)
         except (HTTPError, URLError, InvalidURL) as err:
             print(f"Request Error: {err}")
@@ -195,11 +192,10 @@ class Extractor:
             output_file = os.path.join(out_path, output_file)
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
 
-            if yara is not None:
-                full_match_keywords = self.__check_yara(raw=content, yara=yara)
+            full_match_keywords = self.__check_yara(raw=content, yara=yara)
 
-                if len(full_match_keywords) == 0:
-                    print(f"No matches in: {website}")
+            if len(full_match_keywords) == 0:
+                print(f"No matches in: {website}")
 
             with open(output_file, "w+", encoding="UTF-8") as file:
                 file.write(content)
@@ -218,13 +214,12 @@ class Extractor:
         """
         try:
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
-            if yara is not None:
-                full_match_keywords = self.__check_yara(content, yara)
+            full_match_keywords = self.__check_yara(content, yara)
 
-                if full_match_keywords is None or len(full_match_keywords) == 0:
-                    # No match.
-                    print(f"No matches in: {website}")
-                    return
+            if full_match_keywords is None or len(full_match_keywords) == 0:
+                # No match.
+                print(f"No matches in: {website}")
+                return
 
             print(content)
         except (HTTPError, URLError, InvalidURL) as err:
@@ -232,7 +227,7 @@ class Extractor:
             return
 
     def extract(self):
-        """Extracts the contents of the input file into the outputs folder/file"""
+        """Extracts the contents of the input file/single URL into the outputs folder/file/terminal."""
         # TODO: Return output to torcrawl.py
         if len(self.input_file) > 0:
             if self.crawl:

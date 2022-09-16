@@ -64,7 +64,7 @@ arg | Long | Description
 -e  |--extract| Extract page's code to terminal or file. (Default: Terminal)
 -i  |--input filename| Input file with URL(s) (separated by line)
 -o  |--output [filename]| Output page(s) to file(s) (for one page)
--y  |--yara | Perform yara keyword search (0 = search entire html object. 1 = search only text).
+-y  |--yara 0\|1 | Perform yara keyword search (0 = search entire html object. 1 = search only text).
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
@@ -86,7 +86,7 @@ $ python torcrawl.py -u http://www.github.com
 </html>
 ```
 
-Extract into a file (github.htm) without the use of TOR:
+Extract into a file (github.html) without the use of TOR:
 
 ```shell
 $ python torcrawl.py -w -u http://www.github.com -o github.htm
