@@ -1,7 +1,7 @@
 <!--
   Title: DarkSpider
   Description: a python script to crawl and extract (regular or onion) webpages through TOR network.
-  Author: MikeMeliz
+  Author: PROxZIMA
   -->
 # DarkSpider
 
@@ -58,17 +58,18 @@ arg | Long | Description
 -v  |--verbose| Show more information about the progress
 -u  |--url *.onion| URL of Webpage to crawl or extract
 -w  |--without| Without the use of Relay TOR
+-n  |--port number| Port number of TOR Socks Proxy (default: 9050)
 -f  |--folder| The directory which will contain the generated files ([@guyo13](https://www.github.com/guyo13))
 -s  |--visualize| Visualize the graphs and insights from the crawled data
 **Extract**: | |
 -e  |--extract| Extract page's code to terminal or file. (Default: Terminal)
 -i  |--input filename| Input file with URL(s) (separated by line)
--o  |--output [filename]| Output page(s) to file(s) (for one page)
+-o  |--output filename| Output page(s) to file(s) (for one page)
 -y  |--yara 0\|1 | Perform yara keyword search (0 = search entire html object. 1 = search only text).
 **Crawl**: | |
 -c  |--crawl| Crawl website (Default output on /links.txt)
 -d  |--cdepth| Set depth of crawl's travel (Default: 1)
--z  |--exclusion "regexp"| Regex path that is ignored while crawling (Default: None)
+-z  |--exclusion regexp| Regex path that is ignored while crawling (Default: None)
 -t  |--thread number| How many pages to visit (Threads) at the same time (Default: 16)
 -p  |--pause| The length of time the crawler will pause (Default: 0)
 -l  |--log| Log file with visited URLs and their response code

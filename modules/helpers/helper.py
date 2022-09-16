@@ -55,7 +55,7 @@ def get_requests_header():
     }
 
 
-def get_tor_proxies(port=9050):
+def get_tor_proxies(port):
     """Get Tor socks proxies"""
     return {
         "http": f"socks5h://127.0.0.1:{port}",

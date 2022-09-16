@@ -150,6 +150,8 @@ class Extractor:
                 continue
             except IOError as err:
                 print(f"Error: {err}\nCan't write on file: {output_file}")
+            except Exception as err:
+                print(f"Error: ({err}) {line}")
         file.close()
 
     def __intermex(self, input_file, yara):
@@ -161,21 +163,22 @@ class Extractor:
         """
         try:
             with open(input_file, "r", encoding="UTF-8") as file:
-                for line in file.read().splitlines():
-                    content = self.__session.get(
-                        line, allow_redirects=True, timeout=10
-                    ).text
-                    full_match_keywords = self.__check_yara(raw=content, yara=yara)
+                try:
+                    for line in file.read().splitlines():
+                        content = self.__session.get(
+                            line, allow_redirects=True, timeout=10
+                        ).text
+                        full_match_keywords = self.__check_yara(raw=content, yara=yara)
 
-                    if full_match_keywords is None or len(full_match_keywords) == 0:
-                        print(f"No matches in: {line}")
-                    print(content)
-        except (HTTPError, URLError, InvalidURL) as err:
-            print(f"Request Error: {err}")
+                        if full_match_keywords is None or len(full_match_keywords) == 0:
+                            print(f"No matches in: {line}")
+                        print(content)
+                except (HTTPError, URLError, InvalidURL) as err:
+                    print(f"Request Error: ({err}) {line}")
+                except Exception as err:
+                    print(f"Error: ({err}) {line}")
         except IOError as err:
             print(f"Error: {err}\n## Not valid file")
-        except Exception as err:
-            print(f"Error: {err}")
 
     def __outex(self, website, output_file, out_path, yara):
         """Scrapes the contents of the provided web address and outputs the
@@ -204,6 +207,8 @@ class Extractor:
             print(f"HTTPError: {err}")
         except IOError as err:
             print(f"Error: {err}\n Can't write on file: {output_file}")
+        except Exception as err:
+            print(f"Error: ({err}) {website}")
 
     def __termex(self, website, yara):
         """Scrapes provided web address and prints the results to the terminal.
@@ -222,7 +227,7 @@ class Extractor:
                 return
 
             print(content)
-        except (HTTPError, URLError, InvalidURL) as err:
+        except (HTTPError, URLError, InvalidURL, Exception) as err:
             print(f"Error: ({err}) {website}")
             return
 

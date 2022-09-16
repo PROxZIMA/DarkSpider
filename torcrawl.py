@@ -14,33 +14,34 @@ General:
 -g, --gui          : Open with GUI backend.
 -v, --verbose      : Show more informations about the progress
 -u, --url *.onion  : URL of Webpage to crawl or extract
+-n, --port number  : Port number of TOR Proxy (default: 9050)
 -w, --without      : Without the use of Relay TOR
 -s, --visualize    : Visualize the graphs and insights from the crawled data
 
 Extract:
--e, --extract           : Extract page's code to terminal or file.
-                          (Defualt: terminal)
--i, --input filename    : Input file with URL(s) (seperated by line)
--o, --output [filename] : Output page(s) to file(s) (for one page)
--y, --yara 0|1          : Yara keyword search page categorisation
-                          read in from /res folder. 0 search whole html object.
-                          1 search only the text.
+-e, --extract         : Extract page's code to terminal or file.
+                        (Defualt: terminal)
+-i, --input filename  : Input file with URL(s) (seperated by line)
+-o, --output filename : Output page(s) to file(s) (for one page)
+-y, --yara 0|1        : Yara keyword search page categorisation
+                        read in from /res folder. 0 search whole html object.
+                        1 search only the text.
 
 Crawl:
--c, --crawl               : Crawl website (Default output on /links.txt)
--d, --cdepth              : Set depth of crawl's travel (Default: 1)
--z, --exclusions "regexp" : Paths that you don't want to include
--t, --thread number       : How many pages to visit (Threads) at the same time
-                            (Default: 16)
--p, --pause               : The length of time the crawler will pause
-                            (Default: 0)
--f, --folder	          : The root directory which will contain the
-                            generated files
--l, --log                 : Log file with visited URLs and their response code.
--x, --external            : Exclude external links while crawling a webpage
-                            (Default: include all links)
+-c, --crawl             : Crawl website (Default output on /links.txt)
+-d, --cdepth            : Set depth of crawl's travel (Default: 1)
+-z, --exclusions regexp : Paths that you don't want to include
+-t, --thread number     : How many pages to visit (Threads) at the same time
+                          (Default: 16)
+-p, --pause             : The length of time the crawler will pause
+                          (Default: 0)
+-f, --folder	        : The root directory which will contain the
+                          generated files
+-l, --log               : Log file with visited URLs and their response code.
+-x, --external          : Exclude external links while crawling a webpage
+                          (Default: include all links)
 
-GitHub: github.com/MikeMeliz/TorCrawl.py
+GitHub: github.com/PROxZIMA/DarkSpider.py
 License: GNU General Public License v3.0
 
 """
@@ -142,6 +143,13 @@ def main():
         "-u", "--url", type=str, help="URL of webpage to crawl or extract"
     )
     parser.add_argument(
+        "-n",
+        "--port",
+        type=int,
+        default=9050,
+        help="Port number of TOR Proxy (default: 9050)",
+    )
+    parser.add_argument(
         "-w", "--without", action="store_true", help="Without the use of Relay TOR"
     )
 
@@ -238,6 +246,9 @@ def main():
     if args.url is None and args.input is None:
         parser.error("either argument -u/--url or -i/--input is required to proceed.")
 
+    if args.port < 1 or 65535 < args.port:
+        parser.error("argument -n/--port: expected argument in between 1 to 65535.")
+
     if args.yara not in [0, 1]:
         parser.error("argument -y/--yara: expected argument 0 or 1.")
 
@@ -255,7 +266,7 @@ def main():
     # Connect to TOR
     if args.without is False:
         check_tor(args.verbose)
-        proxies = get_tor_proxies()
+        proxies = get_tor_proxies(port=args.port)
 
     check_ip(
         proxies=proxies, url=args.url, verbose=args.verbose, without_tor=args.without
