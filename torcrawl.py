@@ -250,15 +250,16 @@ def main():
     if args.thread < 1:
         parser.error("argument -t/--thread: expected argument greater than 1.")
 
+    proxies = None
+
     # Connect to TOR
     if args.without is False:
         check_tor(args.verbose)
+        proxies = get_tor_proxies()
 
-    proxies = get_tor_proxies(without=args.without)
-
-    if args.verbose:
-        check_ip(proxies=proxies)
-        print(("## URL: " + args.url))
+    check_ip(
+        proxies=proxies, url=args.url, verbose=args.verbose, without_tor=args.without
+    )
 
     website = ""
     out_path = ""

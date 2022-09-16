@@ -55,10 +55,8 @@ def get_requests_header():
     }
 
 
-def get_tor_proxies(without, port=9050):
-    """Get Tor proxies"""
-    if without:
-        return None
+def get_tor_proxies(port=9050):
+    """Get Tor socks proxies"""
     return {
         "http": f"socks5h://127.0.0.1:{port}",
         "https": f"socks5h://127.0.0.1:{port}",
@@ -71,3 +69,8 @@ def traceback_name(error):
     if module is None or module == str.__class__.__module__:
         return error.__class__.__name__
     return module + "." + error.__class__.__name__
+
+
+class TorProxyException(Exception):
+    "Exception raised for errors in the Tor proxy. This might happen if the Tor is running but the application is using a different port."
+    pass

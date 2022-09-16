@@ -1,14 +1,17 @@
 #!/usr/bin/python
 
 import os
-import re
-import subprocess
 import sys
 from urllib.parse import urlparse
 
+import psutil
 import requests
 
-from modules.helpers.helper import get_requests_header, traceback_name
+from modules.helpers.helper import (
+    TorProxyException,
+    get_requests_header,
+    traceback_name,
+)
 
 
 def url_canon(website, verbose):
@@ -69,33 +72,48 @@ def check_tor(verbose):
     :param verbose: Boolean -'verbose' logging argument.
     :return: None
     """
-    check_for_tor = subprocess.check_output(["ps", "-e"])
-
-    def find_whole_word(word):
-        return re.compile(r"\b({0})\b".format(word), flags=re.IGNORECASE).search
-
-    if find_whole_word("tor")(str(check_for_tor)):
-        if verbose:
-            print("## TOR is ready!")
+    for i in psutil.process_iter():
+        if "tor" == i.name().lower().rstrip(".exe"):
+            if verbose:
+                print("## TOR is ready!")
+            break
     else:
         print("## TOR is NOT running!")
         print("## Enable tor with 'service tor start' or add -w argument")
         sys.exit(2)
 
 
-def check_ip(proxies):
+def check_ip(proxies, url, verbose, without_tor):
     """Checks users IP from external resource.
-    :return: None or HTTPError
+    :return: None
     """
-    addr = "https://api.ipify.org/?format=json"
+    addr = "https://check.torproject.org/api/ip"
     headers = get_requests_header()
     try:
-        my_ip = requests.get(
+        # https://tor.stackexchange.com/a/13079
+        # Double check to tackle false positives
+        check1 = requests.get(
             addr, headers=headers, proxies=proxies, timeout=10, verify=False
-        ).json()["ip"]
-        print(f"## Your IP: {my_ip}")
+        ).json()
+
+        check2 = requests.get(
+            addr, headers=headers, proxies=proxies, timeout=10, verify=False
+        ).json()
+
+        if verbose:
+            print(
+                f"## Your IP: {check2['IP']} :: Tor Connection: {check1['IsTor'] or check2['IsTor']}"
+            )
+            print(f"## URL: {url}")
+
+        if (
+            check1["IsTor"] is False
+            and check2["IsTor"] is False
+            and without_tor is False
+        ):
+            raise TorProxyException(
+                "Tor proxy is NOT running! More info: https://support.torproject.org/connecting/#connecting-4"
+            )
     except Exception as err:
-        print(
-            f"Error: {traceback_name(err)} \n## IP cannot be obtained. \n## Is {addr} up? "
-            f"\n## Exception: {err}"
-        )
+        print(f"## Exception: {traceback_name(err)} \n## Error: {err}")
+        sys.exit(2)
