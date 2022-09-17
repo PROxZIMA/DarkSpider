@@ -20,9 +20,9 @@ class Visualization:
     :param verbose: Whether to print the output or not
     """
 
-    def __init__(self, json_file, out_path, verbose):
+    def __init__(self, json_file, out_path, logger):
         self.json_file = json_file
-        self.verbose = verbose
+        self.logger = logger
 
         self.out_path = folder(os.path.join(out_path, "visualization"))
 

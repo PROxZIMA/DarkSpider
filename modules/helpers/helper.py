@@ -32,8 +32,7 @@ def verbose(func):
     """Verbose decorator"""
 
     def wrapper(*args, **kwargs):
-        if args[0].verbose:
-            print(f"## {func.__doc__}...")
+        args[0].logger.info(f"Generating :: {func.__doc__}..")
         plt.cla()
         plt.figure(figsize=(12, 6))
         plt.grid()

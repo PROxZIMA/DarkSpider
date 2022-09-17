@@ -293,7 +293,10 @@ def main():
         check_tor(logger=crawlog)
         proxies = get_tor_proxies(port=args.port)
 
-    check_ip(proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without)
+    if args.verbose:
+        check_ip(
+            proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without
+        )
 
     if canon:
         crawlog.debug("URL fixed: %s", website)
@@ -319,7 +322,9 @@ def main():
 
         if args.visualize:
             obj = Visualization(
-                os.path.join(out_path, crawler.network_file), out_path, args.verbose
+                json_file=os.path.join(out_path, crawler.network_file),
+                out_path=out_path,
+                logger=crawlog,
             )
             obj.indegree_plot()
             obj.indegree_bar()
