@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from io import StringIO
@@ -45,6 +46,36 @@ def verbose(func):
     wrapper.__doc__ = func.__doc__
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def setup_custom_logger(name, verbose_, filelog, filename):
+    """Setup custom logger with stream and file handlers"""
+    formatter = logging.Formatter(
+        fmt="{asctime} [{levelname:^7s}] [{filename}:{lineno}] {message}",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+
+    screen_handler = logging.StreamHandler(stream=sys.stdout)
+    screen_handler.setFormatter(formatter)
+    screen_handler.setLevel(logging.DEBUG)
+
+    if verbose_ is False:
+        screen_handler.setLevel(logging.INFO)
+
+    logger.addHandler(screen_handler)
+
+    if filelog:
+        file_handler = logging.FileHandler(filename=filename, mode="w")
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
+    return logger
 
 
 def get_requests_header():

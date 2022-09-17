@@ -8,6 +8,7 @@ import networkx as nx
 import seaborn as sns
 from matplotlib.ticker import MultipleLocator
 
+from modules.checker import folder
 from modules.helpers.helper import verbose
 
 
@@ -23,9 +24,7 @@ class Visualization:
         self.json_file = json_file
         self.verbose = verbose
 
-        self.out_path = os.path.join(out_path, "visualization")
-        if not os.path.exists(self.out_path):
-            os.mkdir(self.out_path)
+        self.out_path = folder(os.path.join(out_path, "visualization"))
 
         with open(self.json_file, "r", encoding="UTF-8") as f:
             self.data = json.load(f)

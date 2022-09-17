@@ -47,10 +47,14 @@ License: GNU General Public License v3.0
 """
 
 import argparse
+import logging
 import os
 import sys
+import warnings
 
-from modules.helpers.helper import get_tor_proxies
+import requests
+
+from modules.helpers.helper import get_tor_proxies, setup_custom_logger
 
 try:
     from gooey import Gooey, GooeyParser
@@ -65,6 +69,10 @@ from modules.checker import check_ip, check_tor, extract_domain, folder, url_can
 from modules.crawler import Crawler
 from modules.extractor import Extractor
 from modules.visualization import Visualization
+
+warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
+logging.getLogger("urllib3").setLevel(logging.ERROR)
+requests.urllib3.disable_warnings()
 
 IGNORE_COMMAND = "--ignore-gooey"
 
@@ -262,28 +270,37 @@ def main():
         parser.error("argument -t/--thread: expected argument greater than 1.")
 
     proxies = None
-
-    # Connect to TOR
-    if args.without is False:
-        check_tor(args.verbose)
-        proxies = get_tor_proxies(port=args.port)
-
-    check_ip(
-        proxies=proxies, url=args.url, verbose=args.verbose, without_tor=args.without
-    )
-
-    website = ""
     out_path = ""
+    canon, website = False, ""
 
     # Canonicalization of web url and create path for output.
     if args.url:
-        website = url_canon(args.url, args.verbose)
-        if args.folder is not None:
-            out_path = folder(args.folder, args.verbose)
-        else:
-            out_path = folder(extract_domain(website), args.verbose)
+        canon, website = url_canon(args.url)
+        out_path = folder(extract_domain(website))
+    elif args.folder:
+        out_path = folder(args.folder)
 
-    if args.crawl:
+    # Logger setup
+    crawlog = setup_custom_logger(
+        name="crawlog",
+        verbose_=args.verbose,
+        filelog=args.log,
+        filename=os.path.join(out_path, "crawl.log"),
+    )
+
+    # Connect to TOR
+    if args.without is False:
+        check_tor(logger=crawlog)
+        proxies = get_tor_proxies(port=args.port)
+
+    check_ip(proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without)
+
+    if canon:
+        crawlog.debug("URL fixed: %s", website)
+    if out_path:
+        crawlog.debug("Folder created: %s", out_path)
+
+    if args.crawl and website:
         crawler = Crawler(
             website=website,
             proxies=proxies,
@@ -292,10 +309,13 @@ def main():
             external=args.external,
             exclusion=args.exclusion,
             thread=args.thread,
-            logging_={"log": args.log, "verbose": args.verbose},
+            logger=crawlog,
         )
         json_data = crawler.crawl()
-        print(f"## File created on {os.path.join(out_path, crawler.network_file)}")
+        crawlog.info(
+            "Network Structure created :: %s",
+            os.path.join(out_path, crawler.network_file),
+        )
 
         if args.visualize:
             obj = Visualization(
@@ -319,9 +339,10 @@ def main():
                 input_file=input_file,
                 out_path=out_path,
                 yara=args.yara,
+                logger=crawlog,
             )
             extractor.extract()
-    else:
+    elif args.input or website:
         extractor = Extractor(
             website=website,
             proxies=proxies,
@@ -330,6 +351,7 @@ def main():
             input_file=args.input or "",
             out_path=out_path,
             yara=args.yara,
+            logger=crawlog,
         )
         extractor.extract()
 

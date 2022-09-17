@@ -7,29 +7,22 @@ from urllib.parse import urlparse
 import psutil
 import requests
 
-from modules.helpers.helper import (
-    TorProxyException,
-    get_requests_header,
-    traceback_name,
-)
+from modules.helpers.helper import TorProxyException, get_requests_header
 
 
-def url_canon(website, verbose):
+def url_canon(website):
     """URL normalisation/canonicalization
 
     :param website: String - URL of website.
-    :param verbose: Boolean - Verbose logging switch.
     :return: String 'website' - normalised result.
     """
+    canon = False
     if not website.startswith("http"):
         if not website.startswith("www."):
             website = "www." + website
-            if verbose:
-                print(("## URL fixed: " + website))
         website = "http://" + website
-        if verbose:
-            print(("## URL fixed: " + website))
-    return website
+        canon = True
+    return canon, website
 
 
 def extract_domain(url, remove_http=True):
@@ -49,41 +42,36 @@ def extract_domain(url, remove_http=True):
 
 
 # Create output path
-def folder(website, verbose):
+def folder(out_path):
     """Creates an output path for the findings.
 
-    :param website: String - URL of website to crawl.
-    :param verbose: Boolean - Logging level.
+    :param out_path: String - Output path in which all extracted data is stored.
     :return: String 'out_path' - Path of the output folder.
     """
-    out_path = website
     if not os.path.exists(out_path):
         os.makedirs(out_path)
-    if verbose:
-        print(f"## Folder created: {out_path}")
     return out_path
 
 
-def check_tor(verbose):
+def check_tor(logger):
     """Checks to see if TOR service is running on device.
     Will exit if (-w) with argument is provided on application startup and TOR
     service is not found to be running on the device.
 
-    :param verbose: Boolean -'verbose' logging argument.
+    :param Logger logger: A logger object to log the output.
     :return: None
     """
     for i in psutil.process_iter():
         if "tor" == i.name().lower().rstrip(".exe"):
-            if verbose:
-                print("## TOR is ready!")
+            logger.debug("TOR is ready!")
             break
     else:
-        print("## TOR is NOT running!")
-        print("## Enable tor with 'service tor start' or add -w argument")
+        logger.critical("TOR is NOT running!")
+        logger.critical("Enable tor with 'service tor start' or add -w argument")
         sys.exit(2)
 
 
-def check_ip(proxies, url, verbose, without_tor):
+def check_ip(proxies, url, logger, without_tor):
     """Checks users IP from external resource.
     :return: None
     """
@@ -100,11 +88,10 @@ def check_ip(proxies, url, verbose, without_tor):
             addr, headers=headers, proxies=proxies, timeout=10, verify=False
         ).json()
 
-        if verbose:
-            print(
-                f"## Your IP: {check2['IP']} :: Tor Connection: {check1['IsTor'] or check2['IsTor']}"
-            )
-            print(f"## URL: {url}")
+        logger.debug(
+            f"Your IP: {check2['IP']} :: Tor Connection: {check1['IsTor'] or check2['IsTor']}"
+        )
+        logger.debug(f"URL: {url}")
 
         if (
             check1["IsTor"] is False
@@ -115,5 +102,5 @@ def check_ip(proxies, url, verbose, without_tor):
                 "Tor proxy is NOT running! More info: https://support.torproject.org/connecting/#connecting-4"
             )
     except Exception as err:
-        print(f"## Exception: {traceback_name(err)} \n## Error: {err}")
+        logger.exception(err)
         sys.exit(2)

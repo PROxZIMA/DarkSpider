@@ -1,14 +1,11 @@
 #!/usr/bin/python
 import json
-import logging
 import os
 import re
-import sys
 import time
-import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
-from threading import Lock
+from logging import Logger
 from typing import Union
 from urllib.parse import urljoin
 
@@ -16,10 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.models import Response
 
-from modules.helpers.helper import get_requests_header, traceback_name
-
-warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
-requests.urllib3.disable_warnings()
+from modules.helpers.helper import get_requests_header
 
 
 class Crawler:
@@ -36,11 +30,7 @@ class Crawler:
     :param bool external: True if external links are to be crawled else False.
     :param re str exclusion: Paths that you don't want to include.
     :param int thread: Number pages to visit (Threads) at the same time.
-    :param dict[str, bool] logging: Dictionary mapping
-                                    {
-                                        bool logs: True if logs are to be written else False,
-                                        bool verbose: True if crawl details are to be printed else False
-                                    }
+    :param Logger logger: A logger object to log the output.
     """
 
     network_file = "network_structure.json"
@@ -55,7 +45,7 @@ class Crawler:
         external: bool,
         exclusion: str,
         thread: int,
-        logging_: dict[str, bool],
+        logger: Logger,
     ):
         self.website = website
         self.proxies = proxies
@@ -65,11 +55,9 @@ class Crawler:
         self.external = external
         self.exclusion = rf"{exclusion}" if exclusion else None
         self.thread = thread
-        self.logs = logging_["log"]
-        self.log_path = os.path.join(self.out_path, "log.txt")
-        self.verbose = logging_["verbose"]
+        self.logger = logger
+
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
-        self.__lock = Lock()
         self.__files = {
             "extlinks": open(
                 os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"
@@ -80,7 +68,6 @@ class Crawler:
             "mails": open(
                 os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"
             ),
-            "log_file": open(self.log_path, "w+", encoding="UTF-8"),
             "network_structure": os.path.join(self.out_path, self.network_file),
             "links": os.path.join(self.out_path, "links.txt"),
         }
@@ -138,35 +125,25 @@ class Crawler:
         # For relative paths
         return urljoin(base, href)
 
-    def __crawl_link(self, item, session) -> tuple[str, list[str]]:
+    def __crawl_link(self, item, session) -> tuple[str, set[str], int]:
         # Store the crawled link of an item
         item_data = set()
         html_page = Response
+        response_code = 0
 
         try:
             if item is not None:
                 html_page = session.get(item, allow_redirects=True, timeout=10)
-        except Exception as error:
-            print(
-                f"## Request Error :: {item} :: {traceback_name(error)}{' :: ' + error if self.logs else ''}"
-            )
-            # Keeps logs for every webpage visited.
-            if self.logs:
-                with self.__lock:
-                    self.__files["log_file"].write(f"{str(item)}\n")
-            return item, item_data
+                response_code = html_page.status_code
+        except Exception as _:
+            self.logger.debug(f"Request Error :: {item}", exc_info=True)
+            return item, item_data, 0
 
         try:
             soup = BeautifulSoup(html_page.text, features="html.parser")
-        except Exception as error:
-            print(
-                f"## Soup Parse Error :: {item} :: {traceback_name(error)}{' :: ' + error if self.logs else ''}"
-            )
-            # Keeps logs for every webpage visited.
-            if self.logs:
-                with self.__lock:
-                    self.__files["log_file"].write(f"{str(item)}\n")
-            return item, item_data
+        except Exception as _:
+            self.logger.debug(f"Soup Parse Error :: {item}", exc_info=True)
+            return item, item_data, 0
 
         # For each <a href=""> tag.
         for link in soup.findAll("a"):
@@ -212,7 +189,7 @@ class Crawler:
             if ver_link is not None:
                 item_data.add(ver_link)
 
-        return item, item_data
+        return item, item_data, response_code
 
     def crawl(self):
         """Core of the crawler.
@@ -222,14 +199,8 @@ class Crawler:
         old_level = [self.website]
         cur_level = set()
 
-        if self.logs is True and os.access(self.log_path, os.W_OK) is ~os.path.exists(
-            self.log_path
-        ):
-            print(f"## Unable to write to {self.log_path} - Exiting")
-            sys.exit(2)
-
-        print(
-            f"## Crawler started from {self.website} with {self.c_depth} depth, "
+        self.logger.info(
+            f"Crawler started from {self.website} with {self.c_depth} depth, "
             f"{self.c_pause} second{'s'[:int(self.c_pause)^1]} delay and using {self.thread} "
             f"Thread{'s'[:self.thread^1]}. Excluding '{self.exclusion}' links."
         )
@@ -247,14 +218,13 @@ class Crawler:
             ]
 
             for future in as_completed(futures):
-                item, item_data = future.result()
+                item, item_data, response_code = future.result()
+                self.logger.debug(f"{item} :: {response_code}")
 
                 # Add item_data to crawled links.
                 cur_level = cur_level.union(item_data)
 
-                if self.verbose:
-                    sys.stdout.write(f"-- Results: {len(cur_level)}\r")
-                    sys.stdout.flush()
+                print(f"-- Results: {len(cur_level)}\r", end="", flush=True)
 
                 # Adding to json data
                 json_data[item.rstrip("/")] = list(item_data)
@@ -267,7 +237,9 @@ class Crawler:
             old_level = list(clean_cur_level)
             # Reset cur_level
             cur_level = set()
-            print(f"## Step {index + 1} completed \n\t with: {len(ord_lst)} result(s)")
+            self.logger.info(
+                f"Step {index + 1} completed with: {len(ord_lst)} result(s)"
+            )
 
             # Creating json
             with open(
