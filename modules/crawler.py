@@ -125,7 +125,9 @@ class Crawler:
         # For relative paths
         return urljoin(base, href)
 
-    def __crawl_link(self, item, session) -> tuple[str, set[str], int]:
+    def __crawl_link(
+        self, item, session
+    ) -> tuple[str, set[str], Union[int, tuple[str, Exception]]]:
         # Store the crawled link of an item
         item_data = set()
         html_page = Response
@@ -135,15 +137,13 @@ class Crawler:
             if item is not None:
                 html_page = session.get(item, allow_redirects=True, timeout=10)
                 response_code = html_page.status_code
-        except Exception as _:
-            self.logger.debug(f"Request Error :: {item}", exc_info=True)
-            return item, item_data, 0
+        except Exception as err:
+            return item, item_data, ("Request", err)
 
         try:
             soup = BeautifulSoup(html_page.text, features="html.parser")
-        except Exception as _:
-            self.logger.debug(f"Soup Parse Error :: {item}", exc_info=True)
-            return item, item_data, 0
+        except Exception as err:
+            return item, item_data, ("Soup Parse", err)
 
         # For each <a href=""> tag.
         for link in soup.findAll("a"):
@@ -219,7 +219,11 @@ class Crawler:
 
             for future in as_completed(futures):
                 item, item_data, response_code = future.result()
-                self.logger.debug(f"{item} :: {response_code}")
+                if isinstance(response_code, int):
+                    self.logger.debug(f"{item} :: {response_code}")
+                else:
+                    error, exception = response_code
+                    self.logger.debug(f"{error} Error :: {item}", exc_info=exception)
 
                 # Add item_data to crawled links.
                 cur_level = cur_level.union(item_data)
@@ -237,9 +241,7 @@ class Crawler:
             old_level = list(clean_cur_level)
             # Reset cur_level
             cur_level = set()
-            self.logger.info(
-                f"Step {index + 1} completed with: {len(ord_lst)} result(s)"
-            )
+            self.logger.info(f"Step {index + 1} completed :: {len(ord_lst)} result(s)")
 
             # Creating json
             with open(
