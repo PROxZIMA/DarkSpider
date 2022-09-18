@@ -50,14 +50,14 @@ def extract_domain(url, remove_http=True):
 
 
 # Create output path
-def folder(out_path):
+def folder(out_path, is_file=False):
     """Creates an output path for the findings.
 
     :param out_path: String - Output path in which all extracted data is stored.
+    :param is_file: String - True if output path is a file else False.
     :return: String 'out_path' - Path of the output folder.
     """
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
+    os.makedirs(os.path.dirname(out_path) if is_file else out_path, exist_ok=True)
     return out_path
 
 
@@ -88,13 +88,9 @@ def check_ip(proxies, url, logger, without_tor):
     try:
         # https://tor.stackexchange.com/a/13079
         # Double check to tackle false positives
-        check1 = requests.get(
-            addr, headers=headers, proxies=proxies, timeout=10, verify=False
-        ).json()
+        check1 = requests.get(addr, headers=headers, proxies=proxies, timeout=10, verify=False).json()
 
-        check2 = requests.get(
-            addr, headers=headers, proxies=proxies, timeout=10, verify=False
-        ).json()
+        check2 = requests.get(addr, headers=headers, proxies=proxies, timeout=10, verify=False).json()
 
         logger.debug(
             "Your IP: %s :: Tor Connection: %s",
@@ -103,11 +99,7 @@ def check_ip(proxies, url, logger, without_tor):
         )
         logger.debug("URL :: %s", url)
 
-        if (
-            check1["IsTor"] is False
-            and check2["IsTor"] is False
-            and without_tor is False
-        ):
+        if check1["IsTor"] is False and check2["IsTor"] is False and without_tor is False:
             raise TorProxyException(
                 "Tor proxy is NOT running! More info: https://support.torproject.org/connecting/#connecting-4"
             )
