@@ -64,6 +64,13 @@ def setup_custom_logger(name, verbose_, filelog, filename):
     screen_handler.setLevel(logging.DEBUG)
 
     if verbose_ is False:
+        screen_handler.setFormatter(
+            logging.Formatter(
+                fmt="## {message}",
+                style="{",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
         screen_handler.setLevel(logging.INFO)
 
     logger.addHandler(screen_handler)
