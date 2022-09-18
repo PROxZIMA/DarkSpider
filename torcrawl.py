@@ -214,7 +214,8 @@ def main():
     parser.add_argument(
         "-l",
         "--log",
-        action="store_true",
+        action="store_false",
+        default=True,
         help="A save log will let you see which URLs were visited and their " "response code",
     )
     parser.add_argument(
