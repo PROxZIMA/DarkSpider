@@ -1,9 +1,15 @@
 #!/usr/bin/python
+import logging
 import os
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
+from typing import Union
+from unittest import result
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 
 import requests
 import yara as _yara
@@ -22,6 +28,7 @@ class Extractor:
     :param str output_file: Filename of resulting output from scrape.
     :param str input_file: Filename of crawled/discovered URLs
     :param str out_path: Dir path for output files.
+    :param int thread: Number pages to extract (Threads) at the same time.
     :param int yara: keyword search option.
     :param Logger logger: A logger object to log the output.
     """
@@ -38,6 +45,7 @@ class Extractor:
         output_file: str,
         input_file: str,
         out_path: str,
+        thread: int,
         yara: int,
         logger: Logger,
     ):
@@ -51,6 +59,8 @@ class Extractor:
         if self.crawl:
             self.out_path = folder(os.path.join(out_path, self.__extract_folder))
 
+        self.thread = thread
+        self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.yara = yara
         self.logger = logger
         self.__session = self.__get_tor_session()
@@ -60,14 +70,19 @@ class Extractor:
         # TODO: Return output to torcrawl.py
         if len(self.input_file) > 0:
             if self.crawl or self.out_path:
-                self.__cinex(self.input_file, self.out_path, self.yara)
+                self.__cinex(self.input_file, self.yara, self.out_path)
             else:
-                self.__intermex(self.input_file, self.yara)
+                self.__terminex(self.input_file, self.yara)
         else:
+            results = []
             if len(self.output_file) > 0:
-                self.__outex(self.website, self.output_file, self.out_path, self.yara)
+                self.output_file = os.path.join(self.out_path, self.output_file)
+                results = self.__outex(self.website, self.yara, self.output_file)
             else:
-                self.__termex(self.website, self.yara)
+                results = self.__termex(self.website, self.yara)
+
+            for level, args, exception in results:
+                self.logger.log(level, *args, exc_info=exception)
 
     def __get_tor_session(self):
         session = requests.Session()
@@ -89,10 +104,9 @@ class Extractor:
 
         return " ".join(soup.stripped_strings)
 
-    def __check_yara(self, type_, raw=None, yara=0):
+    def __check_yara(self, raw=None, yara=0):
         """Validates Yara Rule to categorize the site and check for keywords.
 
-        :param type_: String: "Cinex" or "Intermex" or "Outex" or "Termex".
         :param yara:  Integer: Keyword search argument.
         :param raw:   HTTP Response body.
         :return matches: List of yara rule matches.
@@ -105,25 +119,39 @@ class Extractor:
 
         matches = self.__yara_rules.match(data=raw)
 
-        # if len(matches) != 0:
-        #     self.logger.debug(f"{type_} :: Yara match found!")
-
         return matches
 
-    def __inex(self, type_, input_file, yara, out_path=None):
+    def __generate_file_extract(self, url, yara, out_path) -> list[tuple[int, tuple[str], Union[Exception, bool]]]:
+        output_file = None
+        if out_path is not None:
+            try:
+                uri = urlparse(url)
+                output_file = os.path.join(
+                    out_path,
+                    os.path.join(uri.netloc, *uri.path.split("/")) + re.sub(r"[^\w_.)( -]", "", uri.query) + "_.html",
+                )
+                folder(output_file, is_file=True)
+            except Exception as err:
+                return [
+                    (
+                        logging.DEBUG,
+                        ("Output File Error :: %s", url),
+                        err,
+                    )
+                ]
+
+        return self.__ex(website=url, yara=yara, output_file=output_file)
+
+    def __inex(self, input_file, yara, out_path=None):
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents
         into the terminal if out_path is None else out_path/{url_address}.
 
-        :param type_: String: Either "Cinex" or "Intermex".
         :param input_file: String: Filename of the crawled Urls.
         :param out_path: String|None : Pathname of results.
         :param yara: Integer: Keyword search argument.
         :return: None
         """
-        self.logger.info(
-            "%s :: Extracting from %s to %s", type_, input_file, out_path or "terminal"
-        )
         file = TextIOWrapper
         try:
             file = open(input_file, "r", encoding="UTF-8")
@@ -131,90 +159,41 @@ class Extractor:
             self.logger.exception("Read Error :: %s", input_file)
             return
 
-        for line in file.read().splitlines():
+        futures = [
+            self.__executor.submit(self.__generate_file_extract, url=url, yara=yara, out_path=out_path)
+            for url in file.read().splitlines()
+        ]
 
-            # Generate the name for every file.
-            if out_path is not None:
-                try:
-                    page_name = line.rsplit("/", 1)
-                    cl_page_name = str(page_name[1])
-                    if len(cl_page_name) == 0:
-                        output_file = "index.html"
-                    else:
-                        output_file = cl_page_name
-                except Exception as _:
-                    self.logger.debug("Output File Error :: %s", line, exc_info=True)
-                    continue
+        for future in as_completed(futures):
+            for level, args, exception in future.result():
+                self.logger.log(level, *args, exc_info=exception)
 
-            # Extract page to file.
-            try:
-                content = self.__session.get(
-                    line, allow_redirects=True, timeout=10
-                ).text
-
-                full_match_keywords = self.__check_yara(
-                    type_=type_, raw=content, yara=yara
-                )
-
-                self.logger.debug(
-                    "%s :: %s match found!",
-                    line,
-                    "Yara" if len(full_match_keywords) else "No yara",
-                )
-
-                # if len(full_match_keywords) == 0:
-                #     self.logger.debug(f"{type_} :: No yara matches found.")
-                #     Don't write to file if no matches found.
-                #     if out_path is not None:
-                #         continue
-
-                if out_path is not None:
-                    with open(
-                        os.path.join(out_path, output_file), "w+", encoding="UTF-8"
-                    ) as results:
-                        results.write(content)
-                    self.logger.debug(
-                        "File created :: %s", os.path.join(out_path, output_file)
-                    )
-                else:
-                    self.logger.info("%s :: %s", line, content)
-            except HTTPError as _:
-                self.logger.debug("Request Error :: %s", line, exc_info=True)
-                continue
-            except (InvalidURL, URLError) as _:
-                self.logger.debug("Invalid URL Error :: %s :: Skipping...", line)
-                continue
-            except IncompleteRead as _:
-                self.logger.debug("Incomplete Read Error :: %s", line)
-                continue
-            except IOError as _:
-                self.logger.debug("IOError Error :: %s", line, exc_info=True)
-            except Exception as _:
-                self.logger.debug("Error :: %s", line, exc_info=True)
         file.close()
 
-    def __cinex(self, input_file, out_path, yara):
+    def __cinex(self, input_file, yara, out_path):
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents to
         the into out_path/{url_address}.
 
         :param input_file: String: Filename of the crawled Urls.
-        :param out_path: String: Pathname of results.
         :param yara: Integer: Keyword search argument.
+        :param out_path: String: Pathname of results.
         :return: None
         """
-        self.__inex(type_="Cinex", input_file=input_file, yara=yara, out_path=out_path)
+        self.logger.info("Cinex :: Extracting from %s to %s", input_file, out_path)
+        self.__inex(input_file=input_file, yara=yara, out_path=out_path)
 
-    def __intermex(self, input_file, yara):
+    def __terminex(self, input_file, yara):
         """Input links from file and extract them into terminal.
 
         :param input_file: String: File name of links file.
         :param yara: Integer: Keyword search argument.
         :return: None
         """
-        self.__inex(type_="Intermex", input_file=input_file, yara=yara)
+        self.logger.info("Terminex :: Extracting from %s to terminal", input_file)
+        self.__inex(input_file=input_file, yara=yara)
 
-    def __ex(self, type_, website, yara, output_file=None, out_path=None):
+    def __ex(self, website, yara, output_file=None) -> list[tuple[int, tuple[str], Union[Exception, bool]]]:
         """Scrapes the contents of the provided web address and outputs the
         contents to file or terminal.
 
@@ -222,59 +201,60 @@ class Extractor:
         :param website: String: Url of web address to scrape.
         :param yara: Integer: Keyword search argument.
         :param output_file: String|None: Filename of the results.
-        :param out_path: String|None: Folder name of the output findings.
         :return: None
         """
+        result = []
         try:
-            if out_path is not None:
-                output_file = os.path.join(out_path, output_file)
-            self.logger.info(
-                "%s :: Extracting %s to %s", type_, website, output_file or "terminal"
-            )
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
 
-            full_match_keywords = self.__check_yara(type_=type_, raw=content, yara=yara)
+            full_match_keywords = self.__check_yara(raw=content, yara=yara)
 
-            self.logger.debug(
-                "%s :: %s match found!",
-                website,
-                "Yara" if len(full_match_keywords) else "No yara",
+            result.append(
+                (
+                    logging.DEBUG,
+                    (
+                        "%s :: %s match found!",
+                        website,
+                        "Yara" if len(full_match_keywords) else "No yara",
+                    ),
+                    False,
+                )
             )
 
-            if out_path is not None:
-                with open(output_file, "w+", encoding="UTF-8") as file:
-                    file.write(content)
-                self.logger.debug("File created :: %s", output_file)
-            else:
-                self.logger.info("%s :: %s", website, content)
-        except HTTPError as _:
-            self.logger.debug("Request Error :: %s", website, exc_info=True)
-        except (InvalidURL, URLError) as _:
-            self.logger.debug("Invalid URL Error :: %s :: Skipping...", website)
-        except IncompleteRead as _:
-            self.logger.debug("Incomplete Read Error :: %s", website)
-        except IOError as _:
-            self.logger.debug("IOError Error :: %s", website, exc_info=True)
-        except Exception as _:
-            self.logger.debug("Error :: %s", website, exc_info=True)
+            # if len(full_match_keywords) == 0:
+            #     # Don't write to file if no matches found.
+            #     if output_file is not None:
+            #         return result
 
-    def __outex(self, website, output_file, out_path, yara):
+            if output_file is not None:
+                with open(output_file, "w", encoding="UTF-8") as file:
+                    file.write(content)
+                result.append((logging.DEBUG, ("File created :: %s", output_file), False))
+            else:
+                result.append((logging.INFO, ("%s :: %s", website, content), False))
+        except HTTPError as err:
+            result.append((logging.DEBUG, ("Request Error :: %s", website), err))
+        except (InvalidURL, URLError) as _:
+            result.append((logging.DEBUG, ("Invalid URL Error :: %s :: Skipping...", website), False))
+        except IncompleteRead as _:
+            result.append((logging.DEBUG, ("Incomplete Read Error :: %s", website), False))
+        except IOError as err:
+            result.append((logging.DEBUG, ("IOError Error :: %s", website), err))
+        except Exception as err:
+            result.append((logging.DEBUG, ("Error :: %s", website), err))
+        return result
+
+    def __outex(self, website, yara, output_file):
         """Scrapes the contents of the provided web address and outputs the
         contents to file.
 
         :param website: String: Url of web address to scrape.
-        :param output_file: String: Filename of the results.
-        :param out_path: String: Folder name of the output findings.
         :param yara: Integer: Keyword search argument.
+        :param output_file: String: Filename of the results.
         :return: None
         """
-        self.__ex(
-            type_="Outex",
-            website=website,
-            yara=yara,
-            output_file=output_file,
-            out_path=out_path,
-        )
+        self.logger.info("Outex :: Extracting %s to %s", website, output_file)
+        return self.__ex(website=website, yara=yara, output_file=output_file)
 
     def __termex(self, website, yara):
         """Scrapes provided web address and prints the results to the terminal.
@@ -283,4 +263,5 @@ class Extractor:
         :param yara: Integer: Keyword search argument.
         :return: None
         """
-        self.__ex(type_="Termex", website=website, yara=yara)
+        self.logger.info("Termex :: Extracting %s to terminal", website)
+        return self.__ex(website=website, yara=yara)

@@ -112,8 +112,7 @@ def main():
 
     # Get arguments with GooeyParser if available else argparse.
     description = (
-        "DarkSpider.py is a python script to crawl and extract "
-        + "(regular or onion) webpages through TOR network."
+        "DarkSpider.py is a python script to crawl and extract " + "(regular or onion) webpages through TOR network."
     )
     if GOOEY_AVAILABLE:
         parser = GooeyParser(description=description)
@@ -147,9 +146,7 @@ def main():
         action="store_true",
         help="Visualize the graphs and insights from the crawled data",
     )
-    parser.add_argument(
-        "-u", "--url", type=str, help="URL of webpage to crawl or extract"
-    )
+    parser.add_argument("-u", "--url", type=str, help="URL of webpage to crawl or extract")
     parser.add_argument(
         "-n",
         "--port",
@@ -157,9 +154,7 @@ def main():
         default=9050,
         help="Port number of TOR Proxy (default: 9050)",
     )
-    parser.add_argument(
-        "-w", "--without", action="store_true", help="Without the use of Relay TOR"
-    )
+    parser.add_argument("-w", "--without", action="store_true", help="Without the use of Relay TOR")
 
     # Extract
     parser.add_argument(
@@ -220,8 +215,7 @@ def main():
         "-l",
         "--log",
         action="store_true",
-        help="A save log will let you see which URLs were visited and their "
-        "response code",
+        help="A save log will let you see which URLs were visited and their " "response code",
     )
     parser.add_argument(
         "-f",
@@ -294,9 +288,7 @@ def main():
         proxies = get_tor_proxies(port=args.port)
 
     if args.verbose:
-        check_ip(
-            proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without
-        )
+        check_ip(proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without)
 
     if canon:
         crawlog.debug("URL fixed :: %s", website)
@@ -343,6 +335,7 @@ def main():
                 output_file=args.output,
                 input_file=input_file,
                 out_path=out_path,
+                thread=args.thread,
                 yara=args.yara,
                 logger=crawlog,
             )
@@ -355,6 +348,7 @@ def main():
             output_file=args.output,
             input_file=args.input or "",
             out_path=out_path,
+            thread=args.thread,
             yara=args.yara,
             logger=crawlog,
         )

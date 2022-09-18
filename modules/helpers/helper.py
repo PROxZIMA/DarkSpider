@@ -47,6 +47,8 @@ def verbose(func):
 
 
 class RollingFileHandler(RotatingFileHandler):
+    """Custom RotatingFileHandler for incremental infinite logging"""
+
     def __init__(self, filename, mode="w", maxBytes=0, backupCount=0, encoding=None, delay=False):
         self.last_backup_cnt = 0
         super(RollingFileHandler, self).__init__(
