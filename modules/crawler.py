@@ -109,7 +109,7 @@ class Crawler:
             self.__files["mails"].write(str(link) + "\n")
             return True
         # Type of files
-        if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc)$", link, re.IGNORECASE):
+        if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc|js|css)$", link, re.IGNORECASE):
             return True
 
     def canonical(self, base, href):
@@ -156,30 +156,8 @@ class Crawler:
             if ver_link is not None:
                 item_data.add(ver_link)
 
-        # For each <area> tag.
+        # For each <area href=""> tag.
         for link in soup.findAll("area"):
-            link = link.get("href")
-
-            if self.excludes(link):
-                continue
-
-            ver_link = self.canonical(item, link)
-            if ver_link is not None:
-                item_data.add(ver_link)
-
-        # For each <script> tag
-        for link in soup.findAll("script"):
-            link = link.get("src")
-
-            if self.excludes(link):
-                continue
-
-            ver_link = self.canonical(item, link)
-            if ver_link is not None:
-                item_data.add(ver_link)
-
-        # For each <link> tag
-        for link in soup.findAll("link"):
             link = link.get("href")
 
             if self.excludes(link):
