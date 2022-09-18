@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
 """
 DarkSpider is a python script to crawl and extract (regular or onion)
 webpages through TOR network.
@@ -235,9 +236,9 @@ def main():
         "-y",
         "--yara",
         type=int,
-        default=0,
+        default=None,
         help="Check for keywords and only scrape documents that contain a "
-        "match. 0 search whole html object. 1 search only the text. (Default: 0)",
+        "match. 0 search whole html object. 1 search only the text. (Default: None)",
     )
 
     if len(sys.argv) == 1:
@@ -252,7 +253,7 @@ def main():
     if args.port < 1 or 65535 < args.port:
         parser.error("argument -n/--port: expected argument in between 1 to 65535.")
 
-    if args.yara not in [0, 1]:
+    if args.yara and args.yara not in [0, 1]:
         parser.error("argument -y/--yara: expected argument 0 or 1.")
 
     if args.cdepth < 1:
