@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from io import StringIO
+from logging.handlers import RotatingFileHandler
 
 import matplotlib.pyplot as plt
 
@@ -37,14 +38,30 @@ def verbose(func):
         plt.figure(figsize=(12, 6))
         plt.grid()
         ret = func(*args, **kwargs)
-        plt.savefig(
-            os.path.join(args[0].out_path, f"{func.__name__}.png"), bbox_inches="tight"
-        )
+        plt.savefig(os.path.join(args[0].out_path, f"{func.__name__}.png"), bbox_inches="tight")
         return ret
 
     wrapper.__doc__ = func.__doc__
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+class RollingFileHandler(RotatingFileHandler):
+    def __init__(self, filename, mode="w", maxBytes=0, backupCount=0, encoding=None, delay=False):
+        self.last_backup_cnt = 0
+        super(RollingFileHandler, self).__init__(
+            filename=filename, mode=mode, maxBytes=maxBytes, backupCount=backupCount, encoding=encoding, delay=delay
+        )
+
+    def doRollover(self):
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        self.last_backup_cnt += 1
+        next_name = "{0}.{2}{1}".format(*os.path.splitext(self.baseFilename), self.last_backup_cnt)
+        self.rotate(self.baseFilename, next_name)
+        if not self.delay:
+            self.stream = self._open()
 
 
 def setup_custom_logger(name, verbose_, filelog, filename):
@@ -76,7 +93,7 @@ def setup_custom_logger(name, verbose_, filelog, filename):
     logger.addHandler(screen_handler)
 
     if filelog:
-        file_handler = logging.FileHandler(filename=filename, mode="w")
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=10 * 1024 * 1024)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
