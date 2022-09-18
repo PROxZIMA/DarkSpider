@@ -13,6 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.models import Response
 
+from modules.checker import url_canon
 from modules.helpers.helper import get_requests_header
 
 
@@ -154,7 +155,7 @@ class Crawler:
 
             ver_link = self.canonical(item, link)
             if ver_link is not None:
-                item_data.add(ver_link)
+                item_data.add(url_canon(ver_link)[1])
 
         # For each <area href=""> tag.
         for link in soup.findAll("area"):
@@ -165,7 +166,7 @@ class Crawler:
 
             ver_link = self.canonical(item, link)
             if ver_link is not None:
-                item_data.add(ver_link)
+                item_data.add(url_canon(ver_link)[1])
 
         return item, item_data, response_code
 
@@ -192,7 +193,7 @@ class Crawler:
             futures = [
                 self.__executor.submit(self.__crawl_link, item=item, session=session)
                 for item in old_level
-                if item.rstrip("/") not in json_data
+                if item not in json_data
             ]
 
             for future in as_completed(futures):
@@ -209,7 +210,7 @@ class Crawler:
                 print(f"-- Results: {len(cur_level)}\r", end="", flush=True)
 
                 # Adding to json data
-                json_data[item.rstrip("/")] = list(item_data)
+                json_data[item] = list(item_data)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)

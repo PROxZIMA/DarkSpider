@@ -10,18 +10,26 @@ import requests
 from modules.helpers.helper import TorProxyException, get_requests_header
 
 
-def url_canon(website):
+def url_canon(website, www=False):
     """URL normalisation/canonicalization
 
     :param website: String - URL of website.
-    :return: String 'website' - normalised result.
+    :param www: Boolean - True if www is to be included else False.
+    :return: [Boolean, String] 'canon, website' - Bool indicating if normalised, normalised result.
     """
     canon = False
     if not website.startswith("http"):
-        if not website.startswith("www."):
+        if www and not website.startswith("www."):
             website = "www." + website
         website = "http://" + website
         canon = True
+
+    # Remove trailing slash if website is just a hostname
+    uri = urlparse(website)
+    if uri.path == "/":
+        website = website.rstrip("/")
+        canon = True
+
     return canon, website
 
 
