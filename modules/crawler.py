@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import json
 import os
 import re
@@ -6,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
-from typing import Union
+from typing import Optional
 from urllib.parse import urljoin
 
 import requests
@@ -20,18 +19,16 @@ from modules.helpers.helper import get_requests_header
 class Crawler:
     """Crawl input link upto depth (c_depth) with a pause of c_pause seconds using multiple threads.
 
-    :param str website: Website to crawl.
-    :param dict[str, str] proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
-    :param dict[str, any] c_params: Dictionary mapping
-                                    {
-                                        int c_depth: Depth of the crawl,
-                                        float c_pause: Pause after every iteration
-                                    }
-    :param str out_path: Output path to store extracted links.
-    :param bool external: True if external links are to be crawled else False.
-    :param re str exclusion: Paths that you don't want to include.
-    :param int thread: Number pages to visit (Threads) at the same time.
-    :param Logger logger: A logger object to log the output.
+    Attributes:
+        website: Website to crawl.
+        proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+        c_depth: Depth of the crawl.
+        c_pause: Pause after every depth iteration.
+        out_path: Output path to store extracted links.
+        external: True if external links are to be crawled else False.
+        exclusion: Paths that you don't want to include.
+        thread: Number pages to visit (Threads) at the same time.
+        logger: A logger object to log the output.
     """
 
     network_file = "network_structure.json"
@@ -41,7 +38,8 @@ class Crawler:
         self,
         website: str,
         proxies: dict[str, str],
-        c_params: dict[str, Union[int, float]],
+        c_depth: int,
+        c_pause: float,
         out_path: str,
         external: bool,
         exclusion: str,
@@ -50,8 +48,8 @@ class Crawler:
     ):
         self.website = website
         self.proxies = proxies
-        self.c_depth = c_params["c_depth"]
-        self.c_pause = c_params["c_pause"]
+        self.c_depth = c_depth
+        self.c_pause = c_pause
         self.out_path = out_path
         self.external = external
         self.exclusion = rf"{exclusion}" if exclusion else None
@@ -60,33 +58,34 @@ class Crawler:
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__files = {
-            "extlinks": open(
-                os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"
-            ),
-            "telephones": open(
-                os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"
-            ),
-            "mails": open(
-                os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"
-            ),
+            "extlinks": open(os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"),
+            "telephones": open(os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"),
+            "mails": open(os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"),
             "network_structure": os.path.join(self.out_path, self.network_file),
             "links": os.path.join(self.out_path, "links.txt"),
         }
 
-    def __get_tor_session(self):
+    def __get_tor_session(self) -> requests.Session:
+        """Get a new session with Tor proxies.
+
+        Returns:
+            Session object to make requests.
+        """
         session = requests.Session()
         session.proxies = self.proxies
         session.headers.update(self.__headers)
         session.verify = False
         return session
 
-    def excludes(self, link):
+    def excludes(self, link: str) -> bool:
         """Excludes links that are not required.
 
-        :param link: String
-        :return: Boolean
+        Args:
+            link: Link to check for exclusion.
+
+        Returns:
+            True if link is to be excluded else False.
         """
-        # BUG: For NoneType Exceptions, got to find a solution here
         if link is None:
             return True
         # Excludes links that matches the regex path.
@@ -97,7 +96,7 @@ class Crawler:
             return True
         # External links
         if link.startswith("http") and not link.startswith(self.website):
-            if self.external is True:
+            if self.external:
                 return False
             self.__files["extlinks"].write(str(link) + "\n")
             return True
@@ -113,11 +112,15 @@ class Crawler:
         if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc|js|css)$", link, re.IGNORECASE):
             return True
 
-    def canonical(self, base, href):
+    def canonical(self, base: str, href: str) -> str:
         """Canonization of the link.
 
-        :param link: String
-        :return: String 'final_link': parsed canonical url.
+        Args:
+            base: Base URL.
+            href: Hyperlink present in the base URL page.
+
+        Returns:
+            parsed canonical url.
         """
         # Already formatted
         if href.startswith("http"):
@@ -126,25 +129,36 @@ class Crawler:
         # For relative paths
         return urljoin(base, href)
 
-    def __crawl_link(
-        self, item, session
-    ) -> tuple[str, set[str], Union[int, tuple[str, Exception]]]:
-        # Store the crawled link of an item
-        item_data = set()
+    def __crawl_link(self, url: str, session: requests.Session) -> tuple[str, set[str], int | tuple[str, Exception]]:
+        """
+        Extracts all the hyperlinks from the given url and returns a tuple of
+        the url, set of hyperlinks and either status code or raised Exception.
+
+        Args:
+            url: URL to crawl.
+            session: Session object to make requests.
+
+        Returns:
+            A tuple of the url, set of hyperlinks and either status code or raised Exception.
+
+            (`https://example.com`, {`https://example.com/1`, `https://example.com/2`}, `200`)
+            (`https://error.com`, {}, `Exception()`)
+        """
+        url_data = set()
         html_page = Response
         response_code = 0
 
         try:
-            if item is not None:
-                html_page = session.get(item, allow_redirects=True, timeout=10)
+            if url is not None:
+                html_page = session.get(url, allow_redirects=True, timeout=10)
                 response_code = html_page.status_code
         except Exception as err:
-            return item, item_data, ("Request", err)
+            return url, url_data, ("Request", err)
 
         try:
             soup = BeautifulSoup(html_page.text, features="html.parser")
         except Exception as err:
-            return item, item_data, ("Soup Parse", err)
+            return url, url_data, ("Soup Parse", err)
 
         # For each <a href=""> tag.
         for link in soup.findAll("a"):
@@ -153,9 +167,9 @@ class Crawler:
             if self.excludes(link):
                 continue
 
-            ver_link = self.canonical(item, link)
+            ver_link = self.canonical(url, link)
             if ver_link is not None:
-                item_data.add(url_canon(ver_link)[1])
+                url_data.add(url_canon(ver_link)[1])
 
         # For each <area href=""> tag.
         for link in soup.findAll("area"):
@@ -164,15 +178,24 @@ class Crawler:
             if self.excludes(link):
                 continue
 
-            ver_link = self.canonical(item, link)
+            ver_link = self.canonical(url, link)
             if ver_link is not None:
-                item_data.add(url_canon(ver_link)[1])
+                url_data.add(url_canon(ver_link)[1])
 
-        return item, item_data, response_code
+        return url, url_data, response_code
 
-    def crawl(self):
+    def crawl(self) -> dict[str, list[str]]:
         """Core of the crawler.
-        :return: Dict (json_data) - Dictionary of crawled links.
+
+        Returns:
+            Dictionary of crawled links.
+
+            {
+                "link1": [ "link2", "link3", "link4" ],
+                "link2": [ "link5", "link6", "link4" ],
+                "link3": [ "link7", "link2", "link9" ],
+                "link4": [ "link1" ]
+            }
         """
         ord_lst = set([self.website])
         old_level = [self.website]
@@ -190,27 +213,29 @@ class Crawler:
         for index in range(0, int(self.c_depth)):
             session = self.__get_tor_session()
 
+            # Sumbit all the links to the thread pool
             futures = [
-                self.__executor.submit(self.__crawl_link, item=item, session=session)
-                for item in old_level
-                if item not in json_data
+                self.__executor.submit(self.__crawl_link, url=url, session=session)
+                for url in old_level
+                if url not in json_data
             ]
 
+            # Get the results from list of futures and update the json_data
             for future in as_completed(futures):
-                item, item_data, response_code = future.result()
+                url, url_data, response_code = future.result()
                 if isinstance(response_code, int):
-                    self.logger.debug("%s :: %d", item, response_code)
+                    self.logger.debug("%s :: %d", url, response_code)
                 else:
                     error, exception = response_code
-                    self.logger.debug("%s Error :: %s", error, item, exc_info=exception)
+                    self.logger.debug("%s Error :: %s", error, url, exc_info=exception)
 
-                # Add item_data to crawled links.
-                cur_level = cur_level.union(item_data)
+                # Add url_data to crawled links.
+                cur_level = cur_level.union(url_data)
 
                 print(f"-- Results: {len(cur_level)}\r", end="", flush=True)
 
                 # Adding to json data
-                json_data[item] = list(item_data)
+                json_data[url] = list(url_data)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
@@ -220,23 +245,23 @@ class Crawler:
             old_level = list(clean_cur_level)
             # Reset cur_level
             cur_level = set()
-            self.logger.info(
-                "Step %d completed :: %d result(s)", index + 1, len(ord_lst)
-            )
+            self.logger.info("Step %d completed :: %d result(s)", index + 1, len(ord_lst))
 
             # Creating json
-            with open(
-                self.__files["network_structure"], "w", encoding="UTF-8"
-            ) as lst_file:
+            with open(self.__files["network_structure"], "w", encoding="UTF-8") as lst_file:
                 json.dump(json_data, lst_file, indent=2, sort_keys=False)
 
             with open(self.__files["links"], "w+", encoding="UTF-8") as file:
-                for item in sorted(ord_lst):
-                    file.write(f"{item}\n")
+                for url in sorted(ord_lst):
+                    file.write(f"{url}\n")
 
             # Pause time
             time.sleep(self.c_pause)
 
+        # Close the executor, don't wait for all threads to finish
+        self.__executor.shutdown(wait=False)
+
+        # Close the output files and return the json_data
         for file in self.__files.values():
             if isinstance(file, TextIOBase):
                 file.close()

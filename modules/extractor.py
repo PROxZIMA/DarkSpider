@@ -5,20 +5,19 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
-from typing import Union
+from typing import Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 
 import requests
 import yara as _yara
 from bs4 import BeautifulSoup
-from requests import Session
 
 from modules.checker import folder
 from modules.helpers.helper import get_requests_header
 
 # Type hinting aliases
-ExcInfo = Union[Exception, bool]
+ExcInfo = Exception | bool
 LogMsg = tuple[str]
 LogLevel = int
 Log = tuple[LogLevel, LogMsg, ExcInfo]
@@ -29,15 +28,16 @@ Results = list[Single_res]
 class Extractor:
     """Extractor - scrapes the resulting website or discovered links.
 
-    :param str website: URL of website to scrape.
-    :param dict[str, str] proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
-    :param bool crawl: Cinex trigger. If used iteratively scrape the urls from input_file.
-    :param str output_file: Filename of resulting output from scrape.
-    :param str input_file: Filename of crawled/discovered URLs
-    :param str out_path: Dir path for output files.
-    :param int thread: Number pages to extract (Threads) at the same time.
-    :param int|None yara: keyword search option.
-    :param Logger logger: A logger object to log the output.
+    Attributes:
+        website: URL of website to scrape.
+        proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+        crawl: Cinex trigger. If used, iteratively scrape the urls from input_file.
+        output_file: Filename of resulting output from scrape.
+        input_file: Filename of crawled/discovered URLs.
+        out_path: Dir path for output files.
+        thread: Number pages to extract (Threads) at the same time.
+        yara: keyword search option.
+        logger: A logger object to log the output.
     """
 
     __headers = get_requests_header()
@@ -53,7 +53,7 @@ class Extractor:
         input_file: str,
         out_path: str,
         thread: int,
-        yara: Union[int, None],
+        yara: Optional[int],
         logger: Logger,
     ):
         self.website = website
@@ -67,24 +67,62 @@ class Extractor:
             self.out_path = folder(os.path.join(out_path, self.__extract_folder))
 
         self.thread = thread
-        self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.yara = yara
         self.logger = logger
+
+        self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__session = self.__get_tor_session()
 
-    def extract(self):
-        """Extracts the contents of the input file/single URL into the outputs folder/file/terminal."""
+    def extract(self) -> Results:
+        """Extracts the contents of the input file/single URL into the outputs folder/file/terminal.
+
+        Note:
+            `Log` represents either Yara or an Exception output.
+
+            If Yara search is True then content is written to file/terminal.
+
+            If Yara search is False then content is ignored.
+
+        A `Log` is a tuple of `LogLevel`, `LogMsg` and `ExcInfo` with the following format:
+            (`LogLevel`, (`msg`, `*args`), `Exception()` or `False`)
+
+        `Single_res` of an url is a list of `Log` with the following format:
+            [
+                (10, ("%s :: %s match found!", "`http://example.com/file.html`", "Yara"), False),
+
+                (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError()),
+            ]
+
+        Returns:
+            `Results` of an input which is a List of `Single_res` with the following format:
+
+            [[
+                (10, ("%s :: %s match found!", "`http://example.com`", "Yara"), False),
+
+                (10, ("File created :: %s", "example.com/extracted/example.com/_.html"), False),
+            ], [
+                (10, ("%s :: %s match found!", "`http://example.com/main.html`", "No yara"), False)
+            ], [
+                (10, ("%s :: %s match found!", "`http://example.com/file.html`", "Yara"), False),
+
+                (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError()),
+            ]]
+        """
         results: Results = []
         if len(self.input_file) > 0:
             if self.crawl or self.out_path:
-                results = self.__cinex(self.input_file, self.yara, self.out_path)
+                # Crawl(output folder) | INput file | EXtract
+                results = self.__cinex(self.input_file, self.out_path, self.yara)
             else:
+                # TERMinal | INput file | EXtract
                 results = self.__terminex(self.input_file, self.yara)
         else:
             if len(self.output_file) > 0:
+                # OUTput file | EXtract
                 self.output_file = os.path.join(self.out_path, self.output_file)
-                single_res = self.__outex(self.website, self.yara, self.output_file)
+                single_res = self.__outex(self.website, self.output_file, self.yara)
             else:
+                # TERMinal | EXtract
                 single_res = self.__termex(self.website, self.yara)
 
             for level, args, exception in single_res:
@@ -93,67 +131,87 @@ class Extractor:
             results.append(single_res)
         return results
 
-    def __get_tor_session(self) -> Session:
+    def __get_tor_session(self) -> requests.Session:
+        """Get a new session with Tor proxies.
+
+        Returns:
+            Session object to make requests.
+        """
         session = requests.Session()
         session.proxies = self.proxies
         session.headers.update(self.__headers)
         session.verify = False
         return session
 
-    def __cinex(self, input_file: str, yara: Union[int, None], out_path: str) -> Results:
+    def __cinex(self, input_file: str, out_path: str, yara: Optional[int]) -> Results:
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents to
         the into out_path/{url_address}.
 
-        :param input_file: String: Filename of the crawled Urls.
-        :param yara: Integer: Keyword search argument.
-        :param out_path: String: Pathname of results.
-        :return: None
+        Args:
+            input_file: Filename of the crawled Urls.
+            out_path: Dir path for results.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Single_res` for each url in input.
         """
         self.logger.info("Cinex :: Extracting from %s to %s", input_file, out_path)
         return self.__inex(input_file=input_file, yara=yara, out_path=out_path)
 
-    def __terminex(self, input_file: str, yara: Union[int, None]) -> Results:
+    def __terminex(self, input_file: str, yara: Optional[int]) -> Results:
         """Input links from file and extract them into terminal.
 
-        :param input_file: String: File name of links file.
-        :param yara: Integer: Keyword search argument.
-        :return: None
+        Args:
+            input_file: Filename of the crawled Urls.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Single_res` for each url in input.
         """
         self.logger.info("Terminex :: Extracting from %s to terminal", input_file)
         return self.__inex(input_file=input_file, yara=yara)
 
-    def __outex(self, website: str, yara: Union[int, None], output_file: str) -> Single_res:
+    def __outex(self, website: str, output_file: str, yara: Optional[int]) -> Single_res:
         """Scrapes the contents of the provided web address and outputs the
         contents to file.
 
-        :param website: String: Url of web address to scrape.
-        :param yara: Integer: Keyword search argument.
-        :param output_file: String: Filename of the results.
-        :return: None
+        Args:
+            website: Url of web address to scrape.
+            output_file: Filename to write the contents to.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Log` for given website.
         """
         self.logger.info("Outex :: Extracting %s to %s", website, output_file)
         return self.__ex(website=website, yara=yara, output_file=output_file)
 
-    def __termex(self, website: str, yara: Union[int, None]) -> Single_res:
+    def __termex(self, website: str, yara: Optional[int]) -> Single_res:
         """Scrapes provided web address and prints the results to the terminal.
 
-        :param website: String: URL of website to scrape.
-        :param yara: Integer: Keyword search argument.
-        :return: None
+        Args:
+            website: Url of web address to scrape.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Log` for given website.
         """
         self.logger.info("Termex :: Extracting %s to terminal", website)
         return self.__ex(website=website, yara=yara)
 
-    def __inex(self, input_file: str, yara: Union[int, None], out_path: str = None) -> Results:
+    def __inex(self, input_file: str, out_path: Optional[str] = None, yara: Optional[int] = None) -> Results:
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents
         into the terminal if out_path is None else out_path/{url_address}.
 
-        :param input_file: String: Filename of the crawled Urls.
-        :param out_path: String|None : Pathname of results.
-        :param yara: Integer: Keyword search argument.
-        :return: None
+        Args:
+            input_file: Filename of the crawled Urls.
+            out_path: Dir path for results.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Single_res` [`Results`] for each url in input.
         """
         file = TextIOWrapper
         try:
@@ -162,6 +220,7 @@ class Extractor:
             self.logger.exception("Read Error :: %s", input_file)
             return
 
+        # Sumbit all the links to the thread pool
         futures = [
             self.__executor.submit(self.__generate_file, url=url, yara=yara, out_path=out_path)
             for url in file.read().splitlines()
@@ -169,6 +228,7 @@ class Extractor:
 
         results: Results = []
 
+        # Get the results from list of futures and append them to results
         for future in as_completed(futures):
             single_res = future.result()
             results.append(single_res)
@@ -176,19 +236,33 @@ class Extractor:
             for level, args, exception in single_res:
                 self.logger.log(level, *args, exc_info=exception)
 
+        # Close the executor, don't wait for all threads to finish
+        self.__executor.shutdown(wait=False)
         file.close()
 
         return results
 
-    def __generate_file(self, url: str, yara: Union[int, None], out_path: Union[str, None]) -> Single_res:
+    def __generate_file(self, url: str, out_path: Optional[str], yara: Optional[int]) -> Single_res:
+        """Generate output file from url and send it to extractor.
+
+        Args:
+            url: Url of web address to scrape.
+            output_file: Filename to write the contents to.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Log` [`Single_res`] for given url.
+        """
         output_file = None
         if out_path is not None:
             try:
+                # http://a.com/b.ext?x=&y=$%z2 -> a.com/b.extxyz2_.html
                 uri = urlparse(url)
                 output_file = os.path.join(
                     out_path,
                     os.path.join(uri.netloc, *uri.path.split("/")) + re.sub(r"[^\w_.)( -]", "", uri.query) + "_.html",
                 )
+                # Create the directory if it doesn't exist
                 folder(output_file, is_file=True)
             except Exception as err:
                 return [
@@ -201,20 +275,22 @@ class Extractor:
 
         return self.__ex(website=url, yara=yara, output_file=output_file)
 
-    def __ex(self, website: str, yara: Union[int, None], output_file: str = None) -> Single_res:
+    def __ex(self, website: str, output_file: str = None, yara: Optional[int] = None) -> Single_res:
         """Scrapes the contents of the provided web address and outputs the
         contents to file or terminal.
 
-        :param type: String: Either "Outex" or "Termex".
-        :param website: String: Url of web address to scrape.
-        :param yara: Integer: Keyword search argument.
-        :param output_file: String|None: Filename of the results.
-        :return: None
+        Args:
+            website: Url of web address to scrape.
+            output_file: Filename to write the contents to.
+            yara: Keyword search argument.
+
+        Returns:
+            List of `Log` [`Single_res`] for given website.
         """
         result = []
         try:
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
-            if yara:
+            if yara is not None:
                 full_match_keywords = self.__check_yara(raw=content, yara=yara)
 
                 result.append(
@@ -253,12 +329,17 @@ class Extractor:
 
         return result
 
-    def __check_yara(self, raw: str = None, yara: int = 0) -> dict:
+    def __check_yara(self, raw: str, yara: int = 0) -> dict[str, list]:
         """Validates Yara Rule to categorize the site and check for keywords.
 
-        :param yara:  Integer: Keyword search argument.
-        :param raw:   HTTP Response body.
-        :return matches: List of yara rule matches.
+        Args:
+            yara: Keyword search argument.
+            raw: HTTP Response body.
+
+        Returns:
+            Dictionary of yara rule matches.
+
+            {"namespace":[match1,match2,...]}
         """
         if raw is None:
             return None
@@ -270,12 +351,15 @@ class Extractor:
 
         return matches
 
-    def __text(self, response: str = None) -> str:
+    def __text(self, response: str) -> str:
         """Removes all the garbage from the HTML and takes only text elements
         from the page.
 
-        :param response: HTTP Response.
-        :return: String: Text only stripped response.
+        Args:
+            response: HTTP Response.
+
+        Returns:
+        Text only stripped response.
         """
         soup = BeautifulSoup(response, features="lxml")
         for s in soup(["script", "style"]):

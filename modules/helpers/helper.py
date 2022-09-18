@@ -66,8 +66,20 @@ class RollingFileHandler(RotatingFileHandler):
             self.stream = self._open()
 
 
-def setup_custom_logger(name, verbose_, filelog, filename):
-    """Setup custom logger with stream and file handlers"""
+def setup_custom_logger(
+    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True
+) -> logging.Logger:
+    """Setup custom logger with stream and file handlers
+
+    Args:
+        name: Name of the logger.
+        filename: Name of the log file.
+        verbose_: Simple formatter for stream if False.
+        filelog: Add FileHandler to logger if True.
+
+    Returns:
+        Logger object with custom handlers and formatters.
+    """
     formatter = logging.Formatter(
         fmt="{asctime} [{levelname:^7s}] [{filename}:{lineno}] {message}",
         style="{",
@@ -82,7 +94,8 @@ def setup_custom_logger(name, verbose_, filelog, filename):
     screen_handler.setFormatter(formatter)
     screen_handler.setLevel(logging.DEBUG)
 
-    if verbose_ is False:
+    # Set simple formatter for file non-verbose logging
+    if not verbose_:
         screen_handler.setFormatter(
             logging.Formatter(
                 fmt="## {message}",
@@ -103,24 +116,48 @@ def setup_custom_logger(name, verbose_, filelog, filename):
     return logger
 
 
-def get_requests_header():
-    """Get requests header"""
+def get_requests_header() -> dict[str, str]:
+    """Get requests header
+
+    Returns:
+        Header dictioanry with Accept-Encoding and User-Agent.
+
+        {"Accept-Encoding": "identity",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}
+    """
     return {
         "Accept-Encoding": "identity",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
     }
 
 
-def get_tor_proxies(port):
-    """Get Tor socks proxies"""
+def get_tor_proxies(port: int = 9050) -> dict[str, str]:
+    """Get Tor socks proxies
+
+    Args:
+        port: Port number of the Tor socks proxy.
+
+    Returns:
+        Dictioanry with socks5h based http and https proxies.
+
+        {"http": f"socks5h://127.0.0.1:9050",
+        "https": f"socks5h://127.0.0.1:9050"}
+    """
     return {
         "http": f"socks5h://127.0.0.1:{port}",
         "https": f"socks5h://127.0.0.1:{port}",
     }
 
 
-def traceback_name(error):
-    """Get traceback name"""
+def traceback_name(error: Exception) -> str:
+    """Get traceback class names from an exception
+
+    Args:
+        error: Exception object.
+
+    Returns:
+        Exception traceback class names.
+    """
     module = error.__class__.__module__
     if module is None or module == str.__class__.__module__:
         return error.__class__.__name__

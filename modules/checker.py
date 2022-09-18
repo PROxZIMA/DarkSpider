@@ -1,7 +1,7 @@
-#!/usr/bin/python
-
 import os
 import sys
+from logging import Logger
+from typing import Optional
 from urllib.parse import urlparse
 
 import psutil
@@ -10,12 +10,15 @@ import requests
 from modules.helpers.helper import TorProxyException, get_requests_header
 
 
-def url_canon(website, www=False):
+def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
     """URL normalisation/canonicalization
 
-    :param website: String - URL of website.
-    :param www: Boolean - True if www is to be included else False.
-    :return: [Boolean, String] 'canon, website' - Bool indicating if normalised, normalised result.
+    Args:
+        website: URL of website.
+        www: True if www is to be included else False.
+
+    Returns:
+        A tuple of a boolean indicating whether ``website`` is normalised, normalised ``website``.
     """
     canon = False
     if not website.startswith("http"):
@@ -33,13 +36,16 @@ def url_canon(website, www=False):
     return canon, website
 
 
-def extract_domain(url, remove_http=True):
+def extract_domain(url: str, remove_http: bool = True) -> str:
     """Parses the provided 'url' to provide only the netloc or
     scheme + netloc parts of the provided url.
 
-    :param url: String - Url to parse.
-    :param remove_http: Boolean
-    :return: String 'domain_name' - Resulting parsed Url
+    Args:
+        url: Url to parse.
+        remove_http: True if http/https is to be removed else False.
+
+    Returns:
+        Resulting parsed Url.
     """
     uri = urlparse(url)
     if remove_http:
@@ -49,25 +55,30 @@ def extract_domain(url, remove_http=True):
     return domain_name
 
 
-# Create output path
-def folder(out_path, is_file=False):
+def folder(out_path: str, is_file: bool = False) -> str:
     """Creates an output path for the findings.
 
-    :param out_path: String - Output path in which all extracted data is stored.
-    :param is_file: String - True if output path is a file else False.
-    :return: String 'out_path' - Path of the output folder.
+    Args:
+        out_path: Output path in which all extracted data is stored.
+        is_file: True if output path is a file else False.
+
+    Returns:
+        Path of the output folder.
     """
     os.makedirs(os.path.dirname(out_path) if is_file else out_path, exist_ok=True)
     return out_path
 
 
-def check_tor(logger):
+def check_tor(logger: Logger) -> Optional[bool]:
     """Checks to see if TOR service is running on device.
     Will exit if (-w) with argument is provided on application startup and TOR
     service is not found to be running on the device.
 
-    :param Logger logger: A logger object to log the output.
-    :return: None
+    Args:
+        Logger: A logger object to log the output.
+
+    Returns:
+        True if TOR service is running.
     """
     for i in psutil.process_iter():
         if "tor" == i.name().lower().rstrip(".exe"):
@@ -78,10 +89,25 @@ def check_tor(logger):
         logger.critical("Enable tor with 'service tor start' or add -w argument")
         sys.exit(2)
 
+    return True
 
-def check_ip(proxies, url, logger, without_tor):
-    """Checks users IP from external resource.
-    :return: None
+
+def check_ip(
+    proxies: Optional[dict[str, str]], url: str, logger: Logger, without_tor: bool = False
+) -> Optional[dict[str, str | bool]]:
+    """Checks users IP and Tor proxy connection from external resource.
+
+    Args:
+        proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+        url: Url to debug.
+        logger: A logger object to log the output.
+        without_tor: True if not using Tor for crawling/extraction else False.
+
+    Returns:
+        Dictionary containing the IP address and the Tor proxy flag.
+
+        {"IsTor":True,
+        "IP":"185.165.171.46"}
     """
     addr = "https://check.torproject.org/api/ip"
     headers = get_requests_header()
@@ -99,10 +125,13 @@ def check_ip(proxies, url, logger, without_tor):
         )
         logger.debug("URL :: %s", url)
 
-        if check1["IsTor"] is False and check2["IsTor"] is False and without_tor is False:
+        # If both checks are false, then Tor proxy is not working
+        if not (check1["IsTor"] or check2["IsTor"] or without_tor):
             raise TorProxyException(
                 "Tor proxy is NOT running! More info: https://support.torproject.org/connecting/#connecting-4"
             )
+
+        return check2
     except Exception as err:
         logger.exception(err)
         sys.exit(2)

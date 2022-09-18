@@ -107,8 +107,6 @@ def GooeyConditional(flag, **kwargs):
 def main():
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
-
-    :return: None
     """
 
     # Get arguments with GooeyParser if available else argparse.
@@ -279,13 +277,13 @@ def main():
     # Logger setup
     crawlog = setup_custom_logger(
         name="crawlog",
+        filename=os.path.join(out_path, "crawl.log"),
         verbose_=args.verbose,
         filelog=args.log,
-        filename=os.path.join(out_path, "crawl.log"),
     )
 
     # Connect to TOR
-    if args.without is False:
+    if not args.without:
         check_tor(logger=crawlog)
         proxies = get_tor_proxies(port=args.port)
 
@@ -301,7 +299,8 @@ def main():
         crawler = Crawler(
             website=website,
             proxies=proxies,
-            c_params={"c_depth": args.cdepth, "c_pause": args.cpause},
+            c_depth=args.cdepth,
+            c_pause=args.cpause,
             out_path=out_path,
             external=args.external,
             exclusion=args.exclusion,
@@ -341,7 +340,7 @@ def main():
                 yara=args.yara,
                 logger=crawlog,
             )
-            extractor.extract()
+            extract = extractor.extract()
     elif args.input or website:
         extractor = Extractor(
             website=website,
@@ -354,7 +353,7 @@ def main():
             yara=args.yara,
             logger=crawlog,
         )
-        extractor.extract()
+        extract = extractor.extract()
 
 
 # Stub to call main method.
