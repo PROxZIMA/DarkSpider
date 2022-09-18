@@ -89,9 +89,11 @@ def check_ip(proxies, url, logger, without_tor):
         ).json()
 
         logger.debug(
-            f"Your IP: {check2['IP']} :: Tor Connection: {check1['IsTor'] or check2['IsTor']}"
+            "Your IP: %s :: Tor Connection: %s",
+            check2["IP"],
+            check1["IsTor"] or check2["IsTor"],
         )
-        logger.debug(f"URL: {url}")
+        logger.debug("URL :: %s", url)
 
         if (
             check1["IsTor"] is False

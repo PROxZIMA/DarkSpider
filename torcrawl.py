@@ -299,9 +299,9 @@ def main():
         )
 
     if canon:
-        crawlog.debug("URL fixed: %s", website)
+        crawlog.debug("URL fixed :: %s", website)
     if out_path:
-        crawlog.debug("Folder created: %s", out_path)
+        crawlog.debug("Folder created :: %s", out_path)
 
     if args.crawl and website:
         crawler = Crawler(

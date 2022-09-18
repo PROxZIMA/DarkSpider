@@ -220,10 +220,10 @@ class Crawler:
             for future in as_completed(futures):
                 item, item_data, response_code = future.result()
                 if isinstance(response_code, int):
-                    self.logger.debug(f"{item} :: {response_code}")
+                    self.logger.debug("%s :: %d", item, response_code)
                 else:
                     error, exception = response_code
-                    self.logger.debug(f"{error} Error :: {item}", exc_info=exception)
+                    self.logger.debug("%s Error :: %s", error, item, exc_info=exception)
 
                 # Add item_data to crawled links.
                 cur_level = cur_level.union(item_data)
@@ -241,7 +241,9 @@ class Crawler:
             old_level = list(clean_cur_level)
             # Reset cur_level
             cur_level = set()
-            self.logger.info(f"Step {index + 1} completed :: {len(ord_lst)} result(s)")
+            self.logger.info(
+                "Step %d completed :: %d result(s)", index + 1, len(ord_lst)
+            )
 
             # Creating json
             with open(

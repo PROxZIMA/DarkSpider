@@ -121,11 +121,14 @@ class Extractor:
         :param yara: Integer: Keyword search argument.
         :return: None
         """
+        self.logger.info(
+            "%s :: Extracting from %s to %s", type_, input_file, out_path or "terminal"
+        )
         file = TextIOWrapper
         try:
             file = open(input_file, "r", encoding="UTF-8")
         except IOError as _:
-            self.logger.exception(f"{type_} Read Error :: {input_file}")
+            self.logger.exception("Read Error :: %s", input_file)
             return
 
         for line in file.read().splitlines():
@@ -140,9 +143,7 @@ class Extractor:
                     else:
                         output_file = cl_page_name
                 except Exception as _:
-                    self.logger.debug(
-                        f"{type_} Output File Error :: {line}", exc_info=True
-                    )
+                    self.logger.debug("Output File Error :: %s", line, exc_info=True)
                     continue
 
             # Extract page to file.
@@ -156,7 +157,9 @@ class Extractor:
                 )
 
                 self.logger.debug(
-                    f"{type_} :: {line} :: {'Yara' if len(full_match_keywords) else 'No yara'} match found!"
+                    "%s :: %s match found!",
+                    line,
+                    "Yara" if len(full_match_keywords) else "No yara",
                 )
 
                 # if len(full_match_keywords) == 0:
@@ -171,23 +174,23 @@ class Extractor:
                     ) as results:
                         results.write(content)
                     self.logger.debug(
-                        f"{type_} File created :: {os.path.join(out_path, output_file)}"
+                        "File created :: %s", os.path.join(out_path, output_file)
                     )
                 else:
-                    self.logger.info(f"{line} :: {content}")
+                    self.logger.info("%s :: %s", line, content)
             except HTTPError as _:
-                self.logger.debug(f"{type_} Request Error :: {line}", exc_info=True)
+                self.logger.debug("Request Error :: %s", line, exc_info=True)
                 continue
             except (InvalidURL, URLError) as _:
-                self.logger.debug(f"{type_} Invalid URL Error :: {line} :: Skipping...")
+                self.logger.debug("Invalid URL Error :: %s :: Skipping...", line)
                 continue
             except IncompleteRead as _:
-                self.logger.debug(f"{type_} Incomplete Read Error :: {line}")
+                self.logger.debug("Incomplete Read Error :: %s", line)
                 continue
             except IOError as _:
-                self.logger.debug(f"{type_} IOError Error :: {line}", exc_info=True)
+                self.logger.debug("IOError Error :: %s", line, exc_info=True)
             except Exception as _:
-                self.logger.debug(f"{type_} Error :: {line}", exc_info=True)
+                self.logger.debug("Error :: %s", line, exc_info=True)
         file.close()
 
     def __cinex(self, input_file, out_path, yara):
@@ -222,34 +225,38 @@ class Extractor:
         :param out_path: String|None: Folder name of the output findings.
         :return: None
         """
-        # Extract page to file
         try:
             if out_path is not None:
                 output_file = os.path.join(out_path, output_file)
+            self.logger.info(
+                "%s :: Extracting %s to %s", type_, website, output_file or "terminal"
+            )
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
 
             full_match_keywords = self.__check_yara(type_=type_, raw=content, yara=yara)
 
             self.logger.debug(
-                f"{type_} :: {website} :: {'Yara' if len(full_match_keywords) else 'No yara'} match found!"
+                "%s :: %s match found!",
+                website,
+                "Yara" if len(full_match_keywords) else "No yara",
             )
 
             if out_path is not None:
                 with open(output_file, "w+", encoding="UTF-8") as file:
                     file.write(content)
-                self.logger.debug(f"{type_} File created :: {output_file}")
+                self.logger.debug("File created :: %s", output_file)
             else:
-                self.logger.info(f"{website} :: {content}")
+                self.logger.info("%s :: %s", website, content)
         except HTTPError as _:
-            self.logger.debug(f"{type_} Request Error :: {website}", exc_info=True)
+            self.logger.debug("Request Error :: %s", website, exc_info=True)
         except (InvalidURL, URLError) as _:
-            self.logger.debug(f"{type_} Invalid URL Error :: {website} :: Skipping...")
+            self.logger.debug("Invalid URL Error :: %s :: Skipping...", website)
         except IncompleteRead as _:
-            self.logger.debug(f"{type_} Incomplete Read Error :: {website}")
+            self.logger.debug("Incomplete Read Error :: %s", website)
         except IOError as _:
-            self.logger.debug(f"{type_} IOError Error :: {website}", exc_info=True)
+            self.logger.debug("IOError Error :: %s", website, exc_info=True)
         except Exception as _:
-            self.logger.debug(f"{type_} Error :: {website}", exc_info=True)
+            self.logger.debug("Error :: %s", website, exc_info=True)
 
     def __outex(self, website, output_file, out_path, yara):
         """Scrapes the contents of the provided web address and outputs the
