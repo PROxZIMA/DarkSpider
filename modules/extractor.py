@@ -21,8 +21,8 @@ ExcInfo = Exception | bool
 LogMsg = tuple[str]
 LogLevel = int
 Log = tuple[LogLevel, LogMsg, ExcInfo]
-Single_res = list[Log]
-Results = list[Single_res]
+SingleRes = list[Log]
+Results = list[SingleRes]
 
 
 class Extractor:
@@ -86,7 +86,7 @@ class Extractor:
         A `Log` is a tuple of `LogLevel`, `LogMsg` and `ExcInfo` with the following format:
             (`LogLevel`, (`msg`, `*args`), `Exception()` or `False`)
 
-        `Single_res` of an url is a list of `Log` with the following format:
+        `SingleRes` of an url is a list of `Log` with the following format:
             [
                 (10, ("%s :: %s match found!", "`http://example.com/file.html`", "Yara"), False),
 
@@ -94,7 +94,7 @@ class Extractor:
             ]
 
         Returns:
-            `Results` of an input which is a List of `Single_res` with the following format:
+            `Results` of an input which is a List of `SingleRes` with the following format:
 
             [[
                 (10, ("%s :: %s match found!", "`http://example.com`", "Yara"), False),
@@ -154,7 +154,7 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Single_res` for each url in input.
+            List of `SingleRes` for each url in input.
         """
         self.logger.info("Cinex :: Extracting from %s to %s", input_file, out_path)
         return self.__inex(input_file=input_file, yara=yara, out_path=out_path)
@@ -167,12 +167,12 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Single_res` for each url in input.
+            List of `SingleRes` for each url in input.
         """
         self.logger.info("Terminex :: Extracting from %s to terminal", input_file)
         return self.__inex(input_file=input_file, yara=yara)
 
-    def __outex(self, website: str, output_file: str, yara: Optional[int]) -> Single_res:
+    def __outex(self, website: str, output_file: str, yara: Optional[int]) -> SingleRes:
         """Scrapes the contents of the provided web address and outputs the
         contents to file.
 
@@ -187,7 +187,7 @@ class Extractor:
         self.logger.info("Outex :: Extracting %s to %s", website, output_file)
         return self.__ex(website=website, yara=yara, output_file=output_file)
 
-    def __termex(self, website: str, yara: Optional[int]) -> Single_res:
+    def __termex(self, website: str, yara: Optional[int]) -> SingleRes:
         """Scrapes provided web address and prints the results to the terminal.
 
         Args:
@@ -211,7 +211,7 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Single_res` [`Results`] for each url in input.
+            List of `SingleRes` [`Results`] for each url in input.
         """
         file = TextIOWrapper
         try:
@@ -242,7 +242,7 @@ class Extractor:
 
         return results
 
-    def __generate_file(self, url: str, out_path: Optional[str], yara: Optional[int]) -> Single_res:
+    def __generate_file(self, url: str, out_path: Optional[str], yara: Optional[int]) -> SingleRes:
         """Generate output file from url and send it to extractor.
 
         Args:
@@ -251,7 +251,7 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Log` [`Single_res`] for given url.
+            List of `Log` [`SingleRes`] for given url.
         """
         output_file = None
         if out_path is not None:
@@ -275,7 +275,7 @@ class Extractor:
 
         return self.__ex(website=url, yara=yara, output_file=output_file)
 
-    def __ex(self, website: str, output_file: str = None, yara: Optional[int] = None) -> Single_res:
+    def __ex(self, website: str, output_file: str = None, yara: Optional[int] = None) -> SingleRes:
         """Scrapes the contents of the provided web address and outputs the
         contents to file or terminal.
 
@@ -285,7 +285,7 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Log` [`Single_res`] for given website.
+            List of `Log` [`SingleRes`] for given website.
         """
         result = []
         try:
