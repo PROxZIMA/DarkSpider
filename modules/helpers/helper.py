@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import time
 from io import StringIO
 from logging.handlers import RotatingFileHandler
 
@@ -49,10 +50,17 @@ def verbose(func):
 class RollingFileHandler(RotatingFileHandler):
     """Custom RotatingFileHandler for incremental infinite logging"""
 
-    def __init__(self, filename, mode="w", maxBytes=0, backupCount=0, encoding=None, delay=False):
-        self.last_backup_cnt = 0
+    def __init__(self, filename, mode="a", maxBytes=0, backupCount=0, encoding=None, delay=False, errors=None):
+        self.last_backup_cnt = int(time.time())
+        self.filename = filename
         super(RollingFileHandler, self).__init__(
-            filename=filename, mode=mode, maxBytes=maxBytes, backupCount=backupCount, encoding=encoding, delay=delay
+            filename="{0}.{2}.init{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
+            mode=mode,
+            maxBytes=maxBytes,
+            backupCount=backupCount,
+            encoding=encoding,
+            delay=delay,
+            errors=errors,
         )
 
     def doRollover(self):
@@ -60,8 +68,9 @@ class RollingFileHandler(RotatingFileHandler):
             self.stream.close()
             self.stream = None
         self.last_backup_cnt += 1
-        next_name = "{0}.{2}{1}".format(*os.path.splitext(self.baseFilename), self.last_backup_cnt)
-        self.rotate(self.baseFilename, next_name)
+        next_name = "{0}.{2}{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt)
+        self.baseFilename = next_name
+        # self.rotate(self.baseFilename, next_name)
         if not self.delay:
             self.stream = self._open()
 
@@ -108,7 +117,7 @@ def setup_custom_logger(
     logger.addHandler(screen_handler)
 
     if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=10 * 1024 * 1024)
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
