@@ -31,7 +31,6 @@ def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
     uri = urlparse(website)
     if uri.path == "/":
         website = website.rstrip("/")
-        canon = True
 
     return canon, website
 
