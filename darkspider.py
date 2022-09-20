@@ -55,7 +55,7 @@ import warnings
 
 import requests
 
-from modules.helpers.helper import get_tor_proxies, setup_custom_logger
+from modules.helper import get_tor_proxies, setup_custom_logger
 
 try:
     from gooey import Gooey, GooeyParser
@@ -64,10 +64,9 @@ try:
 except ModuleNotFoundError:
     GOOEY_AVAILABLE = False
 
-from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
-
 # DarkSpider Modules
-from modules.crawler import Crawler
+from modules import Crawler
+from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 from modules.extractor import Extractor
 from modules.visualization import Visualization
 

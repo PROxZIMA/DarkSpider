@@ -14,7 +14,7 @@ import yara as _yara
 from bs4 import BeautifulSoup
 
 from modules.checker import folder
-from modules.helpers.helper import get_requests_header
+from modules.helper import get_requests_header
 
 # Type hinting aliases
 ExcInfo = Exception | bool

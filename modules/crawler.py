@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from requests.models import Response
 
 from modules.checker import url_canon
-from modules.helpers.helper import get_requests_header
+from modules.helper import get_requests_header
 
 
 class Crawler:

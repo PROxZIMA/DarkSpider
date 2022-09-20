@@ -9,7 +9,7 @@ import seaborn as sns
 from matplotlib.ticker import MultipleLocator
 
 from modules.checker import folder
-from modules.helpers.helper import verbose
+from modules.helper import verbose
 
 
 class Visualization:

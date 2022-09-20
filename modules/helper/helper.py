@@ -181,4 +181,4 @@ def traceback_name(error: Exception) -> str:
 
 class TorProxyException(Exception):
     "Exception raised for errors in the Tor proxy. This might happen if the Tor is running but the application is using a different port."
-    pass
+    error_code = 69

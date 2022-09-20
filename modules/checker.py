@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import psutil
 import requests
 
-from modules.helpers.helper import TorProxyException, get_requests_header
+from modules.helper import TorProxyException, get_requests_header
 
 
 def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
@@ -133,4 +133,4 @@ def check_ip(
         return check2
     except Exception as err:
         logger.exception(err)
-        sys.exit(2)
+        raise
