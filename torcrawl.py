@@ -280,6 +280,7 @@ def main():
         filename=os.path.join(out_path, "crawl.log"),
         verbose_=args.verbose,
         filelog=args.log,
+        argv=sys.argv,
     )
 
     # Connect to TOR

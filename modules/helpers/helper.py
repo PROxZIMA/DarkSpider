@@ -76,7 +76,7 @@ class RollingFileHandler(RotatingFileHandler):
 
 
 def setup_custom_logger(
-    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True
+    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: list[str] = None
 ) -> logging.Logger:
     """Setup custom logger with stream and file handlers
 
@@ -89,38 +89,44 @@ def setup_custom_logger(
     Returns:
         Logger object with custom handlers and formatters.
     """
-    formatter = logging.Formatter(
-        fmt="{asctime} [{levelname:^7s}] [{filename}:{lineno}] {message}",
-        style="{",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    logger.handlers.clear()
+    logger.handlers.clear()  # Clear all handlers
 
-    screen_handler = logging.StreamHandler(stream=sys.stdout)
-    screen_handler.setFormatter(formatter)
-    screen_handler.setLevel(logging.DEBUG)
+    # Create file handler if filelog is True
+    if filelog:
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
+        file_handler.setFormatter(None)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
 
-    # Set simple formatter for file non-verbose logging
-    if not verbose_:
-        screen_handler.setFormatter(
+        # Add a single non-formatted terminal command to the log file only
+        if argv:
+            logger.info("$ python %s \n", " ".join(argv))
+
+        # Update the formatter for the file handler
+        logger.handlers[0].setFormatter(
             logging.Formatter(
-                fmt="## {message}",
+                fmt="{asctime} |{levelname:^7s}| {filename}:{lineno} | {message}",
                 style="{",
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
         )
-        screen_handler.setLevel(logging.INFO)
 
+    # Simple formatter for non-verbose logging
+    fmt, level = ("[{levelname:^7s}] {message}", logging.DEBUG) if verbose_ else ("## {message}", logging.INFO)
+
+    # Add screen handler with custom formatter
+    screen_handler = logging.StreamHandler(stream=sys.stdout)
+    screen_handler.setFormatter(
+        logging.Formatter(
+            fmt=fmt,
+            style="{",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    screen_handler.setLevel(level)
     logger.addHandler(screen_handler)
-
-    if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
 
     return logger
 
