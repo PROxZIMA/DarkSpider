@@ -23,14 +23,14 @@ DarkSpider is a python script to crawl and extract (regular or onion) webpages t
 With a single argument you can read an .onion webpage or a regular one through TOR Network and using pipes you can pass the output at any other tool you prefer.
 
 ```shell
-$ python torcrawl.py -u http://github.com/ | grep 'google-site-verification'
+$ python darkspider.py -u http://github.com/ | grep 'google-site-verification'
     <meta name="google-site-verification" content="xxxx">
 ```
 
 If you want to crawl the links of a webpage use the `-c` and you will get a folder all the extracted links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
 
 ```shell
-$ python torcrawl.py -v -u http://github.com/ -c -d 2 -p 2
+$ python darkspider.py -v -u http://github.com/ -c -d 2 -p 2
 [ DEBUG ] TOR is ready!
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: True
 [ DEBUG ] URL :: http://github.com
@@ -94,7 +94,7 @@ Args | Long | Description
 - To just extract a single webpage to terminal:
 
 ```shell
-$ python torcrawl.py -u http://github.com/
+$ python darkspider.py -u http://github.com/
 ## Termex :: Extracting http://github.com to terminal
 ## http://github.com ::
 <!DOCTYPE html>
@@ -105,21 +105,21 @@ $ python torcrawl.py -u http://github.com/
 - Extract into a file (github.html) without the use of TOR:
 
 ```shell
-$ python torcrawl.py -w -u http://github.com -o github.html
+$ python darkspider.py -w -u http://github.com -o github.html
 ## Outex :: Extracting http://github.com to github.com/github.html
 ```
 
 - Extract to terminal and find only the line with google-site-verification:
 
 ```shell
-$ python torcrawl.py -u http://github.com/ | grep 'google-site-verification'
+$ python darkspider.py -u http://github.com/ | grep 'google-site-verification'
     <meta name="google-site-verification" content="xxxx">
 ```
 
 - Extract to file and find only the line with google-site-verification using `yara`:
 
 ```shell
-$ python torcrawl.py -v -w -u https://github.com -e -y 0
+$ python darkspider.py -v -w -u https://github.com -e -y 0
 ...
 ```
 
@@ -131,7 +131,7 @@ $ python torcrawl.py -v -w -u https://github.com -e -y 0
 - Extract a set of webpages (imported from file) to a folder:
 
 ```shell
-$ python torcrawl.py -i links.txt -f links_output
+$ python darkspider.py -i links.txt -f links_output
 ...
 ```
 
@@ -139,7 +139,7 @@ $ python torcrawl.py -i links.txt -f links_output
 - Crawl the links of the webpage without the use of TOR, also show verbose output (really helpful):
 
 ```shell
-$ python torcrawl.py -v -w -u http://github.com/ -c
+$ python darkspider.py -v -w -u http://github.com/ -c
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: False
 [ DEBUG ] URL :: http://github.com/
 [ DEBUG ] Folder created :: github.com
@@ -151,7 +151,7 @@ $ python torcrawl.py -v -w -u http://github.com/ -c
 - Crawl the webpage with depth 2 (2 clicks) and 5 seconds waiting before crawl the next page:
 
 ```shell
-$ python torcrawl.py -v -u http://github.com/ -c -d 2 -p 5
+$ python darkspider.py -v -u http://github.com/ -c -d 2 -p 5
 [ DEBUG ] TOR is ready!
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: True
 [ DEBUG ] URL :: http://github.com
@@ -165,7 +165,7 @@ $ python torcrawl.py -v -u http://github.com/ -c -d 2 -p 5
 Crawl the webpage with depth 1 (1 clicks), 1 seconds pause and exclude links that match `.*\.blog`:
 
 ```shell
-$ python torcrawl.py -v -u http://github.com/ -c -d 1 -p 1 -z ".*\.blog"
+$ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -z ".*\.blog"
 [ DEBUG ] TOR is ready!
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: True
 [ DEBUG ] URL :: http://github.com/
@@ -179,7 +179,7 @@ $ python torcrawl.py -v -u http://github.com/ -c -d 1 -p 1 -z ".*\.blog"
 You can crawl a page and also extract the webpages into a folder with a single command:
 
 ```shell
-$ python torcrawl.py -v -u http://github.com/ -c -d 1 -p 1 -e
+$ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -e
 [ DEBUG ] TOR is ready!
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: True
 [ DEBUG ] URL :: http://github.com/
@@ -201,7 +201,7 @@ $ python torcrawl.py -v -u http://github.com/ -c -d 1 -p 1 -e
 Following the same logic; you can parse all these pages to grep (for example) and search for specific text:
 
 ```shell
-$ python torcrawl.py -u http://github.com/ -c -e | grep '</html>'
+$ python darkspider.py -u http://github.com/ -c -e | grep '</html>'
 </html>
 </html>
 ...
@@ -211,7 +211,7 @@ $ python torcrawl.py -u http://github.com/ -c -e | grep '</html>'
 You can crawl a page, perform a keyword search and extract the webpages that match the findings into a folder with a single command:
 
 ```shell
-$ python torcrawl.py -v -u http://github.com/ -o github.html -y 0
+$ python darkspider.py -v -u http://github.com/ -o github.html -y 0
 [ DEBUG ] TOR is ready!
 [ DEBUG ] Your IP: XXX.XXX.XXX.XXX :: Tor Connection: True
 [ DEBUG ] URL :: http://github.com/
@@ -224,7 +224,7 @@ $ python torcrawl.py -v -u http://github.com/ -o github.html -y 0
 Provide `-s` argument to create graphs to gain [insights](https://github.com/PROxZIMA/DarkSpider/pull/13) from the generated data,
 
 ```shell
-$ python torcrawl.py -u "http://github.com/" -c -d 2 -p 1 -t 32 -s
+$ python darkspider.py -u "http://github.com/" -c -d 2 -p 1 -t 32 -s
 ## Crawler started from http://github.com with 2 depth, 1.0 second delay and using 32 Threads. Excluding 'None' links.
 ## Step 1 completed :: 87 result(s)
 ## Step 2 completed :: 4508 result(s)

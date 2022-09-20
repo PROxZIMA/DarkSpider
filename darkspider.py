@@ -4,11 +4,11 @@
 DarkSpider is a python script to crawl and extract (regular or onion)
 webpages through TOR network.
 
-usage: python torcrawl.py [options]
-python torcrawl.py -u l0r3m1p5umD0lorS1t4m3t.onion
-python torcrawl.py -v -w -u http://www.github.com -o github.htm
-python torcrawl.py -v -u l0r3m1p5umD0lorS1t4m3t.onion -c -d 2 -p 5
-python torcrawl.py -v -w -u http://www.github.com -c -d 2 -p 5 -e -f GitHub
+usage: python darkspider.py [options]
+python darkspider.py -u l0r3m1p5umD0lorS1t4m3t.onion
+python darkspider.py -v -w -u http://www.github.com -o github.htm
+python darkspider.py -v -u l0r3m1p5umD0lorS1t4m3t.onion -c -d 2 -p 5
+python darkspider.py -v -w -u http://www.github.com -c -d 2 -p 5 -e -f GitHub
 
 General:
 -h, --help         : Help
