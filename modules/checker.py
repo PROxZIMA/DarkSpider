@@ -8,6 +8,7 @@ import psutil
 import requests
 
 from modules.helper import TorProxyException, get_requests_header
+from modules.helper.helper import TorServiceException
 
 
 def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
@@ -78,17 +79,24 @@ def check_tor(logger: Logger) -> Optional[bool]:
 
     Returns:
         True if TOR service is running.
-    """
-    for i in psutil.process_iter():
-        if "tor" == i.name().lower().rstrip(".exe"):
-            logger.debug("TOR is ready!")
-            break
-    else:
-        logger.critical("TOR is NOT running!")
-        logger.critical("Enable tor with 'service tor start' or add -w argument")
-        sys.exit(2)
 
-    return True
+    Raises:
+        TorServiceException: If Tor Service is not working.
+    """
+    try:
+        tor = "tor"
+        for i in psutil.process_iter():
+            if tor == i.name().lower().rstrip(".exe"):
+                logger.debug("TOR is ready!")
+                break
+        else:
+            raise TorServiceException("TOR is NOT running! Enable tor with 'service tor start' or add -w argument")
+        return True
+    except Exception as err:
+        # We could've logged the TorServiceException where it was raised and could've avoided try/catch block
+        # but we want to log unexpected errors too and raise all the exception
+        logger.critical(err)
+        raise
 
 
 def check_ip(
@@ -107,6 +115,9 @@ def check_ip(
 
         {"IsTor":True,
         "IP":"185.165.171.46"}
+
+    Raises:
+        TorProxyException: If Tor proxy is not working.
     """
     addr = "https://check.torproject.org/api/ip"
     headers = get_requests_header()
@@ -132,5 +143,7 @@ def check_ip(
 
         return check2
     except Exception as err:
-        logger.exception(err)
+        # We could've logged the TorProxyException where it was raised and could've avoided try/catch block
+        # but we want to log unexpected errors too and raise all the exception
+        logger.critical(err)
         raise
