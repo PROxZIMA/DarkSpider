@@ -1,10 +1,12 @@
 import shutil
 import unittest
-from copy import copy
 
+from modules import Crawler
 from modules.checker import extract_domain, folder
-from modules.crawler import Crawler
-from modules.helpers.helper import Capturing
+from modules.helper import setup_custom_logger
+
+# Disable sorted test case loading
+unittest.TestLoader.sortTestMethodsUsing = lambda *args: -1
 
 
 class TestCrawlerFunctions(unittest.TestCase):
@@ -15,21 +17,36 @@ class TestCrawlerFunctions(unittest.TestCase):
         """Test Suite Setup."""
         cls._website = "http://info.cern.ch/"
         cls.out_path = out_path = folder(extract_domain(cls._website), False)
+        cls.logger = setup_custom_logger(
+            name="testlog",
+            filename=None,
+            verbose_=False,
+            filelog=False,
+            argv=None,
+        )
         cls.crawler = Crawler(
             website=cls._website,
+            proxies=None,
             c_depth=1,
             c_pause=1,
             out_path=out_path,
             external=False,
-            thread=1,
-            logs=False,
-            verbose=False,
             exclusion=None,
+            thread=1,
+            logger=cls.logger,
         )
-        cls.crawler_ex = copy(cls.crawler)
-        cls.crawler_ex.external = True
         # Exclude links with subdomain='home.web'
-        cls.crawler_ex.exclusion = ".*//home\.web.*"
+        cls.crawler_ex = Crawler(
+            website=cls._website,
+            proxies=None,
+            c_depth=1,
+            c_pause=1,
+            out_path=out_path,
+            external=True,
+            exclusion=".*//home\.web.*",
+            thread=1,
+            logger=cls.logger,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -38,17 +55,14 @@ class TestCrawlerFunctions(unittest.TestCase):
         shutil.rmtree(cls.out_path)
 
     def test_excludes(self):
-        """Test crawler.excludes function.
-        Return True if the function successfully excludes the the provided
-        failing links.
-        """
+        """Test crawler.excludes function."""
         _uri = self._website
         failing_links = [
             None,
             "#",
             "http://home.web.cern.ch/topics",
             "tel:012-013-104-5",
-            "mailto:test@torcrawl.com",
+            "mailto:test@darkspider.com",
             f"{_uri}/res/test.pdf",
             f"{_uri}/res/test.jpg",
             f"{_uri}/res/test.jpeg",
@@ -73,10 +87,7 @@ class TestCrawlerFunctions(unittest.TestCase):
         )
 
     def test_canonical(self):
-        """Test crawler.canonical function.
-        Return True if the function successfully normalizes the provided
-        failing links.
-        """
+        """Test crawler.canonical function."""
         _uri = self._website
         links = [
             [f"{_uri}sundance", f"{_uri}sundance"],
@@ -94,21 +105,31 @@ class TestCrawlerFunctions(unittest.TestCase):
                 f"Test Fail:: Canon returned = {result}, expected {link[1]}",
             )
 
-    def test_crawl(self):
-        """Test Crawlwer.crawl functionality
-
-        Return: List (ord_lst) - List of crawled links."""
+    def test_crawl_001(self):
+        """Test Crawler.crawl functionality"""
         _uri = self._website
 
-        with Capturing() as _:
-            result = self.crawler.crawl()
-            result_ex = self.crawler_ex.crawl()
+        # with Capturing() as _:
+        result = self.crawler.crawl()
 
         expected = {
             _uri: [
                 f"{_uri}hypertext/WWW/TheProject.html",
             ]
         }
+
+        self.assertCountEqual(
+            expected,
+            result,
+            f"Test Fail:: Crawler returned = {result}, expected {expected}",
+        )
+
+    def test_crawl_002(self):
+        """Test Crawler.crawl functionality"""
+        _uri = self._website
+
+        # with Capturing() as _:
+        result_ex = self.crawler_ex.crawl()
 
         # Following links are excluded as they match the exclusion pattern
         # http://home.web.cern.ch/topics/birth-web
@@ -120,11 +141,6 @@ class TestCrawlerFunctions(unittest.TestCase):
             ]
         }
 
-        self.assertCountEqual(
-            expected,
-            result,
-            f"Test Fail:: Crawler returned = {result}, expected {expected}",
-        )
         self.assertCountEqual(
             expected_ex,
             result_ex,
