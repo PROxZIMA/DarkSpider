@@ -238,15 +238,29 @@ $ python darkspider.py -u "http://github.com/" -c -d 2 -p 1 -t 32 -s
 ## Generating :: Visualization of the graph...
 ```
 
+## Testing:
+Test cases must be updated as we don't want any unexpected exception to pop-up in-between long runs.
+
+Before creating a PR make sure to run all the test cases.
+
+```bash
+$ python3 -m unittest -b
+```
+or a module specific test cases using
+
+```bash
+$ python3 -m unittest modules.tests.test_crawler -b
+```
+---
 > **Note**
 >
 > Output in Readme is trimmed for better readability. General [verbose output](./assets/logging.png) is much detailed.
 
-## Credits
+## Credits:
 - [**@MikeMeliz**](https://github.com/MikeMeliz) for initial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase
 - A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
-## Contributors:
+## Contributing:
 Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
 
 [![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider "Contributors")](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
