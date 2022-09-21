@@ -305,10 +305,9 @@ class Extractor:
                     )
                 )
 
+                # Don't write to file/terminal if no matches found.
                 if len(full_match_keywords) == 0:
-                    # Don't write to file/terminal if no matches found.
-                    if output_file is not None:
-                        return result
+                    return result
 
             if output_file is not None:
                 with open(output_file, "w", encoding="UTF-8") as file:
