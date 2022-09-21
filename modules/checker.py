@@ -1,5 +1,4 @@
 import os
-import sys
 from logging import Logger
 from typing import Optional
 from urllib.parse import urlparse
@@ -7,8 +6,7 @@ from urllib.parse import urlparse
 import psutil
 import requests
 
-from modules.helper import TorProxyException, get_requests_header
-from modules.helper.helper import TorServiceException
+from modules.helper import TorProxyException, TorServiceException, get_requests_header
 
 
 def url_canon(website: str, www: bool = False) -> tuple[bool, str]:

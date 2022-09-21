@@ -6,8 +6,7 @@ from typing import Iterator
 from unittest import mock
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
-from modules.helper import TorProxyException, get_tor_proxies, setup_custom_logger
-from modules.helper.helper import TorServiceException
+from modules.helper import TorProxyException, TorServiceException, get_tor_proxies, setup_custom_logger
 
 
 class MockedPsutilProcess:
