@@ -1,40 +1,49 @@
-#!/usr/bin/python
-
 import os
-import re
-import subprocess
-import sys
-from json import load
-from urllib.error import HTTPError
+from logging import Logger
+from typing import Optional
 from urllib.parse import urlparse
-from urllib.request import urlopen
+
+import psutil
+import requests
+
+from modules.helper import TorProxyException, TorServiceException, get_requests_header
 
 
-def url_canon(website, verbose):
-    """ URL normalisation/canonicalization
+def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
+    """URL normalisation/canonicalization
 
-    :param website: String - URL of website.
-    :param verbose: Boolean - Verbose logging switch.
-    :return: String 'website' - normalised result.
+    Args:
+        website: URL of website.
+        www: True if www is to be included else False.
+
+    Returns:
+        A tuple of a boolean indicating whether ``website`` is normalised, normalised ``website``.
     """
+    canon = False
     if not website.startswith("http"):
-        if not website.startswith("www."):
+        if www and not website.startswith("www."):
             website = "www." + website
-            if verbose:
-                print(("## URL fixed: " + website))
         website = "http://" + website
-        if verbose:
-            print(("## URL fixed: " + website))
-    return website
+        canon = True
+
+    # Remove trailing slash if website is just a hostname
+    uri = urlparse(website)
+    if uri.path == "/":
+        website = website.rstrip("/")
+
+    return canon, website
 
 
-def extract_domain(url, remove_http=True):
-    """ Parses the provided 'url' to provide only the netloc or
+def extract_domain(url: str, remove_http: bool = True) -> str:
+    """Parses the provided 'url' to provide only the netloc or
     scheme + netloc parts of the provided url.
 
-    :param url: String - Url to parse.
-    :param remove_http: Boolean
-    :return: String 'domain_name' - Resulting parsed Url
+    Args:
+        url: Url to parse.
+        remove_http: True if http/https is to be removed else False.
+
+    Returns:
+        Resulting parsed Url.
     """
     uri = urlparse(url)
     if remove_http:
@@ -44,54 +53,95 @@ def extract_domain(url, remove_http=True):
     return domain_name
 
 
-# Create output path
-def folder(website, verbose):
-    """ Creates an output path for the findings.
+def folder(out_path: str, is_file: bool = False) -> str:
+    """Creates an output path for the findings.
 
-    :param website: String - URL of website to crawl.
-    :param verbose: Boolean - Logging level.
-    :return: String 'out_path' - Path of the output folder.
+    Args:
+        out_path: Output path in which all extracted data is stored.
+        is_file: True if output path is a file else False.
+
+    Returns:
+        Path of the output folder.
     """
-    out_path = website
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-    if verbose:
-        print(f"## Folder created: {out_path}")
+    os.makedirs(os.path.dirname(out_path) if is_file else out_path, exist_ok=True)
     return out_path
 
 
-def check_tor(verbose):
+def check_tor(logger: Logger) -> Optional[bool]:
     """Checks to see if TOR service is running on device.
     Will exit if (-w) with argument is provided on application startup and TOR
     service is not found to be running on the device.
 
-    :param verbose: Boolean -'verbose' logging argument.
-    :return: None
+    Args:
+        Logger: A logger object to log the output.
+
+    Returns:
+        True if TOR service is running.
+
+    Raises:
+        TorServiceException: If Tor Service is not working.
     """
-    check_for_tor = subprocess.check_output(['ps', '-e'])
-
-    def find_whole_word(word):
-        return re.compile(r'\b({0})\b'.format(word),
-                          flags=re.IGNORECASE).search
-
-    if find_whole_word('tor')(str(check_for_tor)):
-        if verbose:
-            print("## TOR is ready!")
-    else:
-        print("## TOR is NOT running!")
-        print('## Enable tor with \'service tor start\' or add -w argument')
-        sys.exit(2)
-
-
-def check_ip():
-    """ Checks users IP from external resource.
-    :return: None or HTTPError
-    """
-    addr = 'https://api.ipify.org/?format=json'
     try:
-        my_ip = load(urlopen(addr))['ip']
-        print(f'## Your IP: {my_ip}')
-    except HTTPError as err:
-        error = sys.exc_info()[0]
-        print(f"Error: {error} \n## IP cannot be obtained. \n## Is {addr} up? "
-              f"\n## HTTPError: {err}")
+        tor = "tor"
+        for i in psutil.process_iter():
+            if tor == i.name().lower().rstrip(".exe"):
+                logger.debug("TOR is ready!")
+                break
+        else:
+            raise TorServiceException("TOR is NOT running! Enable tor with 'service tor start' or add -w argument")
+        return True
+    except Exception as err:
+        # We could've logged the TorServiceException where it was raised and could've avoided try/catch block
+        # but we want to log unexpected errors too and raise all the exception
+        logger.critical(err)
+        raise
+
+
+def check_ip(
+    proxies: Optional[dict[str, str]], url: str, logger: Logger, without_tor: bool = False
+) -> Optional[dict[str, str | bool]]:
+    """Checks users IP and Tor proxy connection from external resource.
+
+    Args:
+        proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
+        url: Url to debug.
+        logger: A logger object to log the output.
+        without_tor: True if not using Tor for crawling/extraction else False.
+
+    Returns:
+        Dictionary containing the IP address and the Tor proxy flag.
+
+        {"IsTor":True,
+        "IP":"185.165.171.46"}
+
+    Raises:
+        TorProxyException: If Tor proxy is not working.
+    """
+    addr = "https://check.torproject.org/api/ip"
+    headers = get_requests_header()
+    try:
+        # https://tor.stackexchange.com/a/13079
+        # Double check to tackle false positives
+        check1 = requests.get(addr, headers=headers, proxies=proxies, timeout=10, verify=False).json()
+
+        check2 = requests.get(addr, headers=headers, proxies=proxies, timeout=10, verify=False).json()
+
+        logger.debug(
+            "Your IP: %s :: Tor Connection: %s",
+            check2["IP"],
+            check1["IsTor"] or check2["IsTor"],
+        )
+        logger.debug("URL :: %s", url)
+
+        # If both checks are false, then Tor proxy is not working
+        if not (check1["IsTor"] or check2["IsTor"] or without_tor):
+            raise TorProxyException(
+                "Tor proxy is NOT running! More info: https://support.torproject.org/connecting/#connecting-4"
+            )
+
+        return check2
+    except Exception as err:
+        # We could've logged the TorProxyException where it was raised and could've avoided try/catch block
+        # but we want to log unexpected errors too and raise all the exception
+        logger.critical(err)
+        raise

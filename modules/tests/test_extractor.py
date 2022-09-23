@@ -1,92 +1,104 @@
 import os.path
 import shutil
 import unittest
-import urllib.request
-from ast import literal_eval
 from collections import defaultdict
-from pathlib import Path
+from copy import copy
 from unittest import mock
 
 from modules.checker import folder
-from modules.extractor import (
-    check_yara,
-    cinex,
-    extractor,
-    intermex,
-    outex,
-    termex,
-    text,
-)
-from modules.helpers.helper import Capturing
+from modules.extractor import Extractor
+from modules.helper import setup_custom_logger
 
 URL_1 = "http://info.cern.ch/"
 URL_2 = "http://info.cern.ch/hypertext/WWW/TheProject.html"
 URL_3 = "unknown_path"
 
 
-def mocked_urllib_open(*args, **kwargs):
+def mocked_requests_Session_get(*args, **kwargs):
     """Custom sideeffect for mock testing network urls"""
 
     class MockResponse:
         """Custom mock response"""
 
         def __init__(self, response_data):
-            self.response_data = response_data
+            self.text = response_data
 
-        def read(self):
-            """Read method for urllib.request.urlopen"""
-            return self.response_data
-
-    responses = defaultdict(lambda: None)
+    responses = defaultdict(lambda: "")
 
     responses[
         URL_1
-    ] = b'<html><head></head><body><header>\n<title>http://info.cern.ch</title>\n</header>\n\n<h1>http://info.cern.ch - home of the first website</h1>\n<p>From here you can:</p>\n<ul>\n<li><a href="http://info.cern.ch/hypertext/WWW/TheProject.html">Browse the first website</a></li>\n<li><a href="http://line-mode.cern.ch/www/hypertext/WWW/TheProject.html">Browse the first website using the line-mode browser simulator</a></li>\n<li><a href="http://home.web.cern.ch/topics/birth-web">Learn about the birth of the web</a></li>\n<li><a href="http://home.web.cern.ch/about">Learn about CERN, the physics laboratory where the web was born</a></li>\n</ul>\n</body></html>\n'
+    ] = '<html><head></head><body><header>\n<title>http://info.cern.ch</title>\n</header>\n\n<h1>http://info.cern.ch - home of the first website</h1>\n<p>From here you can:</p>\n<ul>\n<li><a href="http://info.cern.ch/hypertext/WWW/TheProject.html">Browse the first website</a></li>\n<li><a href="http://line-mode.cern.ch/www/hypertext/WWW/TheProject.html">Browse the first website using the line-mode browser simulator</a></li>\n<li><a href="http://home.web.cern.ch/topics/birth-web">Learn about the birth of the web</a></li>\n<li><a href="http://home.web.cern.ch/about">Learn about CERN, the physics laboratory where the web was born</a></li>\n</ul>\n</body></html>\n'
 
     responses[
         URL_2
-    ] = b'<HEADER>\n<TITLE>The World Wide Web project</TITLE>\n<NEXTID N="55">\n</HEADER>\n<BODY>\n<H1>World Wide Web</H1>The WorldWideWeb (W3) is a wide-area<A\nNAME=0 HREF="WhatIs.html">\nhypermedia</A> information retrieval\ninitiative aiming to give universal\naccess to a large universe of documents.<P>\nEverything there is online about\nW3 is linked directly or indirectly\nto this document, including an <A\nNAME=24 HREF="Summary.html">executive\nsummary</A> of the project, <A\nNAME=29 HREF="Administration/Mailing/Overview.html">Mailing lists</A>\n, <A\nNAME=30 HREF="Policy.html">Policy</A> , November\'s  <A\nNAME=34 HREF="News/9211.html">W3  news</A> ,\n<A\nNAME=41 HREF="FAQ/List.html">Frequently Asked Questions</A> .\n<DL>\n<DT><A\nNAME=44 HREF="../DataSources/Top.html">What\'s out there?</A>\n<DD> Pointers to the\nworld\'s online information,<A\nNAME=45 HREF="../DataSources/bySubject/Overview.html"> subjects</A>\n, <A\nNAME=z54 HREF="../DataSources/WWW/Servers.html">W3 servers</A>, etc.\n<DT><A\nNAME=46 HREF="Help.html">Help</A>\n<DD> on the browser you are using\n<DT><A\nNAME=13 HREF="Status.html">Software Products</A>\n<DD> A list of W3 project\ncomponents and their current state.\n(e.g. <A\nNAME=27 HREF="LineMode/Browser.html">Line Mode</A> ,X11 <A\nNAME=35 HREF="Status.html#35">Viola</A> ,  <A\nNAME=26 HREF="NeXT/WorldWideWeb.html">NeXTStep</A>\n, <A\nNAME=25 HREF="Daemon/Overview.html">Servers</A> , <A\nNAME=51 HREF="Tools/Overview.html">Tools</A> ,<A\nNAME=53 HREF="MailRobot/Overview.html"> Mail robot</A> ,<A\nNAME=52 HREF="Status.html#57">\nLibrary</A> )\n<DT><A\nNAME=47 HREF="Technical.html">Technical</A>\n<DD> Details of protocols, formats,\nprogram internals etc\n<DT><A\nNAME=40 HREF="Bibliography.html">Bibliography</A>\n<DD> Paper documentation\non  W3 and references.\n<DT><A\nNAME=14 HREF="People.html">People</A>\n<DD> A list of some people involved\nin the project.\n<DT><A\nNAME=15 HREF="History.html">History</A>\n<DD> A summary of the history\nof the project.\n<DT><A\nNAME=37 HREF="Helping.html">How can I help</A> ?\n<DD> If you would like\nto support the web..\n<DT><A\nNAME=48 HREF="../README.html">Getting code</A>\n<DD> Getting the code by<A\nNAME=49 HREF="LineMode/Defaults/Distribution.html">\nanonymous FTP</A> , etc.</A>\n</DL>\n</BODY>\n'
+    ] = '<HEADER>\n<TITLE>The World Wide Web project</TITLE>\n<NEXTID N="55">\n</HEADER>\n<BODY>\n<H1>World Wide Web</H1>The WorldWideWeb (W3) is a wide-area<A\nNAME=0 HREF="WhatIs.html">\nhypermedia</A> information retrieval\ninitiative aiming to give universal\naccess to a large universe of documents.<P>\nEverything there is online about\nW3 is linked directly or indirectly\nto this document, including an <A\nNAME=24 HREF="Summary.html">executive\nsummary</A> of the project, <A\nNAME=29 HREF="Administration/Mailing/Overview.html">Mailing lists</A>\n, <A\nNAME=30 HREF="Policy.html">Policy</A> , November\'s  <A\nNAME=34 HREF="News/9211.html">W3  news</A> ,\n<A\nNAME=41 HREF="FAQ/List.html">Frequently Asked Questions</A> .\n<DL>\n<DT><A\nNAME=44 HREF="../DataSources/Top.html">What\'s out there?</A>\n<DD> Pointers to the\nworld\'s online information,<A\nNAME=45 HREF="../DataSources/bySubject/Overview.html"> subjects</A>\n, <A\nNAME=z54 HREF="../DataSources/WWW/Servers.html">W3 servers</A>, etc.\n<DT><A\nNAME=46 HREF="Help.html">Help</A>\n<DD> on the browser you are using\n<DT><A\nNAME=13 HREF="Status.html">Software Products</A>\n<DD> A list of W3 project\ncomponents and their current state.\n(e.g. <A\nNAME=27 HREF="LineMode/Browser.html">Line Mode</A> ,X11 <A\nNAME=35 HREF="Status.html#35">Viola</A> ,  <A\nNAME=26 HREF="NeXT/WorldWideWeb.html">NeXTStep</A>\n, <A\nNAME=25 HREF="Daemon/Overview.html">Servers</A> , <A\nNAME=51 HREF="Tools/Overview.html">Tools</A> ,<A\nNAME=53 HREF="MailRobot/Overview.html"> Mail robot</A> ,<A\nNAME=52 HREF="Status.html#57">\nLibrary</A> )\n<DT><A\nNAME=47 HREF="Technical.html">Technical</A>\n<DD> Details of protocols, formats,\nprogram internals etc\n<DT><A\nNAME=40 HREF="Bibliography.html">Bibliography</A>\n<DD> Paper documentation\non  W3 and references.\n<DT><A\nNAME=14 HREF="People.html">People</A>\n<DD> A list of some people involved\nin the project.\n<DT><A\nNAME=15 HREF="History.html">History</A>\n<DD> A summary of the history\nof the project.\n<DT><A\nNAME=37 HREF="Helping.html">How can I help</A> ?\n<DD> If you would like\nto support the web..\n<DT><A\nNAME=48 HREF="../README.html">Getting code</A>\n<DD> Getting the code by<A\nNAME=49 HREF="LineMode/Defaults/Distribution.html">\nanonymous FTP</A> , etc.</A>\n</DL>\n</BODY>\n'
 
     return MockResponse(responses[args[0]])
 
 
+@mock.patch("requests.Session.get", side_effect=mocked_requests_Session_get)
 class TestCheckerFunctions(unittest.TestCase):
     """Unit test for Extractor module."""
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Test Suite Setup."""
+        cls.out_path = "darkspider"
+        cls.out_file = os.path.join(cls.out_path, "index.html")
+        cls.inp_file = os.path.join(cls.out_path, "links.txt")
+        cls.logger = setup_custom_logger(
+            name="testlog",
+            filename=None,
+            verbose_=False,
+            filelog=False,
+            argv=None,
+        )
+        cls.extractor_1 = Extractor(
+            website=URL_1,
+            proxies=None,
+            crawl=False,
+            output_file=cls.out_file,
+            input_file=cls.inp_file,
+            out_path=cls.out_path,
+            thread=1,
+            yara=True,
+            logger=cls.logger,
+        )
+
     def setUp(self):
         """Test Case Setup."""
-        self.out_path = folder("torcrawl", False)
-        self.inp_path = "links.txt"
+        folder(self.out_path, False)
 
-        with open(self.inp_path, "w", encoding="utf-8") as f:
+        with open(self.inp_file, "w", encoding="utf-8") as f:
             f.write(f"{URL_1}\n")
             f.write(f"{URL_2}\n")
             f.write(URL_3)
 
     def tearDown(self):
         """Test Case Teardown."""
-        # Remove input file.
-        os.remove(self.inp_path)
         # Remove test folder.
         shutil.rmtree(self.out_path, ignore_errors=True)
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_text(self, _):
-        """text unit test.
-        Removes all the garbage from the HTML and takes only text elements from the page.
-        """
-        expected = """http://info.cern.ch http://info.cern.ch - home of the first website From here you can: Browse the first website Browse the first website using the line-mode browser simulator Learn about the birth of the web Learn about CERN, the physics laboratory where the web was born"""
-        content = urllib.request.urlopen(URL_1, timeout=10).read()
-        result = text(response=content)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+    def get_response_text(self, url: str) -> str:
+        """Get patched response text.
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_check_yara_001(self, _):
-        """check_yara unit test.
-        Validates Yara Rule to categorize the site and check for keywords.
+        Args:
+            url: URL to get response text.
+
+        Returns:
+            Response text.
         """
+        return self.extractor_1._Extractor__session.get(url, allow_redirects=True, timeout=10).text
+
+    def test_text(self, _):
+        """text unit test."""
+        expected = """http://info.cern.ch http://info.cern.ch - home of the first website From here you can: Browse the first website Browse the first website using the line-mode browser simulator Learn about the birth of the web Learn about CERN, the physics laboratory where the web was born"""
+        content = self.get_response_text(URL_1)
+        result = self.extractor_1._Extractor__text(response=content)
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+
+    def test_check_yara_001(self, _):
+        """check_yara unit test."""
         expected = {
             "main": [
                 {
@@ -154,14 +166,10 @@ class TestCheckerFunctions(unittest.TestCase):
             ]
         }
 
-        content = urllib.request.urlopen(URL_1, timeout=10).read()
-        with Capturing() as _:
-            result = check_yara(raw=content, yara=0)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        content = self.get_response_text(URL_1)
+        result = self.extractor_1._Extractor__check_yara(raw=content, yara=0)
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
     def test_check_yara_002(self, _):
         """check_yara unit test.
         Validates Yara Rule to categorize the site and check for keywords.
@@ -221,407 +229,189 @@ class TestCheckerFunctions(unittest.TestCase):
             ]
         }
 
-        content = urllib.request.urlopen(URL_1, timeout=10).read()
-        with Capturing() as _:
-            result = check_yara(raw=content, yara=1)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        content = self.get_response_text(URL_1)
+        result = self.extractor_1._Extractor__check_yara(raw=content, yara=1)
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_check_yara_003(self, _):
-        """check_yara unit test.
-        Validates Yara Rule to categorize the site and check for keywords.
-        """
-        expected = {}
-
-        content = urllib.request.urlopen(URL_2, timeout=10).read()
-        result = check_yara(raw=content, yara=0)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_check_yara_004(self, _):
-        """check_yara unit test.
-        Validates Yara Rule to categorize the site and check for keywords.
-        """
-        expected = {}
-
-        content = urllib.request.urlopen(URL_2, timeout=10).read()
-        result = check_yara(raw=content, yara=1)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_check_yara_005(self, _):
-        """check_yara unit test.
-        Validates Yara Rule to categorize the site and check for keywords.
-        """
-        expected = None
-
-        content = urllib.request.urlopen(URL_3, timeout=10).read()
-        result = check_yara(raw=content, yara=1)
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_cinex_001(self, _):
-        """cinex unit test.
-        Ingests the crawled links from the input_file,
-        scrapes the contents of the resulting web pages and writes the contents to
-        the into out_path/{url_address}.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_cinex_001(self, _, __):
+        """cinex unit test."""
         expected = [
-            f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
-            f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/TheProject.htm",
-            "Error: list index out of range",
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False),
+            ],
+            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
+            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
         ]
 
-        with Capturing() as result:
-            cinex(self.inp_path, self.out_path)
+        result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, 0)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        # We can't simply compare the contents of the files in `self.out_path`
-        # because the order of the files is not guaranteed.
-        link_1 = os.path.join(self.out_path, "index.htm")
-        link_2 = os.path.join(self.out_path, "TheProject.htm")
-
-        with open(link_1, "rb") as f:
-            expected = mocked_urllib_open(URL_1).read()
-            result = f.read()
-            self.assertEqual(
-                expected, result, f"Test Fail:: expected = {expected}, got {result}"
-            )
-
-        with open(link_2, "rb") as f:
-            expected = mocked_urllib_open(URL_2).read()
-            result = f.read()
-            self.assertEqual(
-                expected, result, f"Test Fail:: expected = {expected}, got {result}"
-            )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_cinex_002(self, _):
-        """cinex unit test.
-        Ingests the crawled links from the input_file,
-        scrapes the contents of the resulting web pages and writes the contents to
-        the into out_path/{url_address}.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_cinex_002(self, _, __):
+        """cinex unit test."""
         expected = [
-            "found a match!",
-            f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
-            "No matches found.",
-            "Error: list index out of range",
+            [(10, ("File created :: %s", "darkspider/info.cern.ch/_.html"), False)],
+            [(10, ("File created :: %s", "darkspider/info.cern.ch/hypertext/WWW/TheProject.html_.html"), False)],
+            [(10, ("File created :: %s", "darkspider/unknown_path_.html"), False)],
         ]
 
-        with Capturing() as result:
-            cinex(self.inp_path, self.out_path, yara=1)
+        result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, None)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        link = os.path.join(self.out_path, "index.htm")
-
-        with open(link, "rb") as f:
-            expected = mocked_urllib_open(URL_1).read()
-            result = f.read()
-            self.assertEqual(
-                expected, result, f"Test Fail:: expected = {expected}, got {result}"
-            )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_intermex_001(self, _):
-        """intermex unit test.
-        Input links from file and extract them into terminal.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_terminex_001(self, _, __):
+        """intermex unit test."""
         expected = [
-            mocked_urllib_open(URL_1).read(),
-            mocked_urllib_open(URL_2).read(),
-            "None",
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
+            ],
+            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
+            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
         ]
 
-        with Capturing() as result:
-            intermex(self.inp_path, None)
+        result = self.extractor_1._Extractor__terminex(self.inp_file, 1)
 
-        result = [
-            literal_eval(x) if x.startswith("b'") and x.endswith("'") else x
-            for x in result
-        ]
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_intermex_002(self, _):
-        """intermex unit test.
-        Input links from file and extract them into terminal.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_terminex_002(self, _, __):
+        """intermex unit test."""
         expected = [
-            "found a match!",
-            mocked_urllib_open(URL_1).read(),
-            f"No matches in: {URL_2}",
-            mocked_urllib_open(URL_2).read(),
-            f"No matches in: {URL_3}",
-            "None",
+            [
+                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
+            ],
+            [
+                (
+                    20,
+                    (
+                        "%s :: %s",
+                        "http://info.cern.ch/hypertext/WWW/TheProject.html",
+                        mocked_requests_Session_get(URL_2).text,
+                    ),
+                    False,
+                ),
+            ],
+            [
+                (20, ("%s :: %s", "unknown_path", mocked_requests_Session_get(URL_3).text), False),
+            ],
         ]
 
-        with Capturing() as result:
-            intermex(self.inp_path, 1)
+        result = self.extractor_1._Extractor__terminex(self.inp_file, None)
 
-        result = [
-            literal_eval(x) if x.startswith("b'") and x.endswith("'") else x
-            for x in result
-        ]
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_intermex_003(self, _):
-        """intermex unit test.
-        Input links from file and extract them into terminal.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_outex_001(self, _, __):
+        """outex unit test."""
         expected = [
-            "Error: [Errno 2] No such file or directory: 'unknown_path'",
-            "## Not valid file",
+            (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
         ]
 
-        with Capturing() as result:
-            intermex("unknown_path", None)
+        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, 0)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_outex_001(self, _):
-        """outex unit test.
-        Scrapes the contents of the provided web address and outputs the
-        contents to file.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_outex_002(self, _, __):
+        """outex unit test."""
         expected = [
-            f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm"
+            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
         ]
 
-        with Capturing() as result:
-            outex(URL_1, "index.htm", self.out_path, None)
+        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, None)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        link = os.path.join(self.out_path, "index.htm")
-
-        with open(link, "rb") as f:
-            expected = mocked_urllib_open(URL_1).read()
-            result = f.read()
-            self.assertEqual(
-                expected, result, f"Test Fail:: expected = {expected}, got {result}"
-            )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_outex_002(self, _):
-        """outex unit test.
-        Scrapes the contents of the provided web address and outputs the
-        contents to file.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_termex_001(self, _, __):
+        """termex unit test."""
         expected = [
-            "found a match!",
-            f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
+            (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+            (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
         ]
 
-        with Capturing() as result:
-            outex(URL_1, "index.htm", self.out_path, 1)
+        result = self.extractor_1._Extractor__termex(URL_1, 1)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        link = os.path.join(self.out_path, "index.htm")
-
-        with open(link, "rb") as f:
-            expected = mocked_urllib_open(URL_1).read()
-            result = f.read()
-            self.assertEqual(
-                expected, result, f"Test Fail:: expected = {expected}, got {result}"
-            )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_outex_003(self, _):
-        """outex unit test.
-        Scrapes the contents of the provided web address and outputs the
-        contents to file.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_termex_002(self, _, __):
+        """termex unit test."""
         expected = [
-            "found a match!",
-            f"Error: [Errno 21] Is a directory: '{self.out_path}/'",
-            f" Can't write on file: {self.out_path}/",
+            (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
         ]
 
-        with Capturing() as result:
-            outex(URL_1, "", self.out_path, 1)
+        result = self.extractor_1._Extractor__termex(URL_1, None)
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_outex_004(self, _):
-        """outex unit test.
-        Scrapes the contents of the provided web address and outputs the
-        contents to file.
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_001(self, _, __):
+        """extractor unit test."""
         expected = [
-            f"Error: [Errno 21] Is a directory: '{self.out_path}/'",
-            f" Can't write on file: {self.out_path}/",
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False),
+            ],
+            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
+            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
         ]
 
-        with Capturing() as result:
-            outex(URL_1, "", self.out_path, None)
+        result = self.extractor_1.extract()
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_termex_001(self, _):
-        """termex unit test.
-        Scrapes provided web address and prints the results to the terminal
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_002(self, _, __):
+        """extractor unit test."""
         expected = [
-            mocked_urllib_open(URL_1).read(),
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
+            ],
+            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
+            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
         ]
 
-        with Capturing() as result:
-            termex(URL_1, None)
+        extractor_2 = copy(self.extractor_1)
+        extractor_2.out_path = None
 
-        result = [literal_eval(*result)]
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        result = extractor_2.extract()
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_termex_002(self, _):
-        """termex unit test.
-        Scrapes provided web address and prints the results to the terminal
-        """
-        expected = [f"No matches in: {URL_2}"]
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        with Capturing() as result:
-            termex(URL_2, 1)
-
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_termex_003(self, _):
-        """termex unit test.
-        Scrapes provided web address and prints the results to the terminal
-        """
-        expected = ["None"]
-
-        with Capturing() as result:
-            termex("unknown_path", None)
-
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_termex_004(self, _):
-        """termex unit test.
-        Scrapes provided web address and prints the results to the terminal
-        """
-        expected = [f"No matches in: {URL_3}"]
-
-        with Capturing() as result:
-            termex("unknown_path", 1)
-
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_extractor_001(self, _):
-        """extractor unit test.
-        Extractor - scrapes the resulting website or discovered links
-        """
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_003(self, _, __):
+        """extractor unit test."""
         expected = [
-            f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm",
-            f"# File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/TheProject.htm",
-            "Error: list index out of range",
+            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)]
         ]
 
-        with Capturing() as result:
-            # Cinex
-            extractor(URL_1, True, "index.htm", self.inp_path, self.out_path, None)
+        extractor_3 = copy(self.extractor_1)
+        extractor_3.website = URL_2
+        extractor_3.input_file = ""
+        extractor_3.output_file = "index.html"
 
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        result = extractor_3.extract()
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_extractor_002(self, _):
-        """extractor unit test.
-        Extractor - scrapes the resulting website or discovered links
-        """
-        expected = [
-            mocked_urllib_open(URL_1).read(),
-            mocked_urllib_open(URL_2).read(),
-            "None",
-        ]
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
 
-        with Capturing() as result:
-            # Intermex
-            extractor(URL_1, False, "index.htm", self.inp_path, self.out_path, None)
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_004(self, _, __):
+        """extractor unit test."""
+        expected = [[(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)]]
 
-        result = [
-            literal_eval(x) if x.startswith("b'") and x.endswith("'") else x
-            for x in result
-        ]
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        extractor_4 = copy(self.extractor_1)
+        extractor_4.website = URL_3
+        extractor_4.input_file = ""
+        extractor_4.output_file = ""
 
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_extractor_003(self, _):
-        """extractor unit test.
-        Extractor - scrapes the resulting website or discovered links
-        """
-        expected = [
-            f"## File created on: {Path(__file__).parent.parent.parent}/{self.out_path}/index.htm"
-        ]
+        result = extractor_4.extract()
 
-        with Capturing() as result:
-            # Outex
-            extractor(URL_1, True, "index.htm", "", self.out_path, None)
-
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
-
-    @mock.patch("urllib.request.urlopen", side_effect=mocked_urllib_open)
-    def test_extractor_004(self, _):
-        """extractor unit test.
-        Extractor - scrapes the resulting website or discovered links
-        """
-        expected = [
-            mocked_urllib_open(URL_1).read(),
-        ]
-
-        with Capturing() as result:
-            # Termex
-            extractor(URL_1, True, "", "", self.out_path, None)
-
-        result = [literal_eval(*result)]
-        self.assertEqual(
-            expected, result, f"Test Fail:: expected = {expected}, got {result}"
-        )
+        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")

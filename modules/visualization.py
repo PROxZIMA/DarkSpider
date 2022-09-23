@@ -8,24 +8,24 @@ import networkx as nx
 import seaborn as sns
 from matplotlib.ticker import MultipleLocator
 
-from modules.helpers.helper import verbose
+from modules.checker import folder
+from modules.helper import verbose
 
 
 class Visualization:
-    """Visualize the graphs and insights from the crawled data
+    """Visualize the graphs and insights from the crawled data.
 
-    :param json_file: The json file containing the crawled data
-    :param out_path: The path to the output directory
-    :param verbose: Whether to print the output or not
+    Attributes:
+        json_file: The json file containing the crawled data.
+        out_path: The path to the output directory.
+        logger: A logger object to log the output.
     """
 
-    def __init__(self, json_file, out_path, verbose):
+    def __init__(self, json_file, out_path, logger):
         self.json_file = json_file
-        self.verbose = verbose
+        self.logger = logger
 
-        self.out_path = os.path.join(out_path, "visualization")
-        if not os.path.exists(self.out_path):
-            os.mkdir(self.out_path)
+        self.out_path = folder(os.path.join(out_path, "visualization"))
 
         with open(self.json_file, "r", encoding="UTF-8") as f:
             self.data = json.load(f)
@@ -85,9 +85,7 @@ class Visualization:
 
         ax = sns.barplot(x=indegree_keys, y=indegree_percent, color="cornflowerblue")
         ax.set_xlim(-1, min(50, len(indegree_keys)))
-        ax.xaxis.set_major_locator(
-            MultipleLocator(base=min(50, max(len(indegree_keys), 5)) // 5)
-        )
+        ax.xaxis.set_major_locator(MultipleLocator(base=min(50, max(len(indegree_keys), 5)) // 5))
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("Indegree")
         plt.title("Indegree of the graph")
@@ -119,9 +117,7 @@ class Visualization:
 
         ax = sns.barplot(x=outdegree_keys, y=outdegree_percent, color="cornflowerblue")
         ax.set_xlim(-1, min(50, len(outdegree_keys)) + 1)
-        ax.xaxis.set_major_locator(
-            MultipleLocator(base=min(50, max(len(outdegree_keys), 5)) // 5)
-        )
+        ax.xaxis.set_major_locator(MultipleLocator(base=min(50, max(len(outdegree_keys), 5)) // 5))
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("Outdegree")
         plt.title("Outdegree of the graph")
@@ -159,9 +155,7 @@ class Visualization:
 
         ax = sns.barplot(x=pagerank_keys, y=pagerank_percent, color="cornflowerblue")
         ax.set_xticklabels(map(lambda x: f"{x:.2E}", pagerank_keys))
-        ax.xaxis.set_major_locator(
-            MultipleLocator(base=max(len(pagerank_keys), 5) // 5)
-        )
+        ax.xaxis.set_major_locator(MultipleLocator(base=max(len(pagerank_keys), 5) // 5))
         plt.ylabel("Percentage of Nodes")
         plt.xlabel("PageRank")
         plt.title("PageRank of the graph")

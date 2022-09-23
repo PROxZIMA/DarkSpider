@@ -166,3 +166,5 @@ www*/
 assets/Dark*
 assets/*.odt
 assets/*2.pdf
+
+.vscode
