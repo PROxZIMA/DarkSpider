@@ -5,7 +5,7 @@
   -->
 # DarkSpider
 
-[![Version](https://img.shields.io/badge/version-2.0.0-green.svg?style=plastic)]() [![Python](https://img.shields.io/badge/python-v3-blue.svg?style=plastic)]() [![license](https://img.shields.io/github/license/PROxZIMA/DarkSpider.svg?style=plastic)]()
+[![Version](https://img.shields.io/badge/version-2.0.1-green.svg?style=plastic)]() [![Python](https://img.shields.io/badge/python-v3-blue.svg?style=plastic)]() [![license](https://img.shields.io/github/license/PROxZIMA/DarkSpider.svg?style=plastic)]()
 
 ## Basic Information:
 DarkSpider is a python script to crawl and extract (regular or onion) webpages through TOR network.
