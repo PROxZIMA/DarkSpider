@@ -274,7 +274,7 @@ Feel free to contribute on this project! Just fork it, make any change on your f
 ## Changelog:
 
     v2.0.0:
-### What's Changed
+#### What's Changed
 * Add: Project IEEE citation by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/8
 * Fix: Ignore Gooey installation by default by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/9
 * Add: CLI command to include/exclude external links by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/11
@@ -288,7 +288,7 @@ Feel free to contribute on this project! Just fork it, make any change on your f
 * Added image and script crawler by @ytatiya3 in https://github.com/PROxZIMA/DarkSpider/pull/15
 * Crawler multi-threaded implementation by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/18
 
-### New Contributors
+#### New Contributors
 * @PROxZIMA made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/8
 * @knightster0804 made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/10
 * @r0nl made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/14
