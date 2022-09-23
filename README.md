@@ -286,6 +286,7 @@ Feel free to contribute on this project! Just fork it, make any change on your f
 * White box unit test cases for modules by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/7
 * New graphical visualization using `seaborn` library by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/17
 * Added image and script crawler by @ytatiya3 in https://github.com/PROxZIMA/DarkSpider/pull/15
+* Crawler multi-threaded implementation by @PROxZIMA in https://github.com/PROxZIMA/DarkSpider/pull/18
 
 ### New Contributors
 * @PROxZIMA made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/8
@@ -293,7 +294,7 @@ Feel free to contribute on this project! Just fork it, make any change on your f
 * @r0nl made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/14
 * @ytatiya3 made their first contribution in https://github.com/PROxZIMA/DarkSpider/pull/15
 
-**Full Changelog**: https://github.com/PROxZIMA/DarkSpider/compare/1.0.0...21
+**Full Changelog**: https://github.com/PROxZIMA/DarkSpider/compare/1.0.0...2.0.1
 
     v1.0.0:
 * Initial project setup
