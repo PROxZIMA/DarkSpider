@@ -162,7 +162,7 @@ $ python darkspider.py -v -u http://github.com/ -c -d 2 -p 5
 [ INFO  ] Network Structure created :: github.com/network_structure.json
 ```
 
-Crawl the webpage with depth 1 (1 clicks), 1 seconds pause and exclude links that match `.*\.blog`:
+- Crawl the webpage with depth 1 (1 clicks), 1 seconds pause and exclude links that match `.*\.blog`:
 
 ```shell
 $ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -z ".*\.blog"
@@ -176,7 +176,7 @@ $ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -z ".*\.blog"
 ```
 
 ### As Crawler + Extractor:
-You can crawl a page and also extract the webpages into a folder with a single command:
+- You can crawl a page and also extract the webpages into a folder with a single command:
 
 ```shell
 $ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -e
@@ -198,7 +198,7 @@ $ python darkspider.py -v -u http://github.com/ -c -d 1 -p 1 -e
 > The default (and only for now) file for crawler's links is the `links.txt` document.
 > To extract along with crawl `-e` argument is required.
 
-Following the same logic; you can parse all these pages to grep (for example) and search for specific text:
+- Following the same logic; you can parse all these pages to grep (for example) and search for specific text:
 
 ```shell
 $ python darkspider.py -u http://github.com/ -c -e | grep '</html>'
@@ -208,7 +208,7 @@ $ python darkspider.py -u http://github.com/ -c -e | grep '</html>'
 ```
 
 ### As Crawler + Extractor + Keyword Search:
-You can crawl a page, perform a keyword search and extract the webpages that match the findings into a folder with a single command:
+- You can crawl a page, perform a keyword search and extract the webpages that match the findings into a folder with a single command:
 
 ```shell
 $ python darkspider.py -v -u http://github.com/ -o github.html -y 0
@@ -221,7 +221,7 @@ $ python darkspider.py -v -u http://github.com/ -o github.html -y 0
 ```
 
 ### Visualization of the Network Structure:
-Provide `-s` argument to create graphs to gain [insights](https://github.com/PROxZIMA/DarkSpider/pull/13) from the generated data,
+- Provide `-s` argument to create graphs to gain [insights](https://github.com/PROxZIMA/DarkSpider/pull/13) from the generated data,
 
 ```shell
 $ python darkspider.py -u "http://github.com/" -c -d 2 -p 1 -t 32 -s
@@ -239,14 +239,13 @@ $ python darkspider.py -u "http://github.com/" -c -d 2 -p 1 -t 32 -s
 ```
 
 ## Testing:
-Test cases must be updated as we don't want any unexpected exception to pop-up in-between long runs.
-
-Before creating a PR make sure to run all the test cases.
+- Test cases must be updated as we don't want any unexpected exception to pop-up in-between long runs.
+- Before creating a PR make sure to run all the test cases.
 
 ```bash
 $ python3 -m unittest -b
 ```
-or a module specific test cases using
+- Or a module specific test cases using
 
 ```bash
 $ python3 -m unittest modules.tests.test_crawler -b
@@ -261,7 +260,7 @@ $ python3 -m unittest modules.tests.test_crawler -b
 - A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
 ## Contributing:
-Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
+- Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
 
 [![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider "Contributors")](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
 
