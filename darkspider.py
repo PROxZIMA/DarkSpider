@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-#I think this banner could be cool for the tool If you like it delete this comment
 """
 
 
