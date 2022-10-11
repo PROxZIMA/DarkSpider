@@ -1,4 +1,4 @@
-remote_theme: just-the-docs/just-the-docs@0.4.0.rc1
+remote_theme: just-the-docs/just-the-docs@v0.4.0.rc1
 
 title: DarkSpider
 description: Anatomy of the Network structure of the Dark web to detect illicit websites
