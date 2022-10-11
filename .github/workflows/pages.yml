@@ -5,7 +5,7 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
-    paths:	
+    paths:
       - 'docs/**'
 
   # Allows you to run this workflow manually from the Actions tab
@@ -39,7 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          source: ./docs/_site
+          path: ./docs/_site
 
   # Deployment job
   deploy:
@@ -52,5 +52,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
-        with:
-          source: ./docs/_site
