@@ -11,7 +11,7 @@
 DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through TOR network, written in Python.
 
 ## Full Documentation
-See the [Wiki](https://github.com/PROxZIMA/DarkSpider/wiki) for full documentation, examples and other information.
+See the [Docs](https://proxzima.dev/DarkSpider/) for full documentation, examples and other information.
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use the [GitHub Issues](https://github.com/PROxZIMA/DarkSpider/issues).
