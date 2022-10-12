@@ -3,7 +3,7 @@ layout: default
 title: How to Use
 nav_order: 3
 has_children: true
-permalink: /docs/how-to-use
+permalink: /how-to-use
 ---
 
 # How to Use
