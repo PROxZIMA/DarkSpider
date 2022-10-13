@@ -31,7 +31,7 @@ exclude:
    - README.md
 
 # Set a path/url to a logo that will be displayed instead of the title
-#logo: "/assets/images/just-the-docs.png"
+logo: "./logo.png"
 
 # Enable or disable the site search
 # Supports true (default) or false
