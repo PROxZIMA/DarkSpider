@@ -1,6 +1,6 @@
 <!--
   Title: DarkSpider
-  Description: a python script to crawl and extract (regular or onion) webpages through TOR network.
+  Description: a python script to crawl and extract (regular or onion) webpages through the TOR network.
   Author: PROxZIMA
   -->
 
@@ -14,18 +14,6 @@
 <h4 align="center">Multithreaded Crawler and Extractor for Dark Web</h4>
 
 <div align="center">
-  <!-- <a href="https://github.com/lapce/lapce/actions/workflows/ci.yml" target="_blank">
-    <img src="https://github.com/lapce/lapce/actions/workflows/ci.yml/badge.svg" />
-  </a>
-  <a href="https://discord.gg/n8tGJ6Rn6D" target="_blank">
-    <img src="https://img.shields.io/discord/946858761413328946?logo=discord" />
-  </a>
-  <a href="https://matrix.to/#/#lapce-editor:matrix.org" target="_blank">
-    <img src="https://img.shields.io/matrix/lapce-editor:matrix.org?color=turquoise&logo=Matrix" />
-  </a>
-  <a href="https://docs.lapce.dev" target="_blank">
-      <img src="https://img.shields.io/static/v1?label=Docs&message=docs.lapce.dev&color=blue" alt="Lapce Docs">
-  </a> -->
 
 [![Version](https://img.shields.io/badge/version-2.0.1-green.svg?style=plastic)]() [![Python](https://img.shields.io/badge/python-v3-blue.svg?style=plastic)]() [![license](https://img.shields.io/github/license/PROxZIMA/DarkSpider.svg?style=plastic)]() [![Documentation](https://github.com/PROxZIMA/DarkSpider/actions/workflows/pages.yml/badge.svg)](https://proxzima.dev/DarkSpider/)
 </div>
@@ -33,16 +21,16 @@
 
 
 ## Introduction
-DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through TOR network, written in Python.
+DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python.
 
 ## Full Documentation
-See the [Docs](https://proxzima.dev/DarkSpider/) for full documentation, examples and other information.
+See the [Docs](https://proxzima.dev/DarkSpider/) for full documentation, examples, and other information.
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use the [GitHub Issues](https://github.com/PROxZIMA/DarkSpider/issues).
 
 ## Credits
-- [**@MikeMeliz**](https://github.com/MikeMeliz) for initial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase.
+- [**@MikeMeliz**](https://github.com/MikeMeliz) for the initial [`TorCrawl`](https://github.com/MikeMeliz/TorCrawl.py) codebase.
 - Logo: [Spider Icon](https://stock.adobe.com/images/spider-icon-isolated-on-white-background-from-jungle-collection-spider-icon-trendy-and-modern-spider-symbol-for-logo-web-app-ui-spider-icon-simple-sign-spider-icon-flat-vector-illustration-for-g/355581671) by [Ayu](https://stock.adobe.com/contributor/209568715/ayu)
 - A. Alharbi et al., "[Exploring the Topological Properties of the Tor Dark Web](https://ieeexplore.ieee.org/document/9340182)", IEEE Access, vol. 9, pp. 21746-21758, 2021.
 
