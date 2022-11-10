@@ -1,6 +1,6 @@
 import os
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import psutil
@@ -9,7 +9,7 @@ import requests
 from modules.helper import TorProxyException, TorServiceException, get_requests_header
 
 
-def url_canon(website: str, www: bool = False) -> tuple[bool, str]:
+def url_canon(website: str, www: bool = False) -> Tuple[bool, str]:
     """URL normalisation/canonicalization
 
     Args:
@@ -98,8 +98,8 @@ def check_tor(logger: Logger) -> Optional[bool]:
 
 
 def check_ip(
-    proxies: Optional[dict[str, str]], url: str, logger: Logger, without_tor: bool = False
-) -> Optional[dict[str, str | bool]]:
+    proxies: Optional[Dict[str, str]], url: str, logger: Logger, without_tor: bool = False
+) -> Union[Dict[str, Union[str, bool]], TorProxyException]:
     """Checks users IP and Tor proxy connection from external resource.
 
     Args:
