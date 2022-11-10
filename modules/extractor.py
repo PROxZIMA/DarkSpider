@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
-from typing import Optional
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 
@@ -17,12 +17,12 @@ from modules.checker import folder
 from modules.helper import get_requests_header
 
 # Type hinting aliases
-ExcInfo = Exception | bool
-LogMsg = tuple[str]
+ExcInfo = Union[Exception, bool]
+LogMsg = Tuple[str]
 LogLevel = int
-Log = tuple[LogLevel, LogMsg, ExcInfo]
-SingleRes = list[Log]
-Results = list[SingleRes]
+Log = Tuple[LogLevel, LogMsg, ExcInfo]
+SingleRes = List[Log]
+Results = List[SingleRes]
 
 
 class Extractor:
@@ -47,7 +47,7 @@ class Extractor:
     def __init__(
         self,
         website: str,
-        proxies: dict[str, str],
+        proxies: Dict[str, str],
         crawl: bool,
         output_file: str,
         input_file: str,
@@ -328,7 +328,7 @@ class Extractor:
 
         return result
 
-    def __check_yara(self, raw: str, yara: int = 0) -> dict[str, list]:
+    def __check_yara(self, raw: str, yara: int = 0) -> Dict[str, list]:
         """Validates Yara Rule to categorize the site and check for keywords.
 
         Args:

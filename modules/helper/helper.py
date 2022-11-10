@@ -4,6 +4,7 @@ import sys
 import time
 from io import StringIO
 from logging.handlers import RotatingFileHandler
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 
@@ -76,7 +77,7 @@ class RollingFileHandler(RotatingFileHandler):
 
 
 def setup_custom_logger(
-    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: list[str] = None
+    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: List[str] = None
 ) -> logging.Logger:
     """Setup custom logger with stream and file handlers
 
@@ -131,7 +132,7 @@ def setup_custom_logger(
     return logger
 
 
-def get_requests_header() -> dict[str, str]:
+def get_requests_header() -> Dict[str, str]:
     """Get requests header
 
     Returns:
@@ -146,7 +147,7 @@ def get_requests_header() -> dict[str, str]:
     }
 
 
-def get_tor_proxies(port: int = 9050) -> dict[str, str]:
+def get_tor_proxies(port: int = 9050) -> Dict[str, str]:
     """Get Tor socks proxies
 
     Args:

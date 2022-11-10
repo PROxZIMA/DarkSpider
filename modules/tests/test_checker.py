@@ -2,7 +2,7 @@ import os.path
 import re
 import shutil
 import unittest
-from typing import Iterator
+from typing import Iterator, List
 from unittest import mock
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
@@ -20,7 +20,7 @@ class MockedPsutilProcess:
         return self._name
 
 
-def mocked_psutil_process_iter(has_tor: bool = True) -> list[Iterator[MockedPsutilProcess]]:
+def mocked_psutil_process_iter(has_tor: bool = True) -> List[Iterator[MockedPsutilProcess]]:
     """Custom sideeffect for mock testing psutil process
 
     Args:
