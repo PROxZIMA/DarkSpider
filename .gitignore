@@ -166,6 +166,10 @@ www*/
 assets/Dark*
 assets/*.odt
 assets/*2.pdf
+assets/*Workbook*
+assets/*.svg
+assets/*Paper*
+assets/base.png
 
 .vscode
 
