@@ -1,0 +1,45 @@
+<div id='toggleWrapper' class='toggleWrapper'>
+  <input type='checkbox' class='theme' id='theme' /><label for='theme' class='toggle'>
+    <span class='toggle__handler'>
+      <span class='crater crater--1'></span>
+      <span class='crater crater--2'></span>
+      <span class='crater crater--3'></span>
+    </span>
+    <span class='star star--1'></span>
+    <span class='star star--2'></span>
+    <span class='star star--3'></span>
+    <span class='star star--4'></span>
+    <span class='star star--5'></span>
+    <span class='star star--6'></span>
+  </label>
+</div>
+
+<script>
+  const setTheme = theme => {
+    document.getElementById('theme').checked = (theme === 'light') ? true : false;
+    document.getElementById('toggleWrapper').title = `Switch to ${(theme === 'light') ? 'dark' : 'light'} theme`;
+    document.documentElement.setAttribute('data-theme', theme);
+  };
+
+  const toogleTheme = () => {
+    if (jtd.getTheme() !== 'light') {
+      setTheme('light');
+      jtd.setTheme('light');
+    }
+    else {
+      setTheme('dark');
+      jtd.setTheme('dark');
+    }
+
+    localStorage.setItem('theme', jtd.getTheme());
+    console.log(`Switched to ${jtd.getTheme()} theme`);
+  };
+
+  document.getElementById('theme').addEventListener('click', () => {
+    toogleTheme();
+  });
+
+  storedTheme = localStorage.getItem('theme') || 'dark';
+  setTheme(storedTheme);
+  localStorage.setItem('theme', storedTheme);
+</script>

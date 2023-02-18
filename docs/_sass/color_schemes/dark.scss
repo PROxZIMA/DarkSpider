@@ -1,0 +1,157 @@
+// @import "./color_schemes/dark";
+
+$blue-000: #89b4fa;
+$blue-200: #89b4fa;
+
+$grey-dk-000: #848eb6;
+$grey-dk-100: #424b6f;
+$grey-dk-200: #333a56;
+$grey-dk-250: #252a3e;
+$grey-dk-300: #161925;
+
+$grey-lt-000: #cdd6f4;
+$grey-lt-100: #bac2de;
+$grey-lt-200: #a6adc8;
+$grey-lt-300: #a6adc8;
+
+$body-background-color: $grey-dk-300;
+$sidebar-color: $grey-dk-300;
+$border-color: $grey-dk-200;
+$body-text-color: $grey-lt-300;
+$body-heading-color: $grey-lt-000;
+$nav-child-link-color: $grey-dk-000;
+$search-result-preview-color: $grey-dk-000;
+$link-color: $blue-000;
+$btn-primary-color: $blue-200;
+$base-button-color: $grey-dk-250;
+$search-background-color: $grey-dk-250;
+$table-background-color: $grey-dk-250;
+$feedback-color: darken($sidebar-color, 3%);
+
+$code-background-color: $grey-dk-250;
+$code-linenumber-color: $grey-lt-300;
+
+
+// Dracula highlight
+.highlight,
+.highlight .w {
+  color: $grey-lt-000 !important;
+}
+
+.highlight .err {
+  color: #282a36 !important;
+  background-color: #ff79c6 !important;
+}
+
+.highlight .c,
+.highlight .cd,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs {
+  color: #44475a !important;
+}
+
+.highlight .cp {
+  color: #50fa7b !important;
+}
+
+.highlight .nt {
+  color: #50fa7b !important;
+}
+
+.highlight .o,
+.highlight .ow {
+  color: $grey-lt-000 !important;
+}
+
+.highlight .p,
+.highlight .pi {
+  color: $grey-lt-000 !important;
+}
+
+.highlight .gi {
+  color: #f1fa8c !important;
+}
+
+.highlight .gd {
+  color: #ff79c6 !important;
+}
+
+.highlight .gh {
+  color: #8be9fd !important;
+  font-weight: bold !important;
+}
+
+.highlight .k,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kv {
+  color: #bd93f9 !important;
+}
+
+.highlight .kc {
+  color: #ffb86c !important;
+}
+
+.highlight .kt {
+  color: #ffb86c !important;
+}
+
+.highlight .kd {
+  color: #ffb86c !important;
+}
+
+.highlight .s,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .s2,
+.highlight .sh,
+.highlight .sx,
+.highlight .s1 {
+  color: #f1fa8c !important;
+}
+
+.highlight .sr {
+  color: #8be9fd !important;
+}
+
+.highlight .si {
+  color: #ff5555 !important;
+}
+
+.highlight .se {
+  color: #ff5555 !important;
+}
+
+.highlight .nn {
+  color: #50fa7b !important;
+}
+
+.highlight .nc {
+  color: #50fa7b !important;
+}
+
+.highlight .no {
+  color: #50fa7b !important;
+}
+
+.highlight .na {
+  color: #8be9fd !important;
+}
+
+.highlight .m,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .il,
+.highlight .mo,
+.highlight .mb,
+.highlight .mx {
+  color: #f1fa8c !important;
+}
+
+.highlight .ss {
+  color: #f1fa8c !important;
+}

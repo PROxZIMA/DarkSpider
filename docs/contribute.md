@@ -5,7 +5,7 @@ nav_order: 4
 ---
 
 # Contributing
-- Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated :shipit:
+- Feel free to contribute on this project! Just fork it, make any change on your fork and add a pull request on current branch! Any advice, help or questions would be appreciated <img src="https://github.githubassets.com/images/icons/emoji/shipit.png" alt=":shipit:" title=":shipit:" width="20px">
 
 [![Contributors](https://contrib.rocks/image?repo=PROxZIMA/DarkSpider "Contributors")](https://github.com/PROxZIMA/DarkSpider/graphs/contributors)
 
