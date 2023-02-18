@@ -1,0 +1,248 @@
+$yellow-000: #f9e2af;
+$yellow-300: #f9e2af;
+
+$blue-000: #89b4fa;
+$blue-200: #89b4fa;
+$blue-300: #89b4fa;
+
+$green-000: #a6e3a1;
+$green-300: #a6e3a1;
+
+$purple-000: #cba6f7;
+$purple-300: #cba6f7;
+
+$red-000: #f38ba8;
+$red-300: #f38ba8;
+
+$border-radius: 6px;
+
+code {
+  font-size: 0.85em !important;
+}
+
+
+// More rounded corners
+div.highlighter-rouge,
+div.highlighter-rouge div.highlight,
+div.listingblock div.highlight,
+div.highlighter-rouge>button,
+div.listingblock>div.content>button,
+figure.highlight>button {
+  border-radius: $border-radius !important;
+}
+
+div.highlighter-rouge {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+// Title
+.site-logo {
+  width: unset !important;
+  aspect-ratio: 1/1;
+}
+
+.title-text {
+  padding-inline-start: 1rem;
+}
+
+// Footer text color
+footer .text-grey-dk-100 {
+  color: $grey-dk-000 !important;
+}
+
+// Theme toogle button
+.toggleWrapper {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-inline: 1rem;
+  width: 45px;
+  box-sizing: content-box;
+}
+
+.toggleWrapper input {
+  position: absolute;
+  visibility: hidden;
+}
+
+.toggle {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  min-width: 90px;
+  height: 50px;
+  background-color: #83d8ff;
+  border-radius: 84px;
+  transition: background-color 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  transform: scale(0.5);
+  transform-origin: left center;
+}
+
+.toggle__handler {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  top: 3px;
+  left: 3px;
+  width: 44px;
+  height: 44px;
+  background-color: #ffcf96;
+  border-radius: 50px;
+  -webkit-box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+  transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform: rotate(-45deg);
+}
+
+.toggle__handler .crater {
+  position: absolute;
+  background-color: #e8cda5;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+  border-radius: 100%;
+}
+
+.toggle__handler .crater--1 {
+  top: 18px;
+  left: 10px;
+  width: 4px;
+  height: 4px;
+}
+
+.toggle__handler .crater--2 {
+  top: 28px;
+  left: 22px;
+  width: 6px;
+  height: 6px;
+}
+
+.toggle__handler .crater--3 {
+  top: 10px;
+  left: 25px;
+  width: 8px;
+  height: 8px;
+}
+
+.star {
+  position: absolute;
+  background-color: #fff;
+  transition: all 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  border-radius: 50%;
+}
+
+.star--1 {
+  top: 10px;
+  left: 35px;
+  z-index: 0;
+  width: 30px;
+  height: 3px;
+}
+
+.star--2 {
+  top: 18px;
+  left: 28px;
+  z-index: 1;
+  width: 30px;
+  height: 3px;
+}
+
+.star--3 {
+  top: 27px;
+  left: 40px;
+  z-index: 0;
+  width: 30px;
+  height: 3px;
+}
+
+.star--4,
+.star--5,
+.star--6 {
+  opacity: 0;
+  transition: all 300ms 0 cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+.star--4 {
+  top: 16px;
+  left: 11px;
+  z-index: 0;
+  width: 2px;
+  height: 2px;
+  transform: translate3d(3px, 0, 0);
+}
+
+.star--5 {
+  top: 32px;
+  left: 17px;
+  z-index: 0;
+  width: 3px;
+  height: 3px;
+  transform: translate3d(3px, 0, 0);
+}
+
+.star--6 {
+  top: 36px;
+  left: 28px;
+  z-index: 0;
+  width: 2px;
+  height: 2px;
+  transform: translate3d(3px, 0, 0);
+}
+
+input:checked+.toggle {
+  background-color: #749dd6;
+}
+
+input:checked+.toggle:before {
+  color: #749ed7;
+}
+
+input:checked+.toggle:after {
+  color: #fff;
+}
+
+input:checked+.toggle .toggle__handler {
+  background-color: #ffe5b5;
+  transform: translate3d(40px, 0, 0) rotate(0);
+}
+
+input:checked+.toggle .toggle__handler .crater {
+  opacity: 1;
+}
+
+input:checked+.toggle .star--1 {
+  width: 2px;
+  height: 2px;
+}
+
+input:checked+.toggle .star--2 {
+  width: 4px;
+  height: 4px;
+  transform: translate3d(-5px, 0, 0);
+}
+
+input:checked+.toggle .star--3 {
+  width: 2px;
+  height: 2px;
+  transform: translate3d(-7px, 0, 0);
+}
+
+input:checked+.toggle .star--4,
+input:checked+.toggle .star--5,
+input:checked+.toggle .star--6 {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+input:checked+.toggle .star--4 {
+  transition: all 300ms 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+input:checked+.toggle .star--5 {
+  transition: all 300ms 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+input:checked+.toggle .star--6 {
+  transition: all 300ms 400ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}

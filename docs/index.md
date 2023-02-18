@@ -1,12 +1,13 @@
 ---
 layout: default
-title: DarkSpider
+title: What is DarkSpider?
 nav_order: 1
+permalink: /
 ---
 
 # What is DarkSpider?
 
-DarkSpider is a python script to crawl and extract (regular or onion) webpages through TOR network.
+DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python.
 {: .fs-6 .fw-300 }
 
 [Get started now](Getting-Started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/PROxZIMA/DarkSpider/){: .btn .fs-5 .mb-4 .mb-md-0 }
@@ -21,14 +22,14 @@ DarkSpider is a python script to crawl and extract (regular or onion) webpages t
 
 ## What makes it simple?
 
-With a single argument you can read an .onion webpage or a regular one through TOR Network and using pipes you can pass the output at any other tool you prefer.
+With a single argument you can read a .onion webpage or a regular one through TOR Network and using pipes you can pass the output to any other tool you prefer.
 
 ```shell
 $ python darkspider.py -u http://github.com/ | grep 'google-site-verification'
     <meta name="google-site-verification" content="xxxx">
 ```
 
-If you want to crawl the links of a webpage use the `-c` and you will get a folder all the extracted links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
+If you want to crawl the links of a webpage use the `-c` and you will get a folder with all the extracted links. You can even use `-d` to crawl them and so on. As far, there is also the necessary argument `-p` to wait some seconds before the next crawl.
 
 ```shell
 $ python darkspider.py -v -u http://github.com/ -c -d 2 -p 2

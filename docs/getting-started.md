@@ -6,7 +6,7 @@ nav_order: 2
 
 # Installation
 
-To install this script, you need to clone that repository:
+To install this script, you need to clone the repository:
 
 ```shell
 $ git clone https://github.com/PROxZIMA/DarkSpider.git
@@ -15,17 +15,27 @@ $ git clone https://github.com/PROxZIMA/DarkSpider.git
 ### Dependencies
 You'll also need to install dependencies:
 
+- [`wxPython`](https://wxpython.org/) :: For Linux, see the [official installation](https://wxpython.org/pages/downloads/index.html) docs
+
+```shell
+$ pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04 wxPython
+```
+
+- [`yara`](https://virustotal.github.io/yara/) :: See the [official installation](https://yara.readthedocs.io/en/stable/gettingstarted.html) docs
+
+- Project requirements
+
 ```shell
 $ pip install -r requirements.txt
 ```
 
 ### TOR
-Of course, the TOR Hidden Service is needed [(for more distros and instructions)](https://www.torproject.org/docs/):
+The TOR Hidden Service is needed [(for more distros and instructions)](https://www.torproject.org/download/):
 
 Debian/Ubuntu:
 
 ```shell
-$ apt-get install tor
+$ apt install tor
 ```
 
 # Arguments

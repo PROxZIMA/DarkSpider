@@ -1,9 +1,10 @@
-remote_theme: just-the-docs/just-the-docs@v0.4.0.rc1
+theme: just-the-docs
 
 title: DarkSpider
 description: Anatomy of the Network structure of the Dark web to detect illicit websites
 baseurl: "/DarkSpider" # the subpath of your site, e.g. /blog
 url: "https://proxzima.dev" # the base hostname & protocol for your site, e.g. http://example.com
+repository: PROxZIMA/DarkSpider # for github-metadata
 
 permalink: pretty
 
@@ -79,16 +80,16 @@ aux_links:
     - "//github.com/PROxZIMA/DarkSpider"
 
 # Makes Aux links open in a new tab. Default is false
-aux_links_new_tab: false
+aux_links_new_tab: true
 
 # Sort order for navigation links
 # nav_sort: case_insensitive # default, equivalent to nil
 nav_sort: case_sensitive # Capital letters sorted before lowercase
 
 # External navigation links
-nav_external_links:
-  - title: DarkSpider on GitHub
-    url: https://github.com/PROxZIMA/DarkSpider
+# nav_external_links:
+#   - title: DarkSpider on GitHub
+#     url: https://github.com/PROxZIMA/DarkSpider
 
 # Footer content
 # appears at the bottom of every page's main content
@@ -97,7 +98,7 @@ nav_external_links:
 back_to_top: true
 back_to_top_text: "Back to top"
 
-footer_content: "Copyright &copy; 2022-2023 Pratik Pingale. Distributed by an <a href=\"https://github.com/PROxZIMA/DarkSpider/blob/master/LICENSE\">GNU General Public License v3.0.</a>"
+footer_content: false
 
 # Footer last edited timestamp
 last_edit_timestamp: true # show or hide edit time - page must have `last_modified_date` defined in the frontmatter
@@ -114,7 +115,9 @@ gh_edit_source: docs # the source that your files originate from
 gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
 
 # Color scheme currently only supports "dark", "light"/nil (default), or a custom scheme that you define
-color_scheme: nil
+color_scheme: dark
+
+callouts_opacity: 0.2
 
 callouts_level: quiet # or loud
 callouts:
