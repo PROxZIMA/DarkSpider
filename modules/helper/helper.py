@@ -1,3 +1,4 @@
+import difflib
 import logging
 import os
 import sys
@@ -188,3 +189,27 @@ class TorProxyException(Exception):
 class TorServiceException(Exception):
     "Exception raised for errors in the Tor Service. This error is raised if the Tor Service is not running."
     error_code = 96
+
+
+def assertMsg(expected, result):
+    old, new = str(expected), str(result)
+
+    bold = lambda text: f"\033[1m{text}\033[0m"
+    red = lambda text: f"\033[91m{text}\033[0m"
+    green = lambda text: f"\033[92m{text}\033[0m"
+    blue = lambda text: f"\033[94m{text}\033[0m"
+    white = lambda text: f"\033[0m{text}\033[0m"
+
+    result = ""
+    opcodes = difflib.SequenceMatcher(a=old, b=new).get_opcodes()
+    for opcode, a0, a1, b0, b1 in opcodes:
+        if opcode == "equal":
+            result += white(old[a0:a1])
+        elif opcode == "delete":
+            result += red(old[a0:a1])
+        elif opcode == "insert":
+            result += green(new[b0:b1])
+        elif opcode == "replace":
+            result += red(old[a0:a1]) + green(new[b0:b1])
+
+    return bold(red("\nTest Fail :: ")) + result

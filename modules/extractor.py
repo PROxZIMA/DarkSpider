@@ -299,7 +299,7 @@ class Extractor:
                         (
                             "%s :: %s match found!",
                             website,
-                            "Yara" if len(full_match_keywords) else "No yara",
+                            "Yara" if full_match_keywords["matches"] else "No yara",
                         ),
                         False,
                     )
@@ -346,9 +346,15 @@ class Extractor:
         if yara == 1:
             raw = self.__text(response=raw).lower()
 
-        matches = self.__yara_rules.match(data=raw)
+        rule_data = []
 
-        return matches
+        def callback(data):
+            rule_data.append(data)
+            return 0  # yara.CALLBACK_CONTINUE
+
+        matches = self.__yara_rules.match(data=raw, callback=callback)
+
+        return rule_data[0]
 
     def __text(self, response: str) -> str:
         """Removes all the garbage from the HTML and takes only text elements

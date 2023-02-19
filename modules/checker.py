@@ -63,8 +63,9 @@ def folder(out_path: str, is_file: bool = False) -> str:
     Returns:
         Path of the output folder.
     """
-    os.makedirs(os.path.dirname(out_path) if is_file else out_path, exist_ok=True)
-    return out_path
+    path = os.path.dirname(out_path) if is_file else out_path
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 def check_tor(logger: Logger) -> Optional[bool]:

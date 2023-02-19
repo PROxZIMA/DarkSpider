@@ -7,7 +7,7 @@ from unittest import mock
 
 from modules.checker import folder
 from modules.extractor import Extractor
-from modules.helper import setup_custom_logger
+from modules.helper import assertMsg, setup_custom_logger
 
 URL_1 = "http://info.cern.ch/"
 URL_2 = "http://info.cern.ch/hypertext/WWW/TheProject.html"
@@ -43,7 +43,7 @@ class TestCheckerFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         """Test Suite Setup."""
-        cls.out_path = "darkspider"
+        cls.out_path = os.path.join("test_run", "darkspider")
         cls.out_file = os.path.join(cls.out_path, "index.html")
         cls.inp_file = os.path.join(cls.out_path, "links.txt")
         cls.logger = setup_custom_logger(
@@ -77,7 +77,7 @@ class TestCheckerFunctions(unittest.TestCase):
     def tearDown(self):
         """Test Case Teardown."""
         # Remove test folder.
-        shutil.rmtree(self.out_path, ignore_errors=True)
+        shutil.rmtree(os.path.dirname(self.out_path), ignore_errors=True)
 
     def get_response_text(self, url: str) -> str:
         """Get patched response text.
@@ -95,197 +95,242 @@ class TestCheckerFunctions(unittest.TestCase):
         expected = """http://info.cern.ch http://info.cern.ch - home of the first website From here you can: Browse the first website Browse the first website using the line-mode browser simulator Learn about the birth of the web Learn about CERN, the physics laboratory where the web was born"""
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__text(response=content)
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
 
     def test_check_yara_001(self, _):
         """check_yara unit test."""
         expected = {
-            "main": [
-                {
-                    "matches": True,
-                    "meta": {"author": "@the-siegfried", "score": 90},
-                    "rule": "keyword_search",
-                    "strings": [
-                        {
-                            "data": "info.cern.ch",
-                            "flags": 27,
-                            "identifier": "$e",
-                            "offset": 48,
-                        },
-                        {
-                            "data": "info.cern.ch",
-                            "flags": 27,
-                            "identifier": "$e",
-                            "offset": 91,
-                        },
-                        {
-                            "data": "info.cern.ch",
-                            "flags": 27,
-                            "identifier": "$e",
-                            "offset": 188,
-                        },
-                        {
-                            "data": "about CERN",
-                            "flags": 27,
-                            "identifier": "$d",
-                            "offset": 558,
-                        },
-                        {
-                            "data": "<h1>http://",
-                            "flags": 19,
-                            "identifier": "$c",
-                            "offset": 80,
-                        },
-                        {
-                            "data": "physics laboratory",
-                            "flags": 59,
-                            "identifier": "$b",
-                            "offset": 574,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 124,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 249,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 356,
-                        },
-                    ],
-                    "tags": [],
-                }
-            ]
+            "matches": True,
+            "rule": "keyword_search",
+            "namespace": "default",
+            "tags": [],
+            "meta": {"author": "@the-siegfried", "score": 90},
+            "strings": [
+                (124, "$a", b"website"),
+                (249, "$a", b"website"),
+                (356, "$a", b"website"),
+                (574, "$b", b"physics laboratory"),
+                (80, "$c", b"<h1>http://"),
+                (558, "$d", b"about CERN"),
+                (48, "$e", b"info.cern.ch"),
+                (91, "$e", b"info.cern.ch"),
+                (188, "$e", b"info.cern.ch"),
+            ],
         }
 
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__check_yara(raw=content, yara=0)
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
 
     def test_check_yara_002(self, _):
         """check_yara unit test.
         Validates Yara Rule to categorize the site and check for keywords.
         """
         expected = {
-            "main": [
-                {
-                    "matches": True,
-                    "meta": {"author": "@the-siegfried", "score": 90},
-                    "rule": "keyword_search",
-                    "strings": [
-                        {
-                            "data": "info.cern.ch",
-                            "flags": 27,
-                            "identifier": "$e",
-                            "offset": 7,
-                        },
-                        {
-                            "data": "info.cern.ch",
-                            "flags": 27,
-                            "identifier": "$e",
-                            "offset": 27,
-                        },
-                        {
-                            "data": "about cern",
-                            "flags": 27,
-                            "identifier": "$d",
-                            "offset": 214,
-                        },
-                        {
-                            "data": "physics laboratory",
-                            "flags": 59,
-                            "identifier": "$b",
-                            "offset": 230,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 60,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 104,
-                        },
-                        {
-                            "data": "website",
-                            "flags": 187,
-                            "identifier": "$a",
-                            "offset": 129,
-                        },
-                    ],
-                    "tags": [],
-                }
-            ]
+            "matches": True,
+            "rule": "keyword_search",
+            "namespace": "default",
+            "tags": [],
+            "meta": {"author": "@the-siegfried", "score": 90},
+            "strings": [
+                (60, "$a", b"website"),
+                (104, "$a", b"website"),
+                (129, "$a", b"website"),
+                (230, "$b", b"physics laboratory"),
+                (214, "$d", b"about cern"),
+                (7, "$e", b"info.cern.ch"),
+                (27, "$e", b"info.cern.ch"),
+            ],
         }
 
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__check_yara(raw=content, yara=1)
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_cinex_001(self, _, __):
         """cinex unit test."""
         expected = [
             [
-                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
+                (10, ("%s :: %s match found!", URL_1, "Yara"), False),
                 (10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False),
             ],
-            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
-            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
+            [
+                (10, ("%s :: %s match found!", URL_2, "No yara"), False),
+                (
+                    10,
+                    ("File created :: %s", f"{self.out_path}/info.cern.ch/hypertext/WWW/TheProject.html_.html"),
+                    False,
+                ),
+            ],
+            [
+                (10, ("%s :: %s match found!", URL_3, "No yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/unknown_path_.html"), False),
+            ],
         ]
 
         result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, 0)
 
-        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertCountEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_cinex_002(self, _, __):
         """cinex unit test."""
         expected = [
-            [(10, ("File created :: %s", "darkspider/info.cern.ch/_.html"), False)],
-            [(10, ("File created :: %s", "darkspider/info.cern.ch/hypertext/WWW/TheProject.html_.html"), False)],
-            [(10, ("File created :: %s", "darkspider/unknown_path_.html"), False)],
+            [(10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False)],
+            [
+                (
+                    10,
+                    ("File created :: %s", f"{self.out_path}/info.cern.ch/hypertext/WWW/TheProject.html_.html"),
+                    False,
+                )
+            ],
+            [(10, ("File created :: %s", f"{self.out_path}/unknown_path_.html"), False)],
         ]
 
         result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, None)
 
-        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertCountEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_terminex_001(self, _, __):
         """intermex unit test."""
         expected = [
             [
-                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
-                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
+                (10, ("%s :: %s match found!", URL_1, "Yara"), False),
+                (20, ("%s :: %s", URL_1, mocked_requests_Session_get(URL_1).text), False),
             ],
-            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
-            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
+            [
+                (10, ("%s :: %s match found!", URL_2, "No yara"), False),
+                (
+                    20,
+                    (
+                        "%s :: %s",
+                        URL_2,
+                        mocked_requests_Session_get(URL_2).text,
+                    ),
+                    False,
+                ),
+            ],
+            [
+                (10, ("%s :: %s match found!", URL_3, "No yara"), False),
+                (20, ("%s :: %s", URL_3, mocked_requests_Session_get(URL_3).text), False),
+            ],
         ]
 
         result = self.extractor_1._Extractor__terminex(self.inp_file, 1)
 
-        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertCountEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_terminex_002(self, _, __):
         """intermex unit test."""
         expected = [
             [
-                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
+                (20, ("%s :: %s", URL_1, mocked_requests_Session_get(URL_1).text), False),
             ],
             [
+                (
+                    20,
+                    (
+                        "%s :: %s",
+                        URL_2,
+                        mocked_requests_Session_get(URL_2).text,
+                    ),
+                    False,
+                ),
+            ],
+            [
+                (20, ("%s :: %s", URL_3, mocked_requests_Session_get(URL_3).text), False),
+            ],
+        ]
+
+        result = self.extractor_1._Extractor__terminex(self.inp_file, None)
+
+        self.assertCountEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_outex_001(self, _, __):
+        """outex unit test."""
+        expected = [
+            (10, ("%s :: %s match found!", URL_1, "Yara"), False),
+            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
+        ]
+
+        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, 0)
+
+        self.assertEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_outex_002(self, _, __):
+        """outex unit test."""
+        expected = [
+            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
+        ]
+
+        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, None)
+
+        self.assertEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_termex_001(self, _, __):
+        """termex unit test."""
+        expected = [
+            (10, ("%s :: %s match found!", URL_1, "Yara"), False),
+            (20, ("%s :: %s", URL_1, mocked_requests_Session_get(URL_1).text), False),
+        ]
+
+        result = self.extractor_1._Extractor__termex(URL_1, 1)
+
+        self.assertEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_termex_002(self, _, __):
+        """termex unit test."""
+        expected = [
+            (20, ("%s :: %s", URL_1, mocked_requests_Session_get(URL_1).text), False),
+        ]
+
+        result = self.extractor_1._Extractor__termex(URL_1, None)
+
+        self.assertEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_001(self, _, __):
+        """extractor unit test."""
+        expected = [
+            [
+                (10, ("%s :: %s match found!", URL_1, "Yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False),
+            ],
+            [
+                (10, ("%s :: %s match found!", URL_2, "No yara"), False),
+                (
+                    10,
+                    ("File created :: %s", f"{self.out_path}/info.cern.ch/hypertext/WWW/TheProject.html_.html"),
+                    False,
+                ),
+            ],
+            [
+                (10, ("%s :: %s match found!", URL_3, "No yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/unknown_path_.html"), False),
+            ],
+        ]
+
+        result = self.extractor_1.extract()
+
+        self.assertEqual(expected, result, assertMsg(expected, result))
+
+    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
+    def test_extractor_002(self, _, __):
+        """extractor unit test."""
+        expected = [
+            [
+                (10, ("%s :: %s match found!", URL_1, "Yara"), False),
+                (20, ("%s :: %s", URL_1, mocked_requests_Session_get(URL_1).text), False),
+            ],
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False),
                 (
                     20,
                     (
@@ -297,86 +342,9 @@ class TestCheckerFunctions(unittest.TestCase):
                 ),
             ],
             [
-                (20, ("%s :: %s", "unknown_path", mocked_requests_Session_get(URL_3).text), False),
+                (10, ("%s :: %s match found!", URL_3, "No yara"), False),
+                (20, ("%s :: %s", URL_3, mocked_requests_Session_get(URL_3).text), False),
             ],
-        ]
-
-        result = self.extractor_1._Extractor__terminex(self.inp_file, None)
-
-        self.assertCountEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_outex_001(self, _, __):
-        """outex unit test."""
-        expected = [
-            (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
-            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
-        ]
-
-        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, 0)
-
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_outex_002(self, _, __):
-        """outex unit test."""
-        expected = [
-            (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
-        ]
-
-        result = self.extractor_1._Extractor__outex(URL_1, self.out_file, None)
-
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_termex_001(self, _, __):
-        """termex unit test."""
-        expected = [
-            (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
-            (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
-        ]
-
-        result = self.extractor_1._Extractor__termex(URL_1, 1)
-
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_termex_002(self, _, __):
-        """termex unit test."""
-        expected = [
-            (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
-        ]
-
-        result = self.extractor_1._Extractor__termex(URL_1, None)
-
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_extractor_001(self, _, __):
-        """extractor unit test."""
-        expected = [
-            [
-                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
-                (10, ("File created :: %s", f"{self.out_path}/info.cern.ch/_.html"), False),
-            ],
-            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
-            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
-        ]
-
-        result = self.extractor_1.extract()
-
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
-
-    @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
-    def test_extractor_002(self, _, __):
-        """extractor unit test."""
-        expected = [
-            [
-                (10, ("%s :: %s match found!", "http://info.cern.ch/", "Yara"), False),
-                (20, ("%s :: %s", "http://info.cern.ch/", mocked_requests_Session_get(URL_1).text), False),
-            ],
-            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)],
-            [(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)],
         ]
 
         extractor_2 = copy(self.extractor_1)
@@ -384,13 +352,16 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_2.extract()
 
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_003(self, _, __):
         """extractor unit test."""
         expected = [
-            [(10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False)]
+            [
+                (10, ("%s :: %s match found!", "http://info.cern.ch/hypertext/WWW/TheProject.html", "No yara"), False),
+                (10, ("File created :: %s", f"{self.out_path}/index.html"), False),
+            ]
         ]
 
         extractor_3 = copy(self.extractor_1)
@@ -400,12 +371,17 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_3.extract()
 
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_004(self, _, __):
         """extractor unit test."""
-        expected = [[(10, ("%s :: %s match found!", "unknown_path", "No yara"), False)]]
+        expected = [
+            [
+                (10, ("%s :: %s match found!", URL_3, "No yara"), False),
+                (20, ("%s :: %s", URL_3, mocked_requests_Session_get(URL_3).text), False),
+            ]
+        ]
 
         extractor_4 = copy(self.extractor_1)
         extractor_4.website = URL_3
@@ -414,4 +390,4 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_4.extract()
 
-        self.assertEqual(expected, result, f"Test Fail:: expected = {expected}, got {result}")
+        self.assertEqual(expected, result, assertMsg(expected, result))
