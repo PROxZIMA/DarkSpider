@@ -176,3 +176,5 @@ assets/base.png
 docs/_site/
 docs/assets/
 docs/.jekyll-cache/
+docs/_config_dev.yml
+output/

@@ -109,9 +109,7 @@ def main():
     """
 
     # Get arguments with GooeyParser if available else argparse.
-    description = (
-        "DarkSpider.py is a python script to crawl and extract " + "(regular or onion) webpages through TOR network."
-    )
+    description = "DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python."
     if GOOEY_AVAILABLE:
         parser = GooeyParser(description=description)
     else:
@@ -269,9 +267,11 @@ def main():
     # Canonicalization of web url and create path for output.
     if args.url:
         canon, website = url_canon(args.url)
-        out_path = folder(extract_domain(website))
+        out_path = extract_domain(website)
     elif args.folder:
-        out_path = folder(args.folder)
+        out_path = args.folder
+
+    out_path = folder(os.path.join("output", out_path))
 
     # Logger setup
     crawlog = setup_custom_logger(
