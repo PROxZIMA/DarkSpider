@@ -2,75 +2,33 @@
 
 """
 
+        ⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣶⣾⣿⣧⡀⠀⢀⣶⣶⣤⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠤⠴⠶⠿⠿⠿⠿⠿⠿⠿⢿⣿⣿⣿⣰⣿⣿⣿⠛⠛⠛⠛⠛⠛⠓⠲⠶⠄⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⢀⣀⣠⣤⣴⣶⣾⣆⠀⢀⣾⣿⣿⠟⠀⠀⠀⣰⣷⣶⣦⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀
+        ⠀⠒⠒⠚⠛⠛⠛⠛⠛⠛⣿⣿⣿⣷⣿⣿⣿⠏⠀⠀⢀⣼⣿⣿⡿⠻⠿⠿⠿⠿⠿⠷⠶⠤⠤⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⡿⠃⠀⠀⢠⣾⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿⣷⡄⠀⠀⠘⢿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠠⠤⢤⣤⣤⣤⣤⣴⣶⣿⣿⣿⡿⣿⣿⣿⣆⠀⠀⠈⢻⣿⣿⣷⣴⣶⣶⣶⣶⣶⠶⠶⠒⠒⠀
+        ⠀⠀⠀⠀⠀⠈⠉⠙⠛⠿⠿⣿⠏⠀⠈⢿⣿⣿⣦⠀⠀⠀⠻⡿⠿⠟⠛⠉⠉⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠒⠲⠶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⣿⠹⣿⣿⣿⣤⣤⣤⣤⣤⣤⡴⠶⠶⠒⠀⠀⠀⠀⠀
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠛⠛⠿⢿⣿⡟⠁⠀⠘⠿⠿⠟⠛⠋⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
-8888888b.                   888                         ,                                 %                      
-888  "Y88b                  888                         /                                .                       
-888    888                  888                          %                               .                       
-888    888  8888b.  888d888 888  888                     *(                             (,                       
-888    888     "88b 888P"   888 .88P                       #,                         (%.                        
-888    888 .d888888 888     888888K                       . (/                       (, ,                        
-888  .d88P 888  888 888     888 "88b                    #  .  %                     (  .  ,                      
-8888888P"  "Y888888 888     888  888                     .  .  ..                 /@   . #.                      
-                                                             .. /,              /&    . /                        
- .d8888b.           d8b      888                         . #/  .  #(          ,&.   ../%                         
-d88P  Y88b          Y8P      888                          .   (( .. ((  ,.# .%.   .%%    .                       
-Y88b.                        888                            .     ./#&(##(&&/@%/       .                         
- "Y888b.   88888b.  888  .d88888  .d88b.  888d888              ....,,,&%*(#%#*..,,,..                            
-    "Y88b. 888 "88b 888 d88" 888 d8P  Y8b 888P"                   (@//%@&&&@%*%/*                                
-      "888 888  888 888 888  888 88888888 888                 (%  /%&#/ *%%%&#%, &/                             
-Y88b  d88P 888 d88P 888 Y88b 888 Y8b.     888               ##  (#,&%#/,#%%%&&,%( .#/                           
- "Y8888P"  88888P"  888  "Y88888  "Y8888  888              * ..% .,&&%%%%%&%@#/,,/. .                           
-           888                                             .  %.,   *%&&@@&((/*   #. #                          
-           888                                               (        ,**/***.    ./                            
-           888                                              ,,.                    /%                           
-                                                            /.                      %                           
-                                                            ,                       (                           
-                                                                                     .                                      
-                                                                                
-DarkSpider is a python script to crawl and extract (regular or onion)
-webpages through TOR network.
+
+DarkSpider is a multithreaded crawler and extractor for regular
+or onion webpages through the TOR network, written in Python.
 
 usage: python darkspider.py [options]
+
+python darkspider.py --help
 python darkspider.py -u l0r3m1p5umD0lorS1t4m3t.onion
 python darkspider.py -v -w -u http://www.github.com -o github.htm
 python darkspider.py -v -u l0r3m1p5umD0lorS1t4m3t.onion -c -d 2 -p 5
 python darkspider.py -v -w -u http://www.github.com -c -d 2 -p 5 -e -f GitHub
 
-General:
--h, --help         : Help
--g, --gui          : Open with GUI backend.
--v, --verbose      : Show more informations about the progress
--u, --url *.onion  : URL of Webpage to crawl or extract
--n, --port number  : Port number of TOR Proxy (default: 9050)
--w, --without      : Without the use of Relay TOR
--s, --visualize    : Visualize the graphs and insights from the crawled data
-
-Extract:
--e, --extract         : Extract page's code to terminal or file.
-                        (Defualt: terminal)
--i, --input filename  : Input file with URL(s) (seperated by line)
--o, --output filename : Output page(s) to file(s) (for one page)
--y, --yara 0|1        : Yara keyword search page categorisation
-                        read in from /res folder. 0 search whole html object.
-                        1 search only the text.
-
-Crawl:
--c, --crawl             : Crawl website (Default output on /links.txt)
--d, --cdepth            : Set depth of crawl's travel (Default: 1)
--z, --exclusions regexp : Paths that you don't want to include
--t, --thread number     : How many pages to visit (Threads) at the same time
-                          (Default: 16)
--p, --pause             : The length of time the crawler will pause
-                          (Default: 0)
--f, --folder	        : The root directory which will contain the
-                          generated files
--l, --log               : Log file with visited URLs and their response code.
--x, --external          : Exclude external links while crawling a webpage
-                          (Default: include all links)
-
 GitHub: github.com/PROxZIMA/DarkSpider.py
 License: GNU General Public License v3.0
-
 """
 
 import argparse
@@ -81,72 +39,33 @@ import warnings
 
 import requests
 
-from modules.helper import get_tor_proxies, setup_custom_logger
-
-try:
-    from gooey import Gooey, GooeyParser
-
-    GOOEY_AVAILABLE = True
-except ModuleNotFoundError:
-    GOOEY_AVAILABLE = False
-
 # DarkSpider Modules
 from modules import Crawler
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 from modules.extractor import Extractor
+from modules.helper import HEADER, Colors, get_tor_proxies, gradient_print, setup_custom_logger
 from modules.visualization import Visualization
 
 warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 requests.urllib3.disable_warnings()
 
-IGNORE_COMMAND = "--ignore-gooey"
 
-# Remove IGNORE_COMMAND if present in arguments.
-# We don't want to pass it to the argpaarse.
-try:
-    sys.argv.remove(IGNORE_COMMAND)
-except ValueError:
-    pass
-
-# If GUI parameters are passed in arguments then handel Gooey unavailable error
-if "-g" not in sys.argv and "--gui" not in sys.argv:
-    if GOOEY_AVAILABLE:
-        sys.argv.append(IGNORE_COMMAND)
-elif not GOOEY_AVAILABLE:
-    print("## Gooey is not available!")
-    print("## Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument")
-    sys.exit(2)
-
-
-def GooeyConditional(flag, **kwargs):
-    """Conditional decorator if GUI backend is available or not"""
-
-    def decorate(function):
-        return Gooey(function, **kwargs) if flag else function
-
-    return decorate
-
-
-@GooeyConditional(GOOEY_AVAILABLE, program_name="DarkSpider")
-def main():
+def main(gooey_available, baseParser):
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
     """
 
     # Get arguments with GooeyParser if available else argparse.
     description = "DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python."
-    if GOOEY_AVAILABLE:
-        parser = GooeyParser(description=description)
-    else:
-        parser = argparse.ArgumentParser(description=description)
+    parser = baseParser(description=description)
 
     # GUI
     gui_kwargs = {
         "action": "store_true",
         "help": "Open with GUI backend.",
     }
-    if GOOEY_AVAILABLE:
+    if gooey_available:
         gui_kwargs["gooey_options"] = {"visible": False}
 
     parser.add_argument(
@@ -382,6 +301,66 @@ def main():
         extract = extractor.extract()
 
 
+GOOEY_AVAILABLE = False
+PARSER = argparse.ArgumentParser
+
+if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
+    # If we are not attached to a terminal or CLI includes -g/--gui, use Gooey
+    try:
+        from gooey import Gooey, GooeyParser
+
+        GOOEY_AVAILABLE = True
+        PARSER = GooeyParser
+        gradient_print(HEADER, start_color=(252, 70, 107), end_color=(63, 94, 251), disable=True)
+
+        main = Gooey(
+            program_name="DarkSpider",
+            image_dir="assets",
+            menu=[
+                {
+                    "name": "File",
+                    "items": [
+                        {
+                            "type": "AboutDialog",
+                            "menuTitle": "About",
+                            "name": "DarkSpider",
+                            "description": "Multithreaded Crawler and Extractor for Dark Web",
+                            "version": "2.1.0",
+                            "copyright": "2023",
+                            "website": "https://proxzima.dev/DarkSpider/",
+                            "developer": "https://github.com/PROxZIMA, https://github.com/knightster0804, https://github.com/r0nl, https://github.com/ytatiya3",
+                            "license": "GNU General Public License v3.0",
+                        },
+                        {
+                            "type": "MessageDialog",
+                            "menuTitle": "Information",
+                            "caption": "Basic Idea about crawlers",
+                            "message": "Crawling is not illegal, but violating copyright is. It's always best to double check a website's T&C before crawling them. Some websites set up what's called robots.txt to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting robots.txt.\n\nExtracting and crawling through TOR network take some time. That's normal behaviour; you can find more information here (https://support.torproject.org/relay-operators/why-is-my-relay-slow/).",
+                        },
+                    ],
+                },
+                {
+                    "name": "Help",
+                    "items": [{"type": "Link", "menuTitle": "Documentation", "url": "https://proxzima.dev/DarkSpider"}],
+                },
+            ],
+        )(main)
+    except ModuleNotFoundError:
+        print(f"[ {Colors.RED}ERROR{Colors.RESET} ] Gooey is not available!")
+        print(
+            f"[ {Colors.BLUE}INFO {Colors.RESET} ] Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument"
+        )
+        sys.exit(2)
+else:
+    os.system("cls" if os.name == "nt" else "clear")
+
+    gradient_print(
+        HEADER,
+        start_color=(252, 70, 107),
+        end_color=(63, 94, 251),
+    )
+
+
 # Stub to call main method.
 if __name__ == "__main__":
-    main()
+    main(gooey_available=GOOEY_AVAILABLE, baseParser=PARSER)
