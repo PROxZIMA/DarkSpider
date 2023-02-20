@@ -35,7 +35,7 @@ The TOR Hidden Service is needed [(for more distros and instructions)](https://w
 Debian/Ubuntu:
 
 ```shell
-$ apt install tor
+$ sudo apt install tor
 ```
 
 # Arguments

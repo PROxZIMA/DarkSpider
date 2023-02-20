@@ -16,10 +16,10 @@ nav_order: 4
 - Before creating a PR make sure to run all the test cases.
 
 ```bash
-$ python3 -m unittest -b
+$ pytest -q --tb=short modules/tests/
 ```
 - Or a module specific test cases using
 
 ```bash
-$ python3 -m unittest modules.tests.test_crawler -b
+$ pytest -q --tb=short modules/tests/test_extractor.py::TestCheckerFunctions::test_outex_002
 ```
