@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
-from typing import Optional
+from typing import Dict, List, Tuple, Union
 from urllib.parse import urljoin
 
 import requests
@@ -37,7 +37,7 @@ class Crawler:
     def __init__(
         self,
         website: str,
-        proxies: dict[str, str],
+        proxies: Dict[str, str],
         c_depth: int,
         c_pause: float,
         out_path: str,
@@ -129,7 +129,9 @@ class Crawler:
         # For relative paths
         return urljoin(base, href)
 
-    def __crawl_link(self, url: str, session: requests.Session) -> tuple[str, set[str], int | tuple[str, Exception]]:
+    def __crawl_link(
+        self, url: str, session: requests.Session
+    ) -> Tuple[str, set[str], Union[int, Tuple[str, Exception]]]:
         """
         Extracts all the hyperlinks from the given url and returns a tuple of
         the url, set of hyperlinks and either status code or raised Exception.
@@ -184,7 +186,7 @@ class Crawler:
 
         return url, url_data, response_code
 
-    def crawl(self) -> dict[str, list[str]]:
+    def crawl(self) -> Dict[str, List[str]]:
         """Core of the crawler.
 
         Returns:

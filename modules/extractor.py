@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
-from typing import Optional
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 
@@ -17,12 +17,12 @@ from modules.checker import folder
 from modules.helper import get_requests_header
 
 # Type hinting aliases
-ExcInfo = Exception | bool
-LogMsg = tuple[str]
+ExcInfo = Union[Exception, bool]
+LogMsg = Tuple[str]
 LogLevel = int
-Log = tuple[LogLevel, LogMsg, ExcInfo]
-SingleRes = list[Log]
-Results = list[SingleRes]
+Log = Tuple[LogLevel, LogMsg, ExcInfo]
+SingleRes = List[Log]
+Results = List[SingleRes]
 
 
 class Extractor:
@@ -47,7 +47,7 @@ class Extractor:
     def __init__(
         self,
         website: str,
-        proxies: dict[str, str],
+        proxies: Dict[str, str],
         crawl: bool,
         output_file: str,
         input_file: str,
@@ -299,7 +299,7 @@ class Extractor:
                         (
                             "%s :: %s match found!",
                             website,
-                            "Yara" if len(full_match_keywords) else "No yara",
+                            "Yara" if full_match_keywords["matches"] else "No yara",
                         ),
                         False,
                     )
@@ -328,7 +328,7 @@ class Extractor:
 
         return result
 
-    def __check_yara(self, raw: str, yara: int = 0) -> dict[str, list]:
+    def __check_yara(self, raw: str, yara: int = 0) -> Dict[str, list]:
         """Validates Yara Rule to categorize the site and check for keywords.
 
         Args:
@@ -346,9 +346,15 @@ class Extractor:
         if yara == 1:
             raw = self.__text(response=raw).lower()
 
-        matches = self.__yara_rules.match(data=raw)
+        rule_data = []
 
-        return matches
+        def callback(data):
+            rule_data.append(data)
+            return 0  # yara.CALLBACK_CONTINUE
+
+        matches = self.__yara_rules.match(data=raw, callback=callback)
+
+        return rule_data[0]
 
     def __text(self, response: str) -> str:
         """Removes all the garbage from the HTML and takes only text elements

@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 
@@ -16,7 +17,7 @@ class TestCrawlerFunctions(unittest.TestCase):
     def setUpClass(cls):
         """Test Suite Setup."""
         cls._website = "http://info.cern.ch/"
-        cls.out_path = out_path = folder(extract_domain(cls._website), False)
+        cls.out_path = folder(os.path.join("test_run", extract_domain(cls._website)), False)
         cls.logger = setup_custom_logger(
             name="testlog",
             filename=None,
@@ -29,7 +30,7 @@ class TestCrawlerFunctions(unittest.TestCase):
             proxies=None,
             c_depth=1,
             c_pause=1,
-            out_path=out_path,
+            out_path=cls.out_path,
             external=False,
             exclusion=None,
             thread=1,
@@ -41,9 +42,9 @@ class TestCrawlerFunctions(unittest.TestCase):
             proxies=None,
             c_depth=1,
             c_pause=1,
-            out_path=out_path,
+            out_path=cls.out_path,
             external=True,
-            exclusion=".*//home\.web.*",
+            exclusion=r".*//home\.web.*",
             thread=1,
             logger=cls.logger,
         )
@@ -52,7 +53,7 @@ class TestCrawlerFunctions(unittest.TestCase):
     def tearDownClass(cls):
         """Test Suite Teardown."""
         # Remove test folder.
-        shutil.rmtree(cls.out_path)
+        shutil.rmtree(os.path.dirname(cls.out_path), ignore_errors=True)
 
     def test_excludes(self):
         """Test crawler.excludes function."""
