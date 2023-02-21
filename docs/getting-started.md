@@ -35,7 +35,7 @@ The TOR Hidden Service is needed [(for more distros and instructions)](https://w
 Debian/Ubuntu:
 
 ```shell
-$ apt install tor
+$ sudo apt install tor
 ```
 
 # Arguments
@@ -46,21 +46,22 @@ Args | Long | Description
 `-h` |`--help`| Help
 `-g` |`--gui`| Open with GUI backend.
 `-v` |`--verbose`| Show more information about the progress
-`-u` |`--url *.onion`| URL of Webpage to crawl or extract
 `-w` |`--without`| Without the use of Relay TOR
 `-n` |`--port number`| Port number of TOR Socks Proxy (default: 9050)
 `-f` |`--folder`| The directory which will contain the generated files
-`-s` |`--visualize`| Visualize the graphs and insights from the crawled data
+`-t` |`--thread number`| How many pages to visit (Threads) at the same time (Default: 16)
+`-l` |`--log`| A log will let you see which URLs were visited and their response code (Default: True)
 **Extract** | |
-`-e` |`--extract`| Extract page's code to terminal or file. (Default: Terminal)
 `-i` |`--input filename`| Input file with URL(s) (separated by line)
+`-e` |`--extract`| Extract page's code to terminal or file. (Default: Terminal)
 `-o` |`--output filename`| Output page(s) to file(s) (for one page)
-`-y` |`--yara 0\|1`| Perform yara keyword search (0 = search entire html object. 1 = search only text).
+`-y` |`--yara 0|1`| Perform yara keyword search (0 = search entire html object. 1 = search only text).
 **Crawl** | |
+`-u` |`--url *.onion`| URL of Webpage to crawl or extract
 `-c` |`--crawl`| Crawl website (Default output on /links.txt)
 `-d` |`--cdepth`| Set depth of crawl's travel (Default: 1)
+`-p` |`--cpause`| The length of time the crawler will pause (Default: 0)
 `-z` |`--exclusion regexp`| Regex path that is ignored while crawling (Default: None)
-`-t` |`--thread number`| How many pages to visit (Threads) at the same time (Default: 16)
-`-p` |`--pause`| The length of time the crawler will pause (Default: 0)
-`-l` |`--log`| Log file with visited URLs and their response code
 `-x` |`--external`| Exclude external links while crawling a webpage (Default: include all links)
+**Visualize** | |
+`-s` |`--visualize`| Visualize the graphs and insights from the crawled data

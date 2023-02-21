@@ -1,13 +1,12 @@
 import difflib
-import logging
 import os
 import sys
-import time
 from io import StringIO
-from logging.handlers import RotatingFileHandler
-from typing import Dict, List
+from typing import Dict
 
 import matplotlib.pyplot as plt
+
+from modules.helper.header import Colors
 
 
 class Capturing(list):
@@ -49,90 +48,6 @@ def verbose(func):
     return wrapper
 
 
-class RollingFileHandler(RotatingFileHandler):
-    """Custom RotatingFileHandler for incremental infinite logging"""
-
-    def __init__(self, filename, mode="a", maxBytes=0, backupCount=0, encoding=None, delay=False, errors=None):
-        self.last_backup_cnt = int(time.time())
-        self.filename = filename
-        super(RollingFileHandler, self).__init__(
-            filename="{0}.{2}.init{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
-            mode=mode,
-            maxBytes=maxBytes,
-            backupCount=backupCount,
-            encoding=encoding,
-            delay=delay,
-            errors=errors,
-        )
-
-    def doRollover(self):
-        if self.stream:
-            self.stream.close()
-            self.stream = None
-        self.last_backup_cnt += 1
-        next_name = "{0}.{2}{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt)
-        self.baseFilename = next_name
-        # self.rotate(self.baseFilename, next_name)
-        if not self.delay:
-            self.stream = self._open()
-
-
-def setup_custom_logger(
-    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: List[str] = None
-) -> logging.Logger:
-    """Setup custom logger with stream and file handlers
-
-    Args:
-        name: Name of the logger.
-        filename: Name of the log file.
-        verbose_: Simple formatter for stream if False.
-        filelog: Add FileHandler to logger if True.
-
-    Returns:
-        Logger object with custom handlers and formatters.
-    """
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    logger.handlers.clear()  # Clear all handlers
-
-    # Create file handler if filelog is True
-    if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
-        file_handler.setFormatter(None)
-        file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
-
-        # Add a single non-formatted terminal command to the log file only
-        if argv:
-            logger.info("$ python %s \n", " ".join(argv))
-
-        # Update the formatter for the file handler
-        logger.handlers[0].setFormatter(
-            logging.Formatter(
-                fmt="{asctime} |{levelname:^7s}| {filename}:{lineno} | {message}",
-                style="{",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-        )
-
-    # Simple formatter for non-verbose logging
-    fmt, level = ("[{levelname:^7s}] {message}", logging.DEBUG) if verbose_ else ("## {message}", logging.INFO)
-
-    # Add screen handler with custom formatter
-    screen_handler = logging.StreamHandler(stream=sys.stdout)
-    screen_handler.setFormatter(
-        logging.Formatter(
-            fmt=fmt,
-            style="{",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-    )
-    screen_handler.setLevel(level)
-    logger.addHandler(screen_handler)
-
-    return logger
-
-
 def get_requests_header() -> Dict[str, str]:
     """Get requests header
 
@@ -166,39 +81,14 @@ def get_tor_proxies(port: int = 9050) -> Dict[str, str]:
     }
 
 
-def traceback_name(error: Exception) -> str:
-    """Get traceback class names from an exception
-
-    Args:
-        error: Exception object.
-
-    Returns:
-        Exception traceback class names.
-    """
-    module = error.__class__.__module__
-    if module is None or module == str.__class__.__module__:
-        return error.__class__.__name__
-    return module + "." + error.__class__.__name__
-
-
-class TorProxyException(Exception):
-    "Exception raised for errors in the Tor proxy. This might happen if the Tor Service is running but the application is using a different port."
-    error_code = 69
-
-
-class TorServiceException(Exception):
-    "Exception raised for errors in the Tor Service. This error is raised if the Tor Service is not running."
-    error_code = 96
-
-
 def assertMsg(expected, result):
     old, new = str(expected), str(result)
 
-    bold = lambda text: f"\033[1m{text}\033[0m"
-    red = lambda text: f"\033[91m{text}\033[0m"
-    green = lambda text: f"\033[92m{text}\033[0m"
-    blue = lambda text: f"\033[94m{text}\033[0m"
-    white = lambda text: f"\033[0m{text}\033[0m"
+    bold = lambda text: f"{Colors.BOLD}{text}{Colors.RESET}"
+    red = lambda text: f"{Colors.RED}{text}{Colors.RESET}"
+    green = lambda text: f"{Colors.GREEN}{text}{Colors.RESET}"
+    blue = lambda text: f"{Colors.BLUE}{text}{Colors.RESET}"
+    white = lambda text: f"{Colors.RESET}{text}{Colors.RESET}"
 
     result = ""
     opcodes = difflib.SequenceMatcher(a=old, b=new).get_opcodes()

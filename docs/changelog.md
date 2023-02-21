@@ -25,6 +25,7 @@ nav_order: 5
 
 **Merged pull requests:**
 
+- Refactor: JTD theme and installation [\#31](https://github.com/PROxZIMA/DarkSpider/pull/31) ([PROxZIMA](https://github.com/PROxZIMA))
 - Fix: Type hinting for Python \<3.9 [\#30](https://github.com/PROxZIMA/DarkSpider/pull/30) ([PROxZIMA](https://github.com/PROxZIMA))
 - Add: Documentation [\#27](https://github.com/PROxZIMA/DarkSpider/pull/27) ([PROxZIMA](https://github.com/PROxZIMA))
 

@@ -164,6 +164,7 @@ cython_debug/
 www*/
 
 assets/Dark*
+assets/diagrams
 assets/*.odt
 assets/*2.pdf
 assets/*Workbook*
