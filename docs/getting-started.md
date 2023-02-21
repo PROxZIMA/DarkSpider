@@ -59,8 +59,8 @@ Args | Long | Description
 **Crawl** | |
 `-u` |`--url *.onion`| URL of Webpage to crawl or extract
 `-c` |`--crawl`| Crawl website (Default output on /links.txt)
-`-d` |`--cdepth`| Set depth of crawl's travel (Default: 1)
-`-p` |`--cpause`| The length of time the crawler will pause (Default: 0)
+`-d` |`--depth`| Set depth of crawl's travel (Default: 1)
+`-p` |`--pause`| The length of time the crawler will pause (Default: 0)
 `-z` |`--exclusion regexp`| Regex path that is ignored while crawling (Default: None)
 `-x` |`--external`| Exclude external links while crawling a webpage (Default: include all links)
 **Visualize** | |

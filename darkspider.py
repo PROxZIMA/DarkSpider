@@ -109,7 +109,7 @@ def main(gooey_available, baseParser):
     )
     crawler_group.add_argument(
         "-d",
-        "--cdepth",
+        "--depth",
         metavar="Depth",
         type=int,
         default=1,
@@ -117,10 +117,10 @@ def main(gooey_available, baseParser):
     )
     crawler_group.add_argument(
         "-p",
-        "--cpause",
+        "--pause",
         metavar="Pause",
         type=float,
-        default=0,
+        default=1,
         help="The length of time the crawler will pause. (Default: 1 second)",
     )
     crawler_group.add_argument(
@@ -223,6 +223,7 @@ def main(gooey_available, baseParser):
 
     args = parser.parse_args()
 
+    print(args.pause)
     if args.url is None and args.input is None:
         parser.error("either argument -u/--url or -i/--input is required to proceed.")
 
@@ -232,11 +233,11 @@ def main(gooey_available, baseParser):
     if args.yara and args.yara not in [0, 1]:
         parser.error("argument -y/--yara: expected argument 0 or 1.")
 
-    if args.cdepth < 1:
-        parser.error("argument -d/--cdepth: expected argument greater than 1.")
+    if args.depth < 1:
+        parser.error("argument -d/--depth: expected argument greater than 1.")
 
-    if args.cpause < 0:
-        parser.error("argument -p/--cpause: expected argument greater than 0.")
+    if args.pause < 0:
+        parser.error("argument -p/--pause: expected argument greater than 0.")
 
     if args.thread < 1:
         parser.error("argument -t/--thread: expected argument greater than 1.")
@@ -280,8 +281,8 @@ def main(gooey_available, baseParser):
         crawler = Crawler(
             website=website,
             proxies=proxies,
-            c_depth=args.cdepth,
-            c_pause=args.cpause,
+            depth=args.depth,
+            pause=args.pause,
             out_path=out_path,
             external=getattr(args, "External links"),
             exclusion=args.exclusion,

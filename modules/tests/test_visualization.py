@@ -27,8 +27,8 @@ class TestVisualizationFunctions(unittest.TestCase):
         cls.crawler = Crawler(
             website=cls._website,
             proxies=None,
-            c_depth=1,
-            c_pause=1,
+            depth=1,
+            pause=1,
             out_path=cls.out_path,
             external=True,
             exclusion=None,

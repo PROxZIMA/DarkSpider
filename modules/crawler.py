@@ -17,13 +17,13 @@ from modules.helper import get_requests_header
 
 
 class Crawler:
-    """Crawl input link upto depth (c_depth) with a pause of c_pause seconds using multiple threads.
+    """Crawl input link upto depth (depth) with a pause of pause seconds using multiple threads.
 
     Attributes:
         website: Website to crawl.
         proxies: Dictionary mapping protocol or protocol and host to the URL of the proxy.
-        c_depth: Depth of the crawl.
-        c_pause: Pause after every depth iteration.
+        depth: Depth of the crawl.
+        pause: Pause after every depth iteration.
         out_path: Output path to store extracted links.
         external: True if external links are to be crawled else False.
         exclusion: Paths that you don't want to include.
@@ -38,8 +38,8 @@ class Crawler:
         self,
         website: str,
         proxies: Dict[str, str],
-        c_depth: int,
-        c_pause: float,
+        depth: int,
+        pause: float,
         out_path: str,
         external: bool,
         exclusion: str,
@@ -48,8 +48,8 @@ class Crawler:
     ):
         self.website = website
         self.proxies = proxies
-        self.c_depth = c_depth
-        self.c_pause = c_pause
+        self.depth = depth
+        self.pause = pause
         self.out_path = out_path
         self.external = external
         self.exclusion = rf"{exclusion}" if exclusion else None
@@ -204,15 +204,15 @@ class Crawler:
         cur_level = set()
 
         self.logger.info(
-            f"Crawler started from {self.website} with {self.c_depth} depth, "
-            f"{self.c_pause} second{'s'[:int(self.c_pause)^1]} delay and using {self.thread} "
+            f"Crawler started from {self.website} with {self.depth} depth, "
+            f"{self.pause} second{'s'[:int(self.pause)^1]} delay and using {self.thread} "
             f"Thread{'s'[:self.thread^1]}. Excluding '{self.exclusion}' links."
         )
 
         # Json dictionary
         json_data = {}
         # Depth
-        for index in range(0, int(self.c_depth)):
+        for index in range(0, int(self.depth)):
             session = self.__get_tor_session()
 
             # Sumbit all the links to the thread pool
@@ -258,7 +258,7 @@ class Crawler:
                     file.write(f"{url}\n")
 
             # Pause time
-            time.sleep(self.c_pause)
+            time.sleep(self.pause)
 
         # Close the executor, don't wait for all threads to finish
         self.__executor.shutdown(wait=False)
