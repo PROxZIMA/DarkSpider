@@ -58,9 +58,89 @@ def main(gooey_available, baseParser):
 
     # Get arguments with GooeyParser if available else argparse.
     description = "DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python."
-    parser = baseParser(description=description)
+    parser = baseParser(description=description, add_help=False)
 
-    # GUI
+    # Required
+    required_group = parser.add_argument_group("Required Options", "Either argument -u/--url or -i/--input is required")
+    required_group.add_argument("-u", "--url", type=str, help="URL of webpage to crawl or extract")
+    required_group.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        help="Input file with URL(s) (seperated by line)",
+    )
+
+    # Extract
+    extract_group = parser.add_argument_group("Extract Options", "Arguments for the Extractor module")
+    extract_group.add_argument(
+        "-e",
+        "--extract",
+        action="store_true",
+        help="Extract page's code to terminal or file.",
+    )
+    extract_group.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="",
+        help="Output page(s) to file(s) (for one page)",
+    )
+    extract_group.add_argument(
+        "-y",
+        "--yara",
+        type=int,
+        default=None,
+        help="Check for keywords and only scrape documents that contain a "
+        "match. 0 search whole html object. 1 search only the text. (Default: None)",
+    )
+
+    # Crawler
+    crawler_group = parser.add_argument_group("Crawler Options", "Arguments for the Crawler module")
+    crawler_group.add_argument(
+        "-c",
+        "--crawl",
+        action="store_true",
+        help="Crawl website (Default output on /links.txt)",
+    )
+    crawler_group.add_argument(
+        "-d",
+        "--cdepth",
+        type=int,
+        default=1,
+        help="Set depth of crawl's travel. (Default: 1)",
+    )
+    crawler_group.add_argument(
+        "-p",
+        "--cpause",
+        type=float,
+        default=0,
+        help="The length of time the crawler will pause. (Default: 1 second)",
+    )
+    crawler_group.add_argument(
+        "-z",
+        "--exclusion",
+        type=str,
+        help="Regex path that is ignored while crawling",
+    )
+    crawler_group.add_argument(
+        "-x",
+        "--external",
+        action="store_false",
+        default=True,
+        help="Exclude external links while crawling a webpage (Default: include all links)",
+    )
+
+    # Visualize
+    visualize_group = parser.add_argument_group("Visualize Options", "Arguments for the Visualize module")
+    visualize_group.add_argument(
+        "-s",
+        "--visualize",
+        action="store_true",
+        help="Visualize the graphs and insights from the crawled data",
+    )
+
+    # General
+    general_group = parser.add_argument_group("General Options", "Configuration options for the crawler")
     gui_kwargs = {
         "action": "store_true",
         "help": "Open with GUI backend.",
@@ -68,117 +148,50 @@ def main(gooey_available, baseParser):
     if gooey_available:
         gui_kwargs["gooey_options"] = {"visible": False}
 
-    parser.add_argument(
+    general_group.add_argument(
         "-g",
         "--gui",
         **gui_kwargs,
     )
-
-    # General
-    parser.add_argument(
+    general_group.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit",
+    )
+    general_group.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         help="Show more information about the progress",
     )
-    parser.add_argument(
-        "-s",
-        "--visualize",
-        action="store_true",
-        help="Visualize the graphs and insights from the crawled data",
-    )
-    parser.add_argument("-u", "--url", type=str, help="URL of webpage to crawl or extract")
-    parser.add_argument(
+    general_group.add_argument("-w", "--without", action="store_true", help="Without the use of Relay TOR")
+    general_group.add_argument(
         "-n",
         "--port",
         type=int,
         default=9050,
         help="Port number of TOR Proxy (default: 9050)",
     )
-    parser.add_argument("-w", "--without", action="store_true", help="Without the use of Relay TOR")
-
-    # Extract
-    parser.add_argument(
-        "-e",
-        "--extract",
-        action="store_true",
-        help="Extract page's code to terminal or file.",
-    )
-    parser.add_argument(
-        "-i",
-        "--input",
+    general_group.add_argument(
+        "-f",
+        "--folder",
         type=str,
-        help="Input file with URL(s) (seperated by line)",
+        help="The root directory which will contain the generated files",
     )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        default="",
-        help="Output page(s) to file(s) (for one page)",
-    )
-
-    # Crawl
-    parser.add_argument(
-        "-c",
-        "--crawl",
-        action="store_true",
-        help="Crawl website (Default output on /links.txt)",
-    )
-    parser.add_argument(
-        "-d",
-        "--cdepth",
-        type=int,
-        default=1,
-        help="Set depth of crawl's travel. (Default: 1)",
-    )
-    parser.add_argument(
-        "-p",
-        "--cpause",
-        type=float,
-        default=0,
-        help="The length of time the crawler will pause. (Default: 1 second)",
-    )
-    parser.add_argument(
-        "-z",
-        "--exclusion",
-        type=str,
-        help="Regex path that is ignored while crawling",
-    )
-    parser.add_argument(
+    general_group.add_argument(
         "-t",
         "--thread",
         type=int,
         default=16,
         help="How many pages to visit (Threads) at the same time (Default: 16)",
     )
-    parser.add_argument(
+    general_group.add_argument(
         "-l",
         "--log",
         action="store_false",
         default=True,
-        help="A save log will let you see which URLs were visited and their " "response code",
-    )
-    parser.add_argument(
-        "-f",
-        "--folder",
-        type=str,
-        help="The root directory which will contain the generated files",
-    )
-    parser.add_argument(
-        "-x",
-        "--external",
-        action="store_false",
-        default=True,
-        help="Exclude external links while crawling a webpage (Default: include all links)",
-    )
-    parser.add_argument(
-        "-y",
-        "--yara",
-        type=int,
-        default=None,
-        help="Check for keywords and only scrape documents that contain a "
-        "match. 0 search whole html object. 1 search only the text. (Default: None)",
+        help="A log will let you see which URLs were visited and their response code (Default: True)",
     )
 
     if len(sys.argv) == 1:
@@ -317,6 +330,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
             program_name="DarkSpider",
             image_dir="assets",
             monospace_display=True,
+            tabbed_groups=False,
             menu=[
                 {
                     "name": "File",
