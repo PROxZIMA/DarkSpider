@@ -46,7 +46,7 @@ from modules.extractor import Extractor
 from modules.helper import HEADER, Colors, get_tor_proxies, gradient_print, setup_custom_logger
 from modules.visualization import Visualization
 
-warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
+warnings.filterwarnings("ignore", category=UserWarning, module=r"bs4|gooey")
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 requests.urllib3.disable_warnings()
 
@@ -316,6 +316,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
         main = Gooey(
             program_name="DarkSpider",
             image_dir="assets",
+            monospace_display=True,
             menu=[
                 {
                     "name": "File",
