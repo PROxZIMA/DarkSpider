@@ -28,6 +28,7 @@ nav_order: 5
 - Refactor: JTD theme and installation [\#31](https://github.com/PROxZIMA/DarkSpider/pull/31) ([PROxZIMA](https://github.com/PROxZIMA))
 - Fix: Type hinting for Python \<3.9 [\#30](https://github.com/PROxZIMA/DarkSpider/pull/30) ([PROxZIMA](https://github.com/PROxZIMA))
 - Add: Documentation [\#27](https://github.com/PROxZIMA/DarkSpider/pull/27) ([PROxZIMA](https://github.com/PROxZIMA))
+- Add project banner [\#26](https://github.com/PROxZIMA/DarkSpider/pull/26) ([DexLulz](https://github.com/DexLulz))
 
 ## [2.0.1](https://github.com/PROxZIMA/DarkSpider/tree/2.0.1) (2022-09-23)
 
