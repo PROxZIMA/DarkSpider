@@ -42,26 +42,26 @@ $ sudo apt install tor
 
 Args | Long | Description
 |:---|:-----|:-----------|
-**General** | |
-`-h` |`--help`| Help
+**General** | | Configuration options for the crawler
+`-h` |`--help`| Show this help message and exit
 `-g` |`--gui`| Open with GUI backend.
 `-v` |`--verbose`| Show more information about the progress
 `-w` |`--without`| Without the use of Relay TOR
-`-n` |`--port number`| Port number of TOR Socks Proxy (default: 9050)
-`-f` |`--folder`| The directory which will contain the generated files
-`-t` |`--thread number`| How many pages to visit (Threads) at the same time (Default: 16)
+`-n Port number` |`--port Port number`| Port number of TOR Socks Proxy (default: 9050)
+`-f Folder` |`--folder Folder`| The root directory which will contain the generated files
+`-t Threads` |`--thread Threads`| How many pages to visit (Threads) at the same time (Default: 16)
 `-l` |`--log`| A log will let you see which URLs were visited and their response code (Default: True)
-**Extract** | |
-`-i` |`--input filename`| Input file with URL(s) (separated by line)
+**Extract** | | Arguments for the Extractor module
+`-i Input file` |`--input Input file`| Input file with URL(s) (separated by line)
 `-e` |`--extract`| Extract page's code to terminal or file. (Default: Terminal)
-`-o` |`--output filename`| Output page(s) to file(s) (for one page)
-`-y` |`--yara 0|1`| Perform yara keyword search (0 = search entire html object. 1 = search only text).
-**Crawl** | |
-`-u` |`--url *.onion`| URL of Webpage to crawl or extract
+`-o Output` |`--output Output`| Output page(s) to file(s) (for one page)
+`-y 0|1` |`--yara 0|1`| Check for keywords and only scrape documents that contain a match. 0 search whole html object. 1 search only the text. (Default: None).
+**Crawl** | | Arguments for the Crawler module
+`-u Seed URL` |`--url Seed URL`| URL of Webpage to crawl or extract
 `-c` |`--crawl`| Crawl website (Default output on /links.txt)
-`-d` |`--depth`| Set depth of crawl's travel (Default: 1)
-`-p` |`--pause`| The length of time the crawler will pause (Default: 0)
-`-z` |`--exclusion regexp`| Regex path that is ignored while crawling (Default: None)
+`-d Depth` |`--depth Depth`| Set depth of crawl's travel (Default: 1)
+`-p Pause` |`--pause Pause`| The length of time the crawler will pause (Default: 1 second)
+`-z Exclusion regex` |`--exclusion Exclusion regex`| Regex path that is ignored while crawling (Default: None)
 `-x` |`--external`| Exclude external links while crawling a webpage (Default: include all links)
-**Visualize** | |
+**Visualize** | | Arguments for the Visualize module
 `-s` |`--visualize`| Visualize the graphs and insights from the crawled data

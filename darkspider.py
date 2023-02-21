@@ -78,7 +78,7 @@ def main(gooey_available, baseParser):
         "--extract",
         dest="Extract",
         action="store_true",
-        help="Extract page's code to terminal or file.",
+        help="Extract page's code to terminal or file. (Default: Terminal)",
     )
     extract_group.add_argument(
         "-o",
@@ -128,7 +128,7 @@ def main(gooey_available, baseParser):
         "--exclusion",
         metavar="Exclusion regex",
         type=str,
-        help="Regex path that is ignored while crawling",
+        help="Regex path that is ignored while crawling (Default: None)",
     )
     crawler_group.add_argument(
         "-x",
