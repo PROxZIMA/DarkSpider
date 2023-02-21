@@ -62,10 +62,11 @@ def main(gooey_available, baseParser):
 
     # Required
     required_group = parser.add_argument_group("Required Options", "Either argument -u/--url or -i/--input is required")
-    required_group.add_argument("-u", "--url", type=str, help="URL of webpage to crawl or extract")
+    required_group.add_argument("-u", "--url", metavar="Seed URL", type=str, help="URL of webpage to crawl or extract")
     required_group.add_argument(
         "-i",
         "--input",
+        metavar="Input file",
         type=str,
         help="Input file with URL(s) (seperated by line)",
     )
@@ -75,12 +76,14 @@ def main(gooey_available, baseParser):
     extract_group.add_argument(
         "-e",
         "--extract",
+        dest="Extract",
         action="store_true",
         help="Extract page's code to terminal or file.",
     )
     extract_group.add_argument(
         "-o",
         "--output",
+        metavar="Output",
         type=str,
         default="",
         help="Output page(s) to file(s) (for one page)",
@@ -88,6 +91,7 @@ def main(gooey_available, baseParser):
     extract_group.add_argument(
         "-y",
         "--yara",
+        metavar="Yara",
         type=int,
         default=None,
         help="Check for keywords and only scrape documents that contain a "
@@ -99,12 +103,14 @@ def main(gooey_available, baseParser):
     crawler_group.add_argument(
         "-c",
         "--crawl",
+        dest="Crawl",
         action="store_true",
         help="Crawl website (Default output on /links.txt)",
     )
     crawler_group.add_argument(
         "-d",
         "--cdepth",
+        metavar="Depth",
         type=int,
         default=1,
         help="Set depth of crawl's travel. (Default: 1)",
@@ -112,6 +118,7 @@ def main(gooey_available, baseParser):
     crawler_group.add_argument(
         "-p",
         "--cpause",
+        metavar="Pause",
         type=float,
         default=0,
         help="The length of time the crawler will pause. (Default: 1 second)",
@@ -119,12 +126,14 @@ def main(gooey_available, baseParser):
     crawler_group.add_argument(
         "-z",
         "--exclusion",
+        metavar="Exclusion regex",
         type=str,
         help="Regex path that is ignored while crawling",
     )
     crawler_group.add_argument(
         "-x",
         "--external",
+        dest="External links",
         action="store_false",
         default=True,
         help="Exclude external links while crawling a webpage (Default: include all links)",
@@ -135,6 +144,7 @@ def main(gooey_available, baseParser):
     visualize_group.add_argument(
         "-s",
         "--visualize",
+        dest="Visualize",
         action="store_true",
         help="Visualize the graphs and insights from the crawled data",
     )
@@ -151,24 +161,34 @@ def main(gooey_available, baseParser):
     general_group.add_argument(
         "-g",
         "--gui",
+        dest="GUI",
         **gui_kwargs,
     )
     general_group.add_argument(
         "-h",
         "--help",
+        dest="Help",
         action="help",
         help="Show this help message and exit",
     )
     general_group.add_argument(
         "-v",
         "--verbose",
+        dest="Verbose",
         action="store_true",
         help="Show more information about the progress",
     )
-    general_group.add_argument("-w", "--without", action="store_true", help="Without the use of Relay TOR")
+    general_group.add_argument(
+        "-w",
+        "--without",
+        dest="Without TOR",
+        action="store_true",
+        help="Without the use of Relay TOR",
+    )
     general_group.add_argument(
         "-n",
         "--port",
+        metavar="Port number",
         type=int,
         default=9050,
         help="Port number of TOR Proxy (default: 9050)",
@@ -176,12 +196,14 @@ def main(gooey_available, baseParser):
     general_group.add_argument(
         "-f",
         "--folder",
+        metavar="Folder",
         type=str,
         help="The root directory which will contain the generated files",
     )
     general_group.add_argument(
         "-t",
         "--thread",
+        metavar="Threads",
         type=int,
         default=16,
         help="How many pages to visit (Threads) at the same time (Default: 16)",
@@ -189,6 +211,7 @@ def main(gooey_available, baseParser):
     general_group.add_argument(
         "-l",
         "--log",
+        dest="Log files",
         action="store_false",
         default=True,
         help="A log will let you see which URLs were visited and their response code (Default: True)",
@@ -235,32 +258,32 @@ def main(gooey_available, baseParser):
     crawlog = setup_custom_logger(
         name="crawlog",
         filename=os.path.join(out_path, "crawl.log"),
-        verbose_=args.verbose,
-        filelog=args.log,
+        verbose_=args.Verbose,
+        filelog=getattr(args, "Log files"),
         argv=sys.argv,
     )
 
     # Connect to TOR
-    if not args.without:
+    if not getattr(args, "Without TOR"):
         check_tor(logger=crawlog)
         proxies = get_tor_proxies(port=args.port)
 
-    if args.verbose:
-        check_ip(proxies=proxies, url=args.url, logger=crawlog, without_tor=args.without)
+    if args.Verbose:
+        check_ip(proxies=proxies, url=args.url, logger=crawlog, without_tor=getattr(args, "Without TOR"))
 
     if canon:
         crawlog.debug("URL fixed :: %s", website)
     if out_path:
         crawlog.debug("Folder created :: %s", out_path)
 
-    if args.crawl and website:
+    if args.Crawl and website:
         crawler = Crawler(
             website=website,
             proxies=proxies,
             c_depth=args.cdepth,
             c_pause=args.cpause,
             out_path=out_path,
-            external=args.external,
+            external=getattr(args, "External links"),
             exclusion=args.exclusion,
             thread=args.thread,
             logger=crawlog,
@@ -271,7 +294,7 @@ def main(gooey_available, baseParser):
             os.path.join(out_path, crawler.network_file),
         )
 
-        if args.visualize:
+        if args.Visualize:
             obj = Visualization(
                 json_file=os.path.join(out_path, crawler.network_file),
                 out_path=out_path,
@@ -285,12 +308,12 @@ def main(gooey_available, baseParser):
             obj.pagerank_bar()
             # obj.visualize()
 
-        if args.extract:
+        if args.Extract:
             input_file = os.path.join(out_path, "links.txt")
             extractor = Extractor(
                 website=website,
                 proxies=proxies,
-                crawl=args.crawl,
+                crawl=args.Crawl,
                 output_file=args.output,
                 input_file=input_file,
                 out_path=out_path,
@@ -303,7 +326,7 @@ def main(gooey_available, baseParser):
         extractor = Extractor(
             website=website,
             proxies=proxies,
-            crawl=args.crawl,
+            crawl=args.Crawl,
             output_file=args.output,
             input_file=args.input or "",
             out_path=out_path,
