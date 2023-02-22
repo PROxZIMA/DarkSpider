@@ -1,0 +1,3 @@
+-r requirements.txt
+pysocks>=1.7.1
+coverage>=7.0.5
