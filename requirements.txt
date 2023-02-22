@@ -6,4 +6,5 @@ psutil>=5.9.2
 requests>=2.25.1
 seaborn>=0.11.1
 yara-python>=4.2.0
+peewee>=3.15.3
 lxml>=4.9.1
