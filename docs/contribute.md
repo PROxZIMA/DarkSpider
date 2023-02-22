@@ -13,13 +13,19 @@ nav_order: 4
 
 # Testing
 - Test cases must be updated as we don't want any unexpected exception to pop-up in-between long runs.
-- Before creating a PR make sure to run all the test cases.
+- Before committing, make sure to run all the test cases and check the code coverage.
 
 ```bash
-$ pytest -q --tb=short modules/tests/
+$ coverage run -m pytest -q --tb=short modules/tests/
 ```
 - Or a module specific test cases using
 
 ```bash
 $ pytest -q --tb=short modules/tests/test_extractor.py::TestCheckerFunctions::test_outex_002
+```
+- Check code coverage
+
+```bash
+$ coverage report -m
+$ coverage html
 ```

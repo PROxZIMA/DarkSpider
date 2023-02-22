@@ -1,0 +1,6 @@
+[run]
+source = .
+omit = ./venv/*,*/tests/*,*__init__.py,*darkspider.py,*/helper/*
+
+[report]
+omit = ./venv/*,*/tests/*,*__init__.py,*darkspider.py,*/helper/*
