@@ -7,7 +7,7 @@ from unittest import mock
 
 from modules.checker import folder
 from modules.extractor import Extractor
-from modules.helper import assertMsg, setup_custom_logger
+from modules.helper import assert_msg, setup_custom_logger
 
 URL_1 = "http://info.cern.ch/"
 URL_2 = "http://info.cern.ch/hypertext/WWW/TheProject.html"
@@ -95,7 +95,7 @@ class TestCheckerFunctions(unittest.TestCase):
         expected = """http://info.cern.ch http://info.cern.ch - home of the first website From here you can: Browse the first website Browse the first website using the line-mode browser simulator Learn about the birth of the web Learn about CERN, the physics laboratory where the web was born"""
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__text(response=content)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_check_yara_001(self, _):
         """check_yara unit test."""
@@ -120,7 +120,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__check_yara(raw=content, yara=0)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_check_yara_002(self, _):
         """check_yara unit test.
@@ -145,7 +145,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         content = self.get_response_text(URL_1)
         result = self.extractor_1._Extractor__check_yara(raw=content, yara=1)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_cinex_001(self, _, __):
@@ -171,7 +171,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, 0)
 
-        self.assertCountEqual(expected, result, assertMsg(expected, result))
+        self.assertCountEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_cinex_002(self, _, __):
@@ -190,7 +190,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__cinex(self.inp_file, self.out_path, None)
 
-        self.assertCountEqual(expected, result, assertMsg(expected, result))
+        self.assertCountEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_terminex_001(self, _, __):
@@ -220,7 +220,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__terminex(self.inp_file, 1)
 
-        self.assertCountEqual(expected, result, assertMsg(expected, result))
+        self.assertCountEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_terminex_002(self, _, __):
@@ -247,7 +247,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__terminex(self.inp_file, None)
 
-        self.assertCountEqual(expected, result, assertMsg(expected, result))
+        self.assertCountEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_outex_001(self, _, __):
@@ -259,7 +259,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__outex(URL_1, self.out_file, 0)
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_outex_002(self, _, __):
@@ -270,7 +270,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__outex(URL_1, self.out_file, None)
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_termex_001(self, _, __):
@@ -282,7 +282,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__termex(URL_1, 1)
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_termex_002(self, _, __):
@@ -293,7 +293,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1._Extractor__termex(URL_1, None)
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_001(self, _, __):
@@ -319,7 +319,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = self.extractor_1.extract()
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_002(self, _, __):
@@ -352,7 +352,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_2.extract()
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_003(self, _, __):
@@ -371,7 +371,7 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_3.extract()
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     @mock.patch("concurrent.futures.ThreadPoolExecutor.shutdown", side_effect=[lambda wait: None])
     def test_extractor_004(self, _, __):
@@ -390,4 +390,4 @@ class TestCheckerFunctions(unittest.TestCase):
 
         result = extractor_4.extract()
 
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
