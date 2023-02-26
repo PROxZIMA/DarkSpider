@@ -3,7 +3,7 @@ import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
-from typing import List
+from typing import List, Optional
 
 from modules.helper.header import Colors
 
@@ -58,7 +58,12 @@ class CustomFormatter(logging.Formatter):
 
 
 def setup_custom_logger(
-    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: List[str] = None
+    name: str,
+    filename: str = "log.log",
+    verbose_: bool = False,
+    filelog: bool = True,
+    screenlog: bool = True,
+    argv: Optional[List[str]] = None,
 ) -> logging.Logger:
     """Setup custom logger with stream and file handlers
 
@@ -94,6 +99,10 @@ def setup_custom_logger(
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
         )
+
+    # Return logger if screen log is disabled
+    if not screenlog:
+        return logger
 
     formatter, fmt, level = (
         (CustomFormatter, "[{color}{{levelname:^7s}}{reset}] {{message}}", logging.DEBUG)

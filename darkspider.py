@@ -38,12 +38,13 @@ import sys
 import warnings
 
 import requests
+from dotenv import load_dotenv
 
 # DarkSpider Modules
 from modules import Crawler
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 from modules.extractor import Extractor
-from modules.helper import HEADER, Colors, get_tor_proxies, gradient_print, setup_custom_logger
+from modules.helper import HEADER, Colors, DatabaseManager, get_tor_proxies, gradient_print, setup_custom_logger
 from modules.visualization import Visualization
 
 warnings.filterwarnings("ignore", category=UserWarning, module=r"bs4|gooey")
@@ -51,14 +52,14 @@ logging.getLogger("urllib3").setLevel(logging.ERROR)
 requests.urllib3.disable_warnings()
 
 
-def main(gooey_available, baseParser):
+def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
     """
 
     # Get arguments with GooeyParser if available else argparse.
     description = "DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python."
-    parser = baseParser(description=description, add_help=False)
+    parser: argparse.ArgumentParser = base_parser(description=description, add_help=False)
 
     # Required
     required_group = parser.add_argument_group("Required Options", "Either argument -u/--url or -i/--input is required")
@@ -223,7 +224,6 @@ def main(gooey_available, baseParser):
 
     args = parser.parse_args()
 
-    print(args.pause)
     if args.url is None and args.input is None:
         parser.error("either argument -u/--url or -i/--input is required to proceed.")
 
@@ -277,6 +277,10 @@ def main(gooey_available, baseParser):
     if out_path:
         crawlog.debug("Folder created :: %s", out_path)
 
+    load_dotenv()
+    db = DatabaseManager(
+        out_path, os.environ.get("NEO4J_SERVER"), os.environ.get("NEO4J_USER"), os.environ.get("NEO4J_PASSWORD")
+    )
     if args.Crawl and website:
         crawler = Crawler(
             website=website,
@@ -287,6 +291,7 @@ def main(gooey_available, baseParser):
             external=getattr(args, "External links"),
             exclusion=args.exclusion,
             thread=args.thread,
+            db=db,
             logger=crawlog,
         )
         json_data = crawler.crawl()
@@ -402,4 +407,4 @@ else:
 
 # Stub to call main method.
 if __name__ == "__main__":
-    main(gooey_available=GOOEY_AVAILABLE, baseParser=PARSER)
+    main(gooey_available=GOOEY_AVAILABLE, base_parser=PARSER)

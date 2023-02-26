@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from requests.models import Response
 
 from modules.checker import url_canon
-from modules.helper import get_requests_header
+from modules.helper import DatabaseManager, get_requests_header
 
 
 class Crawler:
@@ -44,6 +44,7 @@ class Crawler:
         external: bool,
         exclusion: str,
         thread: int,
+        db: DatabaseManager,
         logger: Logger,
     ):
         self.website = website
@@ -54,6 +55,7 @@ class Crawler:
         self.external = external
         self.exclusion = rf"{exclusion}" if exclusion else None
         self.thread = thread
+        self.db = db
         self.logger = logger
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
@@ -238,6 +240,9 @@ class Crawler:
 
                 # Adding to json data
                 json_data[url] = list(url_data)
+
+                for x in url_data:
+                    self.db.create_linkage(url, x)
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)

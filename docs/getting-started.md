@@ -15,6 +15,19 @@ $ git clone https://github.com/PROxZIMA/DarkSpider.git
 ### Dependencies
 You'll also need to install dependencies:
 
+- [`Neo4j`](https://neo4j.com/) :: For desktop app, see the [official installation](https://neo4j.com/download-center/#desktop) docs
+    - Open Neo4j desktop application.
+    - New > Create project > Add > Local DBMS > Enter password `<<password>>` > Create > Start
+    - Wait for the database to start then open the Neo4j Browser.
+    - Run `:server status` and note down `<<user>>` and `<<server_uri>>`.
+    - Create a new `.env` file in the root the project directory with the following content.
+
+    ```
+    NEO4J_SERVER=server_uri
+    NEO4J_USER=user
+    NEO4J_PASSWORD=password
+    ```
+
 - [`wxPython`](https://wxpython.org/) :: For Linux, see the [official installation](https://wxpython.org/pages/downloads/index.html) docs
 
 ```shell
