@@ -123,21 +123,21 @@ class DatabaseManager:
         Returns:
             None
         """
-        query = """
-            MERGE (w1:WebPage { url: $wp1_url })
+        query = f"""
+            MERGE (w1:WebPage {{ url: "{wp1_url}" }})
             ON CREATE
                 SET
                     w1.index_counter = 1,
                     w1.index_datetime = datetime()
             FOREACH (link IN $hyperlinks |
-                MERGE (w2:WebPage { url: link })
+                MERGE (w2:WebPage {{ url: link }})
                 SET
                     w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
                     w2.index_datetime = datetime()
                 MERGE (w1)-[:POINTS_TO]->(w2)
             )
             RETURN w1, $hyperlinks as hyperlinks"""
-        result = self.query(requested=True, query=query, wp1_url=wp1_url, hyperlinks=hyperlinks)
+        result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
             return
         records, summary = result
@@ -145,6 +145,37 @@ class DatabaseManager:
             self.logger.info(
                 "(%d ms) (%s)-[:POINTS_TO]->(%s)", summary.result_available_after, row["w1"], row["hyperlinks"]
             )
+
+    def create_labeled_link(self, label: str, hyperlinks: List[List[str]]) -> None:
+        """Create labeled links between `hyperlinks[x][0]` containing `hyperlinks[x][1]`
+
+        Args:
+            label: Label of link like "Extlink", "Mail", "Telephone"
+            hyperlinks: List of pairwise URLs
+
+        Returns:
+            None
+        """
+        query = f"""
+            FOREACH (link IN $hyperlinks |
+                MERGE (w1:WebPage {{ url: link[0] }})
+                ON CREATE
+                    SET
+                        w1.index_counter = 1,
+                        w1.index_datetime = datetime()
+                MERGE (w2:{label} {{ url: link[1] }})
+                SET
+                    w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
+                    w2.index_datetime = datetime()
+                MERGE (w1)-[:CONTAINS]->(w2)
+            )
+            RETURN $hyperlinks as hyperlinks"""
+        result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
+        if not result:
+            return
+        records, summary = result
+        for row in records:
+            self.logger.info("(%d ms) [:CONTAINS]->(%s)", summary.result_available_after, row["hyperlinks"])
 
     def db_summary(self):
         """Summary about the database"""

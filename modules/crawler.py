@@ -60,9 +60,9 @@ class Crawler:
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__files = {
-            "extlinks": open(os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"),
-            "telephones": open(os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"),
-            "mails": open(os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"),
+            "Extlink": open(os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"),
+            "Telephone": open(os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"),
+            "Mail": open(os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"),
             "network_structure": os.path.join(self.out_path, self.network_file),
             "links": os.path.join(self.out_path, "links.txt"),
         }
@@ -79,7 +79,7 @@ class Crawler:
         session.verify = False
         return session
 
-    def excludes(self, link: str) -> bool:
+    def excludes(self, link: str, parent_url: str) -> bool:
         """Excludes links that are not required.
 
         Args:
@@ -100,15 +100,15 @@ class Crawler:
         if link.startswith("http") and not link.startswith(self.website):
             if self.external:
                 return False
-            self.__files["extlinks"].write(str(link) + "\n")
+            self.__files["Extlink"].write(f"{parent_url}\n{link}\n")
             return True
         # Telephone Number
         if link.startswith("tel:"):
-            self.__files["telephones"].write(str(link) + "\n")
+            self.__files["Telephone"].write(f"{parent_url}\n{link}\n")
             return True
         # Mails
         if link.startswith("mailto:"):
-            self.__files["mails"].write(str(link) + "\n")
+            self.__files["Mail"].write(f"{parent_url}\n{link}\n")
             return True
         # Type of files
         if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc|js|css)$", link, re.IGNORECASE):
@@ -168,7 +168,7 @@ class Crawler:
         for link in soup.findAll("a"):
             link = link.get("href")
 
-            if self.excludes(link):
+            if self.excludes(link, url):
                 continue
 
             ver_link = self.canonical(url, link)
@@ -179,7 +179,7 @@ class Crawler:
         for link in soup.findAll("area"):
             link = link.get("href")
 
-            if self.excludes(link):
+            if self.excludes(link, url):
                 continue
 
             ver_link = self.canonical(url, link)
@@ -269,8 +269,12 @@ class Crawler:
         self.__executor.shutdown(wait=False)
 
         # Close the output files and return the json_data
-        for file in self.__files.values():
+        for label, file in self.__files.items():
             if isinstance(file, TextIOBase):
+                file.seek(0)
+                data = file.read().splitlines()
+                pairs = [data[i : i + 2] for i in range(0, len(data), 2)]
+                self.db.create_labeled_link(label, pairs)
                 file.close()
 
         return json_data
