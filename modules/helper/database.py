@@ -97,7 +97,7 @@ class DatabaseManager:
                 auth = (username, password)
             self.driver = GraphDatabase.driver(uri, auth=auth, encrypted=False)
             self.driver.verify_connectivity()
-            self.logger.info("Ne04J database connectivity successful")
+            self.logger.info("Neo4J database connectivity successful")
         except AuthError as e:
             self.logger.error("AuthError :: Could not authenticate to Neo4j database server", exc_info=e)
         except Exception as e:
@@ -113,36 +113,38 @@ class DatabaseManager:
             except ClientError:
                 pass
 
-    def create_linkage(self, wp1_url: str, wp2_url: str) -> None:
-        """Create link between two webpages where WebPage 1 with URL `wp1_url` contains hyperlink
-        to WebPage 2 with URL `wp2_url`
+    def create_linkage(self, wp1_url: str, hyperlinks: List[str]) -> None:
+        """Create links between a WebPage with URL `wp1_url` containing a list of `hyperlinks`
 
         Args:
             wp1_url: URL of WebPage 1
-            wp1_url: URL of WebPage 2
+            hyperlinks: List of URLs in WebPage 1
 
         Returns:
             None
         """
-        query = (
-            "MERGE (w1:WebPage { url: $wp1_url }) "
-            "ON CREATE "
-            "    SET "
-            "        w1.index_counter = 1, "
-            "        w1.index_datetime = datetime() "
-            "MERGE (w2:WebPage { url: $wp2_url }) "
-            "SET "
-            "    w2.index_counter = COALESCE(w2.index_counter, 0) + 1, "
-            "    w2.index_datetime = datetime() "
-            "MERGE (w1)-[:POINTS_TO]->(w2) "
-            "RETURN w1, w2 "
-        )
-        result = self.query(requested=True, query=query, wp1_url=wp1_url, wp2_url=wp2_url)
+        query = """
+            MERGE (w1:WebPage { url: $wp1_url })
+            ON CREATE
+                SET
+                    w1.index_counter = 1,
+                    w1.index_datetime = datetime()
+            FOREACH (link IN $hyperlinks |
+                MERGE (w2:WebPage { url: link })
+                SET
+                    w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
+                    w2.index_datetime = datetime()
+                MERGE (w1)-[:POINTS_TO]->(w2)
+            )
+            RETURN w1, $hyperlinks as hyperlinks"""
+        result = self.query(requested=True, query=query, wp1_url=wp1_url, hyperlinks=hyperlinks)
         if not result:
             return
         records, summary = result
         for row in records:
-            self.logger.info("(%d ms) (%s)-[:POINTS_TO]->(%s)", summary.result_available_after, row["w1"], row["w2"])
+            self.logger.info(
+                "(%d ms) (%s)-[:POINTS_TO]->(%s)", summary.result_available_after, row["w1"], row["hyperlinks"]
+            )
 
     def db_summary(self):
         """Summary about the database"""

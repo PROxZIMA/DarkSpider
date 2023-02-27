@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 from urllib.parse import urljoin
 
 import requests
@@ -203,7 +203,7 @@ class Crawler:
         """
         ord_lst = set([self.website])
         old_level = [self.website]
-        cur_level = set()
+        cur_level: Set[str] = set()
 
         self.logger.info(
             f"Crawler started from {self.website} with {self.depth} depth, "
@@ -241,8 +241,7 @@ class Crawler:
                 # Adding to json data
                 json_data[url] = list(url_data)
 
-                for x in url_data:
-                    self.db.create_linkage(url, x)
+                self.db.create_linkage(url, list(url_data))
 
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
@@ -262,6 +261,7 @@ class Crawler:
                 for url in sorted(ord_lst):
                     file.write(f"{url}\n")
 
+            session.close()
             # Pause time
             time.sleep(self.pause)
 
