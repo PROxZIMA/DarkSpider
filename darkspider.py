@@ -35,6 +35,7 @@ import argparse
 import logging
 import os
 import sys
+import time
 import warnings
 
 import requests
@@ -249,7 +250,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
     # Canonicalization of web url and create path for output.
     if args.url:
         canon, website = url_canon(args.url)
-        out_path = extract_domain(website)
+        out_path = f"{extract_domain(website)}.{int(time.time())}"
     elif args.folder:
         out_path = args.folder
 

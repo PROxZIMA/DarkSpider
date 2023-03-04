@@ -12,10 +12,10 @@ class RollingFileHandler(RotatingFileHandler):
     """Custom RotatingFileHandler for incremental infinite logging"""
 
     def __init__(self, filename, mode="a", maxBytes=0, backupCount=0, encoding=None, delay=False, errors=None):
-        self.last_backup_cnt = int(time.time())
+        self.last_backup_cnt = 0
         self.filename = filename
         super(RollingFileHandler, self).__init__(
-            filename="{0}.{2}.init{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
+            filename="{0}.{2}{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
             mode=mode,
             maxBytes=maxBytes,
             backupCount=backupCount,
@@ -82,7 +82,7 @@ def setup_custom_logger(
 
     # Create file handler if filelog is True
     if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 10 * 1)
         file_handler.setFormatter(None)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
