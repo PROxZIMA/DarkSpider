@@ -82,7 +82,7 @@ def setup_custom_logger(
 
     # Create file handler if filelog is True
     if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 10 * 1)
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
         file_handler.setFormatter(None)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)

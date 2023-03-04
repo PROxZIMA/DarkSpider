@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
+from shutil import get_terminal_size
 from typing import Dict, List, Set, Tuple, Union
 from urllib.parse import urljoin
 
@@ -223,9 +224,16 @@ class Crawler:
                 for url in old_level
                 if url not in json_data
             ]
+            _flength = len(futures)
+            _i = 0
 
             # Get the results from list of futures and update the json_data
             for future in as_completed(futures):
+                _i += 1
+                _percent = int((_i / _flength) * 100)
+                _width = (_percent + 1) // 4
+                print(" " * get_terminal_size().columns, end="\r", flush=True)
+
                 url, url_data, response_code = future.result()
                 if isinstance(response_code, int):
                     self.logger.debug("%s :: %d", url, response_code)
@@ -236,13 +244,18 @@ class Crawler:
                 # Add url_data to crawled links.
                 cur_level = cur_level.union(url_data)
 
-                print(f"-- Results: {len(cur_level)}\r", end="", flush=True)
+                print(
+                    f"[{'#'*_width}{' '*(25-_width)}]{_percent: >3}% -- Results: {len(cur_level)}",
+                    end="\r",
+                    flush=True,
+                )
 
                 # Adding to json data
                 json_data[url] = list(url_data)
 
                 self.db.create_linkage(url, list(url_data))
 
+            print(" " * get_terminal_size().columns, end="\r", flush=True)
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
             # Merge both ord_lst and cur_level into ord_lst

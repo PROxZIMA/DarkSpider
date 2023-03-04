@@ -147,11 +147,11 @@ class DatabaseManager:
             )
 
     def create_labeled_link(self, label: str, hyperlinks: List[List[str]]) -> None:
-        """Create labeled links between `hyperlinks[x][0]` containing `hyperlinks[x][1]`
+        """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
 
         Args:
             label: Label of link like "Extlink", "Mail", "Telephone"
-            hyperlinks: List of pairwise URLs
+            hyperlinks: List of pairwise URLs with [`hyperlinks[i][0]` contains `hyperlinks[i][1]`] relationship
 
         Returns:
             None
@@ -175,7 +175,11 @@ class DatabaseManager:
             return
         records, summary = result
         for row in records:
-            self.logger.info("(%d ms) [:CONTAINS]->(%s)", summary.result_available_after, row["hyperlinks"])
+            self.logger.info(
+                "(%d ms) Created '%s' relationship within following items", summary.result_available_after, label
+            )
+            for hyperlink in row["hyperlinks"]:
+                self.logger.info("(%s)-[:CONTAINS]->(%s)", hyperlink[0], hyperlink[1])
 
     def db_summary(self):
         """Summary about the database"""
