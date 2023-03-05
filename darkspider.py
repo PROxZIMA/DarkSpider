@@ -295,7 +295,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
             db=db,
             logger=crawlog,
         )
-        json_data = crawler.crawl()
+        _json_data = crawler.crawl()
         crawlog.info(
             "Network Structure created :: %s",
             os.path.join(out_path, crawler.network_file),
@@ -317,6 +317,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
 
         if args.Extract:
             input_file = os.path.join(out_path, "links.txt")
+            # Input file is present and Craling is done :: Cinex
             extractor = Extractor(
                 website=website,
                 proxies=proxies,
@@ -325,11 +326,15 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
                 input_file=input_file,
                 out_path=out_path,
                 thread=args.thread,
+                db=db,
                 yara=args.yara,
                 logger=crawlog,
             )
-            extract = extractor.extract()
+            _extract = extractor.extract()
     elif args.input or website:
+        # Input file is present but Crawling is not done (O/P to terminal) :: Terminex
+        # No input file so extract the website to output file :: Outex
+        # Even output file is not there then O/P to terminal :: Termex
         extractor = Extractor(
             website=website,
             proxies=proxies,
@@ -338,16 +343,17 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
             input_file=args.input or "",
             out_path=out_path,
             thread=args.thread,
+            db=db,
             yara=args.yara,
             logger=crawlog,
         )
-        extract = extractor.extract()
+        _extract = extractor.extract()
 
 
 GOOEY_AVAILABLE = False
 PARSER = argparse.ArgumentParser
 
-if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
+if "-g" in sys.argv or "--gui" in sys.argv:
     # If we are not attached to a terminal or CLI includes -g/--gui, use Gooey
     try:
         from gooey import Gooey, GooeyParser
@@ -396,7 +402,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
             f"[ {Colors.BLUE}INFO {Colors.RESET} ] Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument"
         )
         sys.exit(2)
-else:
+elif "-v" in sys.argv or "--verbose" in sys.argv:
     os.system("cls" if os.name == "nt" else "clear")
 
     gradient_print(

@@ -1,7 +1,7 @@
 import os
 import threading
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase, Record
@@ -13,8 +13,10 @@ from modules.helper.logger import setup_custom_logger
 
 
 @dataclass
-class WebPage:
-    """A Webpage
+class Result:
+    """Extractor scraping result class
+
+    (`LogLevel`, (`msg`, `*args`), `Exception()` or `False`)
 
     Attributes:
         url: Uniform Resource Locator of the webpage
@@ -23,14 +25,34 @@ class WebPage:
         scrape_datetime: :class:`neo4j.time.DateTime` manually created while extracting
         scrape_html: HTML content of the webpage
         scrape_data: Text content of the webpage
-    """
+        yara_code: Yara match status of the page"""
 
     url: str
-    index_counter: int = 0
-    index_datetime: DateTime = field(default_factory=DateTime.now)
+    # index_counter: int = 0
+    # index_datetime: DateTime = field(default_factory=DateTime.now)
     scrape_datetime: Optional[DateTime] = None
     scrape_html: Optional[str] = None
     scrape_data: Optional[str] = None
+    yara_code: Optional[int] = None
+    yara: Optional[Tuple[int, Tuple[str], Union[Exception, Literal[False]]]] = None
+    extract: Optional[Tuple[int, Tuple[str], Union[Exception, Literal[False]]]] = None
+    error: Optional[Tuple[int, Tuple[str], Union[Exception, Literal[False]]]] = None
+
+    def __str__(self) -> str:
+        return f"{{yara: {self.yara}, extract: {self.extract}, error: {self.error}}}"
+
+    def __repr__(self) -> str:
+        return f"Result(yara: {self.yara}, extract: {self.extract}, error: {self.error})"
+
+    def dict(self) -> Dict[str, Any]:
+        """Return dictionry representation for Neo4j"""
+        return {
+            "url": self.url,
+            "scrape_datetime": self.scrape_datetime,
+            "scrape_html": self.scrape_html,
+            "scrape_data": self.scrape_data,
+            "yara": self.yara,
+        }
 
 
 class DatabaseManager:
@@ -113,6 +135,36 @@ class DatabaseManager:
             except ClientError:
                 pass
 
+    def get_all_urls(self) -> List[str]:
+        """
+        Returns:
+            List of all urls in the database
+        """
+        query = "MATCH (w:WebPage) RETURN w.url AS url"
+        result = self.query(requested=True, query=query)
+        if not result:
+            return []
+        records, summary = result
+        all_urls = [row["url"] for row in records]
+        self.logger.info("(%d ms) get_all_urls()->(%s)", summary.result_available_after, all_urls)
+
+        return all_urls
+
+    def get_all_scrape_data(self) -> List[str]:
+        """
+        Returns:
+            List of all scrape_data in the database
+        """
+        query = "MATCH (w:WebPage) RETURN w.scrape_data AS scrape_data"
+        result = self.query(requested=True, query=query)
+        if not result:
+            return []
+        records, summary = result
+        all_scrape_data = [row["scrape_data"] for row in records]
+        self.logger.info("(%d ms) get_all_scrape_data()->()", summary.result_available_after)
+
+        return all_scrape_data
+
     def create_linkage(self, wp1_url: str, hyperlinks: List[str]) -> None:
         """Create links between a WebPage with URL `wp1_url` containing a list of `hyperlinks`
 
@@ -124,27 +176,25 @@ class DatabaseManager:
             None
         """
         query = f"""
+            UNWIND $hyperlinks AS link
             MERGE (w1:WebPage {{ url: "{wp1_url}" }})
             ON CREATE
                 SET
                     w1.index_counter = 1,
                     w1.index_datetime = datetime()
-            FOREACH (link IN $hyperlinks |
-                MERGE (w2:WebPage {{ url: link }})
-                SET
-                    w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
-                    w2.index_datetime = datetime()
-                MERGE (w1)-[:POINTS_TO]->(w2)
-            )
-            RETURN w1, $hyperlinks as hyperlinks"""
+            MERGE (w2:WebPage {{ url: link }})
+            SET
+                w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
+                w2.index_datetime = datetime()
+            MERGE (w1)-[:POINTS_TO]->(w2)
+            RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, w2{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}"""
         result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
             return
         records, summary = result
+        self.logger.info("(%d ms) Created linkage between following items", summary.result_available_after)
         for row in records:
-            self.logger.info(
-                "(%d ms) (%s)-[:POINTS_TO]->(%s)", summary.result_available_after, row["w1"], row["hyperlinks"]
-            )
+            self.logger.info("(%s)-[:POINTS_TO]->(%s)", row["w1"], row["w2"])
 
     def create_labeled_link(self, label: str, hyperlinks: List[List[str]]) -> None:
         """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
@@ -157,29 +207,58 @@ class DatabaseManager:
             None
         """
         query = f"""
-            FOREACH (link IN $hyperlinks |
-                MERGE (w1:WebPage {{ url: link[0] }})
-                ON CREATE
-                    SET
-                        w1.index_counter = 1,
-                        w1.index_datetime = datetime()
-                MERGE (w2:{label} {{ url: link[1] }})
+            UNWIND $hyperlinks AS link
+            MERGE (w1:WebPage {{ url: link[0] }})
+            ON CREATE
                 SET
-                    w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
-                    w2.index_datetime = datetime()
-                MERGE (w1)-[:CONTAINS]->(w2)
-            )
-            RETURN $hyperlinks as hyperlinks"""
+                    w1.index_counter = 1,
+                    w1.index_datetime = datetime()
+            MERGE (w2:{label} {{ url: link[1] }})
+            SET
+                w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
+                w2.index_datetime = datetime()
+            MERGE (w1)-[:CONTAINS]->(w2)
+            RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, w2{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}"""
         result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
             return
         records, summary = result
+        self.logger.info(
+            "(%d ms) Created '%s' relationship between following items", summary.result_available_after, label
+        )
         for row in records:
-            self.logger.info(
-                "(%d ms) Created '%s' relationship within following items", summary.result_available_after, label
-            )
-            for hyperlink in row["hyperlinks"]:
-                self.logger.info("(%s)-[:CONTAINS]->(%s)", hyperlink[0], hyperlink[1])
+            self.logger.info("(%s)-[:CONTAINS]->(%s)", row["w1"], row["w2"])
+
+    def add_web_content(self, data: List[Result]) -> None:
+        """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
+
+        Args:
+            label: Label of link like "Extlink", "Mail", "Telephone"
+            hyperlinks: List of pairwise URLs with [`hyperlinks[i][0]` contains `hyperlinks[i][1]`] relationship
+
+        Returns:
+            None
+        """
+        query = """
+            UNWIND $data AS page
+            MERGE (w1:WebPage { url: page.url })
+            ON CREATE
+                SET
+                    w1.index_counter = 1,
+                    w1.index_datetime = datetime()
+            SET
+                w1.scrape_datetime = page.scrape_datetime,
+                w1.scrape_data = page.scrape_data,
+                w1.scrape_html = page.scrape_html,
+                w1.yara = page.yara
+            RETURN w1{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}"""
+        result = self.query(requested=True, query=query, data=data)
+        if not result:
+            return
+        records, summary = result
+        self.logger.info("(%d ms) Added web content for following items", summary.result_available_after)
+        for row in records:
+            self.logger.info("%s", row["w1"])
 
     def db_summary(self):
         """Summary about the database"""
@@ -191,6 +270,7 @@ class DatabaseManager:
     def delete_db(self):
         """Delete all the nodes and relationships in the database"""
         self.query(requested=False, query="MATCH (n) DETACH DELETE n")
+        self.logger.info("Neo4J database cleaned")
 
     def __del__(self):
         self.shutdown()
@@ -212,8 +292,22 @@ if __name__ == "__main__":
         os.environ.get("NEO4J_USER"),
         os.environ.get("NEO4J_PASSWORD"),
     )
+    app.delete_db()
     app.create_linkage("ABC", "DEF")
     app.create_linkage("DEF", "GHI")
     app.create_linkage("DEF", "JKL")
     app.create_linkage("JKL", "ABC")
-    app.close()
+
+    app.create_labeled_link("MAIL", [["ABC", "ABC Mail"], ["DEF", "DEF Mail"], ["GHI", "GHI Mail"]])
+
+    data = [
+        Result(
+            url="ABC", scrape_datetime=DateTime.now(), scrape_data="ABC DATA", scrape_html="ABC HTML", yara=0
+        ).dict(),
+        Result(url="DEF", scrape_datetime=DateTime.now(), scrape_data="DEF DATA", scrape_html="DEF HTML").dict(),
+        Result(
+            url="GHI", scrape_datetime=DateTime.now(), scrape_data="GHI DATA", scrape_html="GHI HTML", yara=1
+        ).dict(),
+    ]
+    app.add_web_content(data=data)
+    # app.shutdown()

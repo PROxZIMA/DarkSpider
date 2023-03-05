@@ -5,24 +5,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
 
 import requests
 import yara as _yara
 from bs4 import BeautifulSoup
+from neo4j.time import DateTime
 
 from modules.checker import folder
-from modules.helper import get_requests_header
-
-# Type hinting aliases
-ExcInfo = Union[Exception, bool]
-LogMsg = Tuple[str]
-LogLevel = int
-Log = Tuple[LogLevel, LogMsg, ExcInfo]
-SingleRes = List[Log]
-Results = List[SingleRes]
+from modules.helper import DatabaseManager, Result, get_requests_header
 
 
 class Extractor:
@@ -36,6 +28,7 @@ class Extractor:
         input_file: Filename of crawled/discovered URLs.
         out_path: Dir path for output files.
         thread: Number pages to extract (Threads) at the same time.
+        db: Neo4j :class:`DatabaseManager` object
         yara: keyword search option.
         logger: A logger object to log the output.
     """
@@ -53,6 +46,7 @@ class Extractor:
         input_file: str,
         out_path: str,
         thread: int,
+        db: DatabaseManager,
         yara: Optional[int],
         logger: Logger,
     ):
@@ -67,52 +61,42 @@ class Extractor:
             self.out_path = folder(os.path.join(out_path, self.__extract_folder))
 
         self.thread = thread
+        self.db = db
         self.yara = yara
         self.logger = logger
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__session = self.__get_tor_session()
 
-    def extract(self) -> Results:
+    def extract(self) -> List[Result]:
         """Extracts the contents of the input file/single URL into the outputs folder/file/terminal.
 
-        Note:
-            `Log` represents either Yara or an Exception output.
-
-            If Yara search is True then content is written to file/terminal.
-
-            If Yara search is False then content is ignored.
-
-        A `Log` is a tuple of `LogLevel`, `LogMsg` and `ExcInfo` with the following format:
-            (`LogLevel`, (`msg`, `*args`), `Exception()` or `False`)
-
-        `SingleRes` of an url is a list of `Log` with the following format:
-            [
-                (10, ("%s :: %s match found!", "`http://example.com/file.html`", "Yara"), False),
-
-                (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError()),
-            ]
-
         Returns:
-            `Results` of an input which is a List of `SingleRes` with the following format:
+            List[Result] with any of the following formats:
 
-            [[
-                (10, ("%s :: %s match found!", "`http://example.com`", "Yara"), False),
+            Result(
+                yara: (10, ("%s :: %s match found!", "`http://example.com`", "Yara"), False),
+                extract: (10, ("File created :: %s", "output/input_file_name.html"), False),
+                error: None
+            )
 
-                (10, ("File created :: %s", "example.com/extracted/example.com/_.html"), False),
-            ], [
-                (10, ("%s :: %s match found!", "`http://example.com/main.html`", "No yara"), False)
-            ], [
-                (10, ("%s :: %s match found!", "`http://example.com/file.html`", "Yara"), False),
+            Result(
+                yara: None,
+                extract: (20, ("%s :: %s", "http://example.com", "<html>...</html>"), False),
+                error: None
+            )
 
-                (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError()),
-            ]]
+            Result(
+                yara: (10, ("%s :: %s match found!", "`http://example.com/file.html`", "No yara"), False),
+                extract: None
+                error: (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError())
+            )
         """
-        results: Results = []
+        results: List[Result] = []
         if len(self.input_file) > 0:
-            if self.crawl or self.out_path:
-                # Crawl(output folder) | INput file | EXtract
-                results = self.__cinex(self.input_file, self.out_path, self.yara)
+            if self.crawl:
+                # Crawl | INput db | EXtract
+                results = self.__cinex(self.yara, self.db)
             else:
                 # TERMinal | INput file | EXtract
                 results = self.__terminex(self.input_file, self.yara)
@@ -120,15 +104,17 @@ class Extractor:
             if len(self.output_file) > 0:
                 # OUTput file | EXtract
                 self.output_file = os.path.join(self.out_path, self.output_file)
-                single_res = self.__outex(self.website, self.output_file, self.yara)
+                result = self.__outex(self.website, self.output_file, self.yara)
             else:
                 # TERMinal | EXtract
-                single_res = self.__termex(self.website, self.yara)
+                result = self.__termex(self.website, self.yara)
 
-            for level, args, exception in single_res:
-                self.logger.log(level, *args, exc_info=exception)
+            for log_type in (result.yara, result.extract, result.error):
+                if log_type is not None:
+                    level, args, exception = log_type
+                    self.logger.log(level, *args, exc_info=exception)
 
-            results.append(single_res)
+            results.append(result)
         return results
 
     def __get_tor_session(self) -> requests.Session:
@@ -143,23 +129,28 @@ class Extractor:
         session.verify = False
         return session
 
-    def __cinex(self, input_file: str, out_path: str, yara: Optional[int]) -> Results:
-        """Ingests the crawled links from the input_file,
+    # Depricate input file extraction to an output folder after crawling
+    # Use database to get all nodes, extract them and save ouput to the database.
+    def __cinex(self, yara: Optional[int], db: DatabaseManager) -> List[Result]:
+        """Ingests the crawled links from the database,
         scrapes the contents of the resulting web pages and writes the contents to
-        the into out_path/{url_address}.
+        the Database.
 
         Args:
-            input_file: Filename of the crawled Urls.
-            out_path: Dir path for results.
             yara: Keyword search argument.
+            db: Neo4j :class:`DatabaseManager` object
 
         Returns:
-            List of `SingleRes` for each url in input.
+            List of :class:`Result` for each url in input.
         """
-        self.logger.info("Cinex :: Extracting from %s to %s", input_file, out_path)
-        return self.__inex(input_file=input_file, yara=yara, out_path=out_path)
+        self.logger.info("Cinex :: Extracting contents of all nodes to Database")
+        results = self.__inex(yara=yara, db=db)
+        for i, result in enumerate(results):
+            results[i] = result.dict()
+        self.db.add_web_content(results)
+        return results
 
-    def __terminex(self, input_file: str, yara: Optional[int]) -> Results:
+    def __terminex(self, input_file: str, yara: Optional[int]) -> List[Result]:
         """Input links from file and extract them into terminal.
 
         Args:
@@ -167,12 +158,12 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `SingleRes` for each url in input.
+            List of :class:`Result` for each url in input.
         """
         self.logger.info("Terminex :: Extracting from %s to terminal", input_file)
         return self.__inex(input_file=input_file, yara=yara)
 
-    def __outex(self, website: str, output_file: str, yara: Optional[int]) -> SingleRes:
+    def __outex(self, website: str, output_file: str, yara: Optional[int]) -> Result:
         """Scrapes the contents of the provided web address and outputs the
         contents to file.
 
@@ -182,12 +173,12 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Log` for given website.
+            :class:`Result` for given website.
         """
         self.logger.info("Outex :: Extracting %s to %s", website, output_file)
         return self.__ex(website=website, yara=yara, output_file=output_file)
 
-    def __termex(self, website: str, yara: Optional[int]) -> SingleRes:
+    def __termex(self, website: str, yara: Optional[int]) -> Result:
         """Scrapes provided web address and prints the results to the terminal.
 
         Args:
@@ -195,87 +186,67 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Log` for given website.
+            :class:`Result` for given website.
         """
         self.logger.info("Termex :: Extracting %s to terminal", website)
         return self.__ex(website=website, yara=yara)
 
-    def __inex(self, input_file: str, out_path: Optional[str] = None, yara: Optional[int] = None) -> Results:
+    def __inex(
+        self,
+        input_file: Optional[str] = None,
+        yara: Optional[int] = None,
+        db: Optional[DatabaseManager] = None,
+    ) -> List[Result]:
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents
-        into the terminal if out_path is None else out_path/{url_address}.
+        into the terminal if db is None else to database.
 
         Args:
             input_file: Filename of the crawled Urls.
-            out_path: Dir path for results.
             yara: Keyword search argument.
+            db: Neo4j :class:`DatabaseManager` object
 
         Returns:
-            List of `SingleRes` [`Results`] for each url in input.
+            List of :class:`Result` for each url in input.
         """
-        file = TextIOWrapper
-        try:
-            file = open(input_file, "r", encoding="UTF-8")
-        except IOError as _:
-            self.logger.exception("Read Error :: %s", input_file)
-            return
+        results: List[Result] = []
+        urls: List[str] = []
+
+        if db is not None:
+            urls: List[str] = db.get_all_urls()
+        elif input_file is not None:
+            file = TextIOWrapper
+            try:
+                file = open(input_file, "r", encoding="UTF-8")
+                urls: List[str] = file.read().splitlines()
+                file.close()
+            except IOError as _:
+                self.logger.exception("Read Error :: %s", input_file)
+                return results
 
         # Sumbit all the links to the thread pool
-        futures = [
-            self.__executor.submit(self.__generate_file, url=url, yara=yara, out_path=out_path)
-            for url in file.read().splitlines()
-        ]
-
-        results: Results = []
+        futures = [self.__executor.submit(self.__ex, website=url, yara=yara) for url in urls]
 
         # Get the results from list of futures and append them to results
         for future in as_completed(futures):
-            single_res = future.result()
-            results.append(single_res)
+            result = future.result()
+            results.append(result)
 
-            for level, args, exception in single_res:
-                self.logger.log(level, *args, exc_info=exception)
+            # db exists so don't log to terminal
+            if db is not None:
+                continue
+
+            for log_type in (result.yara, result.extract, result.error):
+                if log_type is not None:
+                    level, args, exception = log_type
+                    self.logger.log(level, *args, exc_info=exception)
 
         # Close the executor, don't wait for all threads to finish
         self.__executor.shutdown(wait=False)
-        file.close()
 
         return results
 
-    def __generate_file(self, url: str, out_path: Optional[str], yara: Optional[int]) -> SingleRes:
-        """Generate output file from url and send it to extractor.
-
-        Args:
-            url: Url of web address to scrape.
-            output_file: Filename to write the contents to.
-            yara: Keyword search argument.
-
-        Returns:
-            List of `Log` [`SingleRes`] for given url.
-        """
-        output_file = None
-        if out_path is not None:
-            try:
-                # http://a.com/b.ext?x=&y=$%z2 -> a.com/b.extxyz2_.html
-                uri = urlparse(url)
-                output_file = os.path.join(
-                    out_path,
-                    os.path.join(uri.netloc, *uri.path.split("/")) + re.sub(r"[^\w_.)( -]", "", uri.query) + "_.html",
-                )
-                # Create the directory if it doesn't exist
-                folder(output_file, is_file=True)
-            except Exception as err:
-                return [
-                    (
-                        logging.DEBUG,
-                        ("Output File Error :: %s", url),
-                        err,
-                    )
-                ]
-
-        return self.__ex(website=url, yara=yara, output_file=output_file)
-
-    def __ex(self, website: str, output_file: str = None, yara: Optional[int] = None) -> SingleRes:
+    def __ex(self, website: str, output_file: Optional[str] = None, yara: Optional[int] = None) -> Result:
         """Scrapes the contents of the provided web address and outputs the
         contents to file or terminal.
 
@@ -285,24 +256,31 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of `Log` [`SingleRes`] for given website.
+            List of `Log` [`Result`] for given website.
         """
-        result = []
+        result = Result(url=website, scrape_datetime=DateTime.now())
         try:
             content = self.__session.get(website, allow_redirects=True, timeout=10).text
-            if yara is not None:
-                full_match_keywords = self.__check_yara(raw=content, yara=yara)
+            raw = self.__text(response=content).lower()
+            result.scrape_html = content
+            result.scrape_data = raw
 
-                result.append(
+            if yara is not None:
+
+                if yara == 1:
+                    content = raw
+
+                full_match_keywords = self.__check_yara(data=content)
+                result.yara_code = 1 if full_match_keywords["matches"] else 0
+
+                result.yara = (
+                    logging.DEBUG,
                     (
-                        logging.DEBUG,
-                        (
-                            "%s :: %s match found!",
-                            website,
-                            "Yara" if full_match_keywords["matches"] else "No yara",
-                        ),
-                        False,
-                    )
+                        "%s :: %s match found!",
+                        website,
+                        "Yara" if full_match_keywords["matches"] else "No yara",
+                    ),
+                    False,
                 )
 
                 # Don't write to file/terminal if no matches found.
@@ -312,39 +290,35 @@ class Extractor:
             if output_file is not None:
                 with open(output_file, "w", encoding="UTF-8") as file:
                     file.write(content)
-                result.append((logging.DEBUG, ("File created :: %s", output_file), False))
+                result.extract = (logging.DEBUG, ("File created for %s :: %s", website, output_file), False)
             else:
-                result.append((logging.INFO, ("%s :: %s", website, content), False))
+                result.extract = (logging.INFO, ("%s :: %s", website, content), False)
         except HTTPError as err:
-            result.append((logging.DEBUG, ("Request Error :: %s", website), err))
+            result.error = (logging.DEBUG, ("Request Error :: %s", website), err)
         except (InvalidURL, URLError) as _:
-            result.append((logging.DEBUG, ("Invalid URL Error :: %s :: Skipping...", website), False))
+            result.error = (logging.DEBUG, ("Invalid URL Error :: %s :: Skipping...", website), False)
         except IncompleteRead as _:
-            result.append((logging.DEBUG, ("Incomplete Read Error :: %s", website), False))
+            result.error = (logging.DEBUG, ("Incomplete Read Error :: %s", website), False)
         except IOError as err:
-            result.append((logging.DEBUG, ("IOError Error :: %s", website), err))
+            result.error = (logging.DEBUG, ("IOError Error :: %s", website), err)
         except Exception as err:
-            result.append((logging.DEBUG, ("Error :: %s", website), err))
+            result.error = (logging.DEBUG, ("Error :: %s", website), err)
 
         return result
 
-    def __check_yara(self, raw: str, yara: int = 0) -> Dict[str, list]:
+    def __check_yara(self, data: str) -> Dict[str, list]:
         """Validates Yara Rule to categorize the site and check for keywords.
 
         Args:
-            yara: Keyword search argument.
-            raw: HTTP Response body.
+            data: HTTP Response body.
 
         Returns:
             Dictionary of yara rule matches.
 
             {"namespace":[match1,match2,...]}
         """
-        if raw is None:
+        if data is None:
             return None
-
-        if yara == 1:
-            raw = self.__text(response=raw).lower()
 
         rule_data = []
 
@@ -352,7 +326,7 @@ class Extractor:
             rule_data.append(data)
             return 0  # yara.CALLBACK_CONTINUE
 
-        matches = self.__yara_rules.match(data=raw, callback=callback)
+        _matches = self.__yara_rules.match(data=data, callback=callback)
 
         return rule_data[0]
 

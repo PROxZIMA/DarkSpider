@@ -29,6 +29,7 @@ class Crawler:
         external: True if external links are to be crawled else False.
         exclusion: Paths that you don't want to include.
         thread: Number pages to visit (Threads) at the same time.
+        db: Neo4j :class:`DatabaseManager` object
         logger: A logger object to log the output.
     """
 
