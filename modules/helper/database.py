@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 from collections import defaultdict
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ from neo4j.exceptions import AuthError, ClientError, ServiceUnavailable
 from neo4j.time import DateTime
 from neo4j.work import ResultSummary
 
+sys.path.append("/home/proxzima/Documents/PROxZIMA/DarkSpider/")
 from modules.helper.logger import setup_custom_logger
 
 

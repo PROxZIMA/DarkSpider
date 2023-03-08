@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
 from logging import Logger
+from shutil import get_terminal_size
 from typing import Dict, List, Optional
 from urllib.error import HTTPError, URLError
 
@@ -226,9 +227,21 @@ class Extractor:
 
         # Sumbit all the links to the thread pool
         futures = [self.__executor.submit(self.__ex, website=url, yara=yara) for url in urls]
+        _flength = len(futures)
+        _i = 0
 
         # Get the results from list of futures and append them to results
         for future in as_completed(futures):
+            _i += 1
+            _percent = int((_i / _flength) * 100)
+            _width = (_percent + 1) // 4
+            _stmt = f"[{'#'*_width}{' '*(25-_width)}]{_percent: >3}%"
+            print(
+                _stmt + " " * max(get_terminal_size().columns - len(_stmt), 0),
+                end="\r",
+                flush=True,
+            )
+
             result = future.result()
             results.append(result)
 
@@ -241,6 +254,7 @@ class Extractor:
                     level, args, exception = log_type
                     self.logger.log(level, *args, exc_info=exception)
 
+        print(" " * get_terminal_size().columns, end="\r", flush=True)
         # Close the executor, don't wait for all threads to finish
         self.__executor.shutdown(wait=False)
 
