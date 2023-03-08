@@ -278,10 +278,14 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
     if out_path:
         crawlog.debug("Folder created :: %s", out_path)
 
-    load_dotenv()
-    db = DatabaseManager(
-        out_path, os.environ.get("NEO4J_SERVER"), os.environ.get("NEO4J_USER"), os.environ.get("NEO4J_PASSWORD")
-    )
+    try:
+        load_dotenv()
+        db = DatabaseManager(
+            out_path, os.environ.get("NEO4J_SERVER"), os.environ.get("NEO4J_USER"), os.environ.get("NEO4J_PASSWORD")
+        )
+    except Exception as e:
+        crawlog.error("Error :: Failed to create graph client", exc_info=e)
+        return
     if args.Crawl and website:
         crawler = Crawler(
             website=website,
@@ -366,7 +370,7 @@ if "-g" in sys.argv or "--gui" in sys.argv:
             program_name="DarkSpider",
             image_dir="assets",
             monospace_display=True,
-            tabbed_groups=False,
+            tabbed_groups=True,
             menu=[
                 {
                     "name": "File",
@@ -379,7 +383,7 @@ if "-g" in sys.argv or "--gui" in sys.argv:
                             "version": "2.1.0",
                             "copyright": "2023",
                             "website": "https://proxzima.dev/DarkSpider/",
-                            "developer": "https://github.com/PROxZIMA, https://github.com/knightster0804, https://github.com/r0nl, https://github.com/ytatiya3",
+                            "developer": "https://github.com/PROxZIMA \nhttps://github.com/knightster0804 \nhttps://github.com/r0nl \nhttps://github.com/ytatiya3",
                             "license": "GNU General Public License v3.0",
                         },
                         {
