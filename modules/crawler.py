@@ -1,7 +1,6 @@
-import json
-import os
 import re
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
@@ -59,15 +58,9 @@ class Crawler:
         self.thread = thread
         self.db = db
         self.logger = logger
+        self.extras = defaultdict(lambda: defaultdict(list))
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
-        self.__files = {
-            "Extlink": open(os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"),
-            "Telephone": open(os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"),
-            "Mail": open(os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"),
-            "network_structure": os.path.join(self.out_path, self.network_file),
-            "links": os.path.join(self.out_path, "links.txt"),
-        }
 
     def __get_tor_session(self) -> requests.Session:
         """Get a new session with Tor proxies.
@@ -102,15 +95,15 @@ class Crawler:
         if link.startswith("http") and not link.startswith(self.website):
             if self.external:
                 return False
-            self.__files["Extlink"].write(f"{parent_url}\n{link}\n")
+            self.extras["Extlink"][parent_url].append(link)
             return True
         # Telephone Number
         if link.startswith("tel:"):
-            self.__files["Telephone"].write(f"{parent_url}\n{link}\n")
+            self.extras["Telephone"][parent_url].append(link)
             return True
         # Mails
         if link.startswith("mailto:"):
-            self.__files["Mail"].write(f"{parent_url}\n{link}\n")
+            self.extras["Mail"][parent_url].append(link)
             return True
         # Type of files
         if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc|js|css)$", link, re.IGNORECASE):
@@ -213,18 +206,12 @@ class Crawler:
             f"Thread{'s'[:self.thread^1]}. Excluding '{self.exclusion}' links."
         )
 
-        # Json dictionary
-        json_data = {}
         # Depth
         for index in range(0, int(self.depth)):
             session = self.__get_tor_session()
 
             # Sumbit all the links to the thread pool
-            futures = [
-                self.__executor.submit(self.__crawl_link, url=url, session=session)
-                for url in old_level
-                if url not in json_data
-            ]
+            futures = [self.__executor.submit(self.__crawl_link, url=url, session=session) for url in old_level]
             _flength = len(futures)
             _i = 0
 
@@ -251,9 +238,6 @@ class Crawler:
                     flush=True,
                 )
 
-                # Adding to json data
-                json_data[url] = list(url_data)
-
                 self.db.create_linkage(url, list(url_data))
 
             print(" " * get_terminal_size().columns, end="\r", flush=True)
@@ -267,13 +251,10 @@ class Crawler:
             cur_level = set()
             self.logger.info("Step %d completed :: %d result(s)", index + 1, len(ord_lst))
 
-            # Creating json
-            with open(self.__files["network_structure"], "w", encoding="UTF-8") as lst_file:
-                json.dump(json_data, lst_file, indent=2, sort_keys=False)
+            for label, data in self.extras.items():
+                self.db.create_labeled_link(label, data)
 
-            with open(self.__files["links"], "w+", encoding="UTF-8") as file:
-                for url in sorted(ord_lst):
-                    file.write(f"{url}\n")
+            self.extras = defaultdict(lambda: defaultdict(list))
 
             session.close()
             # Pause time
@@ -282,13 +263,4 @@ class Crawler:
         # Close the executor, don't wait for all threads to finish
         self.__executor.shutdown(wait=False)
 
-        # Close the output files and return the json_data
-        for label, file in self.__files.items():
-            if isinstance(file, TextIOBase):
-                file.seek(0)
-                data = file.read().splitlines()
-                pairs = [data[i : i + 2] for i in range(0, len(data), 2)]
-                self.db.create_labeled_link(label, pairs)
-                file.close()
-
-        return json_data
+        return self.db.get_network_structure()

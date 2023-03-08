@@ -1,6 +1,7 @@
 import os
 import threading
-from dataclasses import dataclass, field
+from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from dotenv import load_dotenv
@@ -122,6 +123,7 @@ class DatabaseManager:
             self.logger.info("Neo4J database connectivity successful")
         except AuthError as e:
             self.logger.error("AuthError :: Could not authenticate to Neo4j database server", exc_info=e)
+            raise
         except Exception as e:
             self.logger.error("Error :: Failed to create graph client", exc_info=e)
             raise
@@ -150,6 +152,23 @@ class DatabaseManager:
 
         return all_urls
 
+    def get_network_structure(self) -> Dict[str, List[str]]:
+        """
+        Returns:
+            List of all urls in the database
+        """
+        query = "MATCH (w1:WebPage)-[:POINTS_TO]->(w2:WebPage) RETURN w1.url AS url, COLLECT(w2.url) AS points_to"
+        result = self.query(requested=True, query=query)
+        network_structure = {}
+        if not result:
+            return network_structure
+        records, summary = result
+        for row in records:
+            network_structure[row["url"]] = row["points_to"]
+        self.logger.info("(%d ms) get_network_structure()->(%s)", summary.result_available_after, network_structure)
+
+        return network_structure
+
     def get_all_scrape_data(self) -> List[str]:
         """
         Returns:
@@ -164,6 +183,25 @@ class DatabaseManager:
         self.logger.info("(%d ms) get_all_scrape_data()->()", summary.result_available_after)
 
         return all_scrape_data
+
+    def save_all_scrape_data_as_csv(self, file_path=None) -> None:
+        """
+        Args:
+            file_path: Location of the file to save the csv to.
+
+        Returns:
+            None
+        """
+        if file_path is None:
+            return
+        query = f'CALL apoc.export.csv.query("MATCH (w:WebPage) RETURN w.url as url, w.scrape_data AS scrape_data", "{file_path}", {{}})'
+        result = self.query(requested=True, query=query)
+        if not result:
+            return []
+        records, summary = result
+        self.logger.info(
+            "(%d ms) save_all_scrape_data_as_csv()->(%s)", summary.result_available_after, records[0]["file"]
+        )
 
     def create_linkage(self, wp1_url: str, hyperlinks: List[str]) -> None:
         """Create links between a WebPage with URL `wp1_url` containing a list of `hyperlinks`
@@ -196,29 +234,31 @@ class DatabaseManager:
         for row in records:
             self.logger.info("(%s)-[:POINTS_TO]->(%s)", row["w1"], row["w2"])
 
-    def create_labeled_link(self, label: str, hyperlinks: List[List[str]]) -> None:
+    def create_labeled_link(self, label: str, hyperlinks: Dict[str, List[str]]) -> None:
         """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
 
         Args:
-            label: Label of link like "Extlink", "Mail", "Telephone"
+            label: Label of link like "Extlink", "Mail", or "Telephone"
             hyperlinks: List of pairwise URLs with [`hyperlinks[i][0]` contains `hyperlinks[i][1]`] relationship
 
         Returns:
             None
         """
         query = f"""
-            UNWIND $hyperlinks AS link
-            MERGE (w1:WebPage {{ url: link[0] }})
+            UNWIND keys($hyperlinks) AS parent
+            WITH parent, $hyperlinks[parent] AS content
+            UNWIND content AS link
+            MERGE (w1:WebPage {{ url: parent }})
             ON CREATE
                 SET
                     w1.index_counter = 1,
                     w1.index_datetime = datetime()
-            MERGE (w2:{label} {{ url: link[1] }})
+            MERGE (w2:{label} {{ url: link }})
             SET
                 w2.index_counter = COALESCE(w2.index_counter, 0) + 1,
                 w2.index_datetime = datetime()
             MERGE (w1)-[:CONTAINS]->(w2)
-            RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, w2{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}"""
+            RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, COLLECT(w2{{.url, .index_counter, .index_datetime}}) as w2"""
         result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
             return
@@ -272,8 +312,8 @@ class DatabaseManager:
         self.query(requested=False, query="MATCH (n) DETACH DELETE n")
         self.logger.info("Neo4J database cleaned")
 
-    def __del__(self):
-        self.shutdown()
+    # def __del__(self):
+    #     self.shutdown()
 
     def shutdown(self):
         """Close the driver connection"""
@@ -293,12 +333,21 @@ if __name__ == "__main__":
         os.environ.get("NEO4J_PASSWORD"),
     )
     app.delete_db()
+
     app.create_linkage("ABC", "DEF")
     app.create_linkage("DEF", "GHI")
     app.create_linkage("DEF", "JKL")
     app.create_linkage("JKL", "ABC")
 
-    app.create_labeled_link("MAIL", [["ABC", "ABC Mail"], ["DEF", "DEF Mail"], ["GHI", "GHI Mail"]])
+    extras = defaultdict(lambda: defaultdict(list))
+    extras["Mail"]["ABC"] = ["ABC Mail", "ABC Mail2"]
+    extras["Mail"]["DEF"] = ["DEF Mail", "DEF Mail2"]
+    extras["Mail"]["GHI"] = ["GHI Mail", "GHI Mail2"]
+    extras["Telephone"]["ABC"] = ["ABC Telephone", "ABC Telephone2"]
+    extras["Telephone"]["DEF"] = ["DEF Telephone", "DEF Telephone2"]
+    extras["Telephone"]["GHI"] = ["GHI Telephone", "GHI Telephone2"]
+    for label, data in extras.items():
+        app.create_labeled_link(label, data)
 
     data = [
         Result(
@@ -310,4 +359,7 @@ if __name__ == "__main__":
         ).dict(),
     ]
     app.add_web_content(data=data)
-    # app.shutdown()
+
+    app.get_network_structure()
+    app.save_all_scrape_data_as_csv(file_path="/home/proxzima/Documents/PROxZIMA/DarkSpider/output/dataset.csv")
+    app.shutdown()
