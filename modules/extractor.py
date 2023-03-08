@@ -116,6 +116,11 @@ class Extractor:
                     self.logger.log(level, *args, exc_info=exception)
 
             results.append(result)
+
+        dataset_path = os.path.join(os.getcwd(), self.out_path, "dataset.csv")
+        self.db.save_all_scrape_data_as_csv(file_path=dataset_path)
+        self.logger.info("Dataset created :: %s", dataset_path)
+
         return results
 
     def __get_tor_session(self) -> requests.Session:
@@ -358,4 +363,4 @@ class Extractor:
         for s in soup(["script", "style"]):
             s.decompose()
 
-        return " ".join(soup.stripped_strings)
+        return " ".join((_.replace("\n", " ") for _ in soup.stripped_strings))

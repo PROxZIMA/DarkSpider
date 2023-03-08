@@ -300,10 +300,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
             logger=crawlog,
         )
         _json_data = crawler.crawl()
-        crawlog.info(
-            "Network Structure created :: %s",
-            os.path.join(out_path, crawler.network_file),
-        )
+        crawlog.info("Crawling completed successfully")
 
         if args.Visualize:
             obj = Visualization(
