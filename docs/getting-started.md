@@ -17,12 +17,19 @@ You'll also need to install dependencies:
 
 - [`Neo4j`](https://neo4j.com/) :: For desktop app, see the [official installation](https://neo4j.com/download-center/#desktop) docs
     - Open Neo4j desktop application.
-    - New > Create project > Add > Local DBMS > Enter password `<<password>>` > Create > Start
+    - New > Create project > Add > Local DBMS > Enter name `Graph DBMS` and password `<<password>>` > Create > Start.
+    - Create an [`APOC` config file](https://neo4j.com/docs/apoc/current/config/) with the following content.
+
+    ```ruby
+    apoc.export.file.enabled=true
+    apoc.import.file.use_neo4j_config=false
+    ```
+    - Select project > Click `Graph DBMS` > Plugins pane > `APOC` > Install and Restart.
     - Wait for the database to start then open the Neo4j Browser.
     - Run `:server status` and note down `<<user>>` and `<<server_uri>>`.
     - Create a new `.env` file in the root the project directory with the following content.
 
-    ```
+    ```ruby
     NEO4J_SERVER=server_uri
     NEO4J_USER=user
     NEO4J_PASSWORD=password
