@@ -6,6 +6,7 @@ psutil>=5.9.2
 requests>=2.25.1
 pysocks>=1.7.1
 seaborn>=0.11.1
+scipy>=1.9.3
 yara-python>=4.2.0
 lxml>=4.9.1
 neo4j==5.5.0
