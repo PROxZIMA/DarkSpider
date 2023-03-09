@@ -1,5 +1,4 @@
 import os
-import sys
 import threading
 from collections import defaultdict
 from dataclasses import dataclass
@@ -11,7 +10,6 @@ from neo4j.exceptions import AuthError, ClientError, ServiceUnavailable
 from neo4j.time import DateTime
 from neo4j.work import ResultSummary
 
-sys.path.append("/home/proxzima/Documents/PROxZIMA/DarkSpider/")
 from modules.helper.logger import setup_custom_logger
 
 
@@ -114,7 +112,7 @@ class DatabaseManager:
             if requested and records and summary:
                 return records, summary
 
-    def get_graph_driver(self, uri: str, username: str, password: str) -> GraphDatabase:
+    def get_graph_driver(self, uri: str, username: str, password: str) -> None:
         """sets up graph client"""
         try:
             auth = None
@@ -186,7 +184,7 @@ class DatabaseManager:
 
         return all_scrape_data
 
-    def save_all_scrape_data_as_csv(self, file_path=None) -> None:
+    def save_all_scrape_data_as_csv(self, file_path=None) -> bool:
         """
         Args:
             file_path: Location of the file to save the csv to.
@@ -196,16 +194,18 @@ class DatabaseManager:
         """
         if file_path is None:
             return
+        file_path = ("file:///" + file_path).replace("\\", "/")
         query = f'CALL apoc.export.csv.query("MATCH (w:WebPage) RETURN w.url as url, w.scrape_data AS scrape_data", "{file_path}", {{}})'
         result = self.query(requested=True, query=query)
         if not result:
-            return []
+            return False
         records, summary = result
         self.logger.info(
             "(%d ms) save_all_scrape_data_as_csv()->(%s)", summary.result_available_after, records[0]["file"]
         )
+        return True
 
-    def create_linkage(self, wp1_url: str, hyperlinks: List[str]) -> None:
+    def create_linkage(self, wp1_url: str, hyperlinks: List[str]) -> bool:
         """Create links between a WebPage with URL `wp1_url` containing a list of `hyperlinks`
 
         Args:
@@ -230,13 +230,14 @@ class DatabaseManager:
             RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, w2{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}"""
         result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
-            return
+            return False
         records, summary = result
         self.logger.info("(%d ms) Created linkage between following items", summary.result_available_after)
         for row in records:
             self.logger.info("(%s)-[:POINTS_TO]->(%s)", row["w1"], row["w2"])
+        return True
 
-    def create_labeled_link(self, label: str, hyperlinks: Dict[str, List[str]]) -> None:
+    def create_labeled_link(self, label: str, hyperlinks: Dict[str, List[str]]) -> bool:
         """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
 
         Args:
@@ -263,20 +264,20 @@ class DatabaseManager:
             RETURN w1{{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}}, COLLECT(w2{{.url, .index_counter, .index_datetime}}) as w2"""
         result = self.query(requested=True, query=query, hyperlinks=hyperlinks)
         if not result:
-            return
+            return False
         records, summary = result
         self.logger.info(
             "(%d ms) Created '%s' relationship between following items", summary.result_available_after, label
         )
         for row in records:
             self.logger.info("(%s)-[:CONTAINS]->(%s)", row["w1"], row["w2"])
+        return True
 
-    def add_web_content(self, data: List[Result]) -> None:
-        """Create labeled links between `hyperlinks[i][0]` containing `hyperlinks[i][1]`
+    def add_web_content(self, data: List[Dict]) -> bool:
+        """Add a list of dictionaries derived from :class:`Result` objects to the database. Each dictionary contains keys like url, scrape_datetime, scrape_html, scrape_data, yara_code
 
         Args:
-            label: Label of link like "Extlink", "Mail", "Telephone"
-            hyperlinks: List of pairwise URLs with [`hyperlinks[i][0]` contains `hyperlinks[i][1]`] relationship
+            data: List of Dict derived from :class:`Result` objects
 
         Returns:
             None
@@ -296,11 +297,12 @@ class DatabaseManager:
             RETURN w1{.url, .index_counter, .index_datetime, .scrape_datetime, .yara_code}"""
         result = self.query(requested=True, query=query, data=data)
         if not result:
-            return
+            return False
         records, summary = result
         self.logger.info("(%d ms) Added web content for following items", summary.result_available_after)
         for row in records:
             self.logger.info("%s", row["w1"])
+        return True
 
     def db_summary(self):
         """Summary about the database"""
@@ -363,5 +365,6 @@ if __name__ == "__main__":
     app.add_web_content(data=data)
 
     app.get_network_structure()
-    app.save_all_scrape_data_as_csv(file_path="/home/proxzima/Documents/PROxZIMA/DarkSpider/output/dataset.csv")
+    dataset_path = os.path.join(os.getcwd(), "output", "dataset.csv")
+    app.save_all_scrape_data_as_csv(file_path=dataset_path)
     app.shutdown()

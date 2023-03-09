@@ -32,7 +32,6 @@ class Crawler:
         logger: A logger object to log the output.
     """
 
-    network_file = "network_structure.json"
     __headers = get_requests_header()
 
     def __init__(

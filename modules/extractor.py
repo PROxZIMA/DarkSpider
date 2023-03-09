@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import IncompleteRead, InvalidURL
 from io import TextIOWrapper
@@ -69,38 +68,19 @@ class Extractor:
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
         self.__session = self.__get_tor_session()
 
-    def extract(self) -> List[Result]:
+    def extract(self) -> Optional[str]:
         """Extracts the contents of the input file/single URL into the outputs folder/file/terminal.
 
         Returns:
-            List[Result] with any of the following formats:
-
-            Result(
-                yara: (10, ("%s :: %s match found!", "`http://example.com`", "Yara"), False),
-                extract: (10, ("File created :: %s", "output/input_file_name.html"), False),
-                error: None
-            )
-
-            Result(
-                yara: None,
-                extract: (20, ("%s :: %s", "http://example.com", "<html>...</html>"), False),
-                error: None
-            )
-
-            Result(
-                yara: (10, ("%s :: %s match found!", "`http://example.com/file.html`", "No yara"), False),
-                extract: None
-                error: (10, ("IOError Error :: %s", "`http://example.com/file.html`"), IOError())
-            )
+            None
         """
-        results: List[Result] = []
         if len(self.input_file) > 0:
             if self.crawl:
                 # Crawl | INput db | EXtract
-                results = self.__cinex(self.yara, self.db)
+                self.__cinex(self.yara, self.db)
             else:
                 # TERMinal | INput file | EXtract
-                results = self.__terminex(self.input_file, self.yara)
+                self.__terminex(self.input_file, self.yara)
         else:
             if len(self.output_file) > 0:
                 # OUTput file | EXtract
@@ -115,13 +95,11 @@ class Extractor:
                     level, args, exception = log_type
                     self.logger.log(level, *args, exc_info=exception)
 
-            results.append(result)
-
         dataset_path = os.path.join(os.getcwd(), self.out_path, "dataset.csv")
-        self.db.save_all_scrape_data_as_csv(file_path=dataset_path)
-        self.logger.info("Dataset created :: %s", dataset_path)
-
-        return results
+        if self.db.save_all_scrape_data_as_csv(file_path=dataset_path):
+            self.logger.info("Dataset created :: %s", dataset_path)
+            return dataset_path
+        return None
 
     def __get_tor_session(self) -> requests.Session:
         """Get a new session with Tor proxies.
@@ -137,7 +115,7 @@ class Extractor:
 
     # Depricate input file extraction to an output folder after crawling
     # Use database to get all nodes, extract them and save ouput to the database.
-    def __cinex(self, yara: Optional[int], db: DatabaseManager) -> List[Result]:
+    def __cinex(self, yara: Optional[int], db: DatabaseManager) -> None:
         """Ingests the crawled links from the database,
         scrapes the contents of the resulting web pages and writes the contents to
         the Database.
@@ -147,16 +125,13 @@ class Extractor:
             db: Neo4j :class:`DatabaseManager` object
 
         Returns:
-            List of :class:`Result` for each url in input.
+            None
         """
         self.logger.info("Cinex :: Extracting contents of all nodes to Database")
         results = self.__inex(yara=yara, db=db)
-        for i, result in enumerate(results):
-            results[i] = result.dict()
         self.db.add_web_content(results)
-        return results
 
-    def __terminex(self, input_file: str, yara: Optional[int]) -> List[Result]:
+    def __terminex(self, input_file: str, yara: Optional[int]) -> None:
         """Input links from file and extract them into terminal.
 
         Args:
@@ -164,10 +139,10 @@ class Extractor:
             yara: Keyword search argument.
 
         Returns:
-            List of :class:`Result` for each url in input.
+            None
         """
         self.logger.info("Terminex :: Extracting from %s to terminal", input_file)
-        return self.__inex(input_file=input_file, yara=yara)
+        self.__inex(input_file=input_file, yara=yara)
 
     def __outex(self, website: str, output_file: str, yara: Optional[int]) -> Result:
         """Scrapes the contents of the provided web address and outputs the
@@ -202,7 +177,7 @@ class Extractor:
         input_file: Optional[str] = None,
         yara: Optional[int] = None,
         db: Optional[DatabaseManager] = None,
-    ) -> List[Result]:
+    ) -> List[Dict]:
         """Ingests the crawled links from the input_file,
         scrapes the contents of the resulting web pages and writes the contents
         into the terminal if db is None else to database.
@@ -215,7 +190,7 @@ class Extractor:
         Returns:
             List of :class:`Result` for each url in input.
         """
-        results: List[Result] = []
+        results: List[Dict] = []
         urls: List[str] = []
 
         if db is not None:
@@ -248,7 +223,7 @@ class Extractor:
             )
 
             result = future.result()
-            results.append(result)
+            results.append(result.dict())
 
             # db exists so don't log to terminal
             if db is not None:

@@ -299,12 +299,12 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
             db=db,
             logger=crawlog,
         )
-        _json_data = crawler.crawl()
+        json_data = crawler.crawl()
         crawlog.info("Crawling completed successfully")
 
         if args.Visualize:
             obj = Visualization(
-                json_file=os.path.join(out_path, crawler.network_file),
+                json_data=json_data,
                 out_path=out_path,
                 logger=crawlog,
             )
@@ -331,7 +331,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
                 yara=args.yara,
                 logger=crawlog,
             )
-            _extract = extractor.extract()
+            dataset_path = extractor.extract()
     elif args.input or website:
         # Input file is present but Crawling is not done (O/P to terminal) :: Terminex
         # No input file so extract the website to output file :: Outex
@@ -348,7 +348,7 @@ def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
             yara=args.yara,
             logger=crawlog,
         )
-        _extract = extractor.extract()
+        dataset_path = extractor.extract()
 
 
 GOOEY_AVAILABLE = False
