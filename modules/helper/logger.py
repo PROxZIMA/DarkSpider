@@ -3,7 +3,7 @@ import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
-from typing import List
+from typing import List, Optional
 
 from modules.helper.header import Colors
 
@@ -12,10 +12,10 @@ class RollingFileHandler(RotatingFileHandler):
     """Custom RotatingFileHandler for incremental infinite logging"""
 
     def __init__(self, filename, mode="a", maxBytes=0, backupCount=0, encoding=None, delay=False, errors=None):
-        self.last_backup_cnt = int(time.time())
+        self.last_backup_cnt = 0
         self.filename = filename
         super(RollingFileHandler, self).__init__(
-            filename="{0}.{2}.init{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
+            filename="{0}.{2}{1}".format(*os.path.splitext(self.filename), self.last_backup_cnt),
             mode=mode,
             maxBytes=maxBytes,
             backupCount=backupCount,
@@ -58,7 +58,12 @@ class CustomFormatter(logging.Formatter):
 
 
 def setup_custom_logger(
-    name: str, filename: str = "log.log", verbose_: bool = False, filelog: bool = True, argv: List[str] = None
+    name: str,
+    filename: str = "log.log",
+    verbose_: bool = False,
+    filelog: bool = True,
+    screenlog: bool = True,
+    argv: Optional[List[str]] = None,
 ) -> logging.Logger:
     """Setup custom logger with stream and file handlers
 
@@ -77,7 +82,7 @@ def setup_custom_logger(
 
     # Create file handler if filelog is True
     if filelog:
-        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)
+        file_handler = RollingFileHandler(filename=filename, mode="w", maxBytes=1024 * 1024 * 10)  # 10MB
         file_handler.setFormatter(None)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
@@ -94,6 +99,10 @@ def setup_custom_logger(
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
         )
+
+    # Return logger if screen log is disabled
+    if not screenlog:
+        return logger
 
     formatter, fmt, level = (
         (CustomFormatter, "[{color}{{levelname:^7s}}{reset}] {{message}}", logging.DEBUG)

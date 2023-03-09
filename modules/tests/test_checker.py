@@ -6,7 +6,7 @@ from typing import Iterator, List
 from unittest import mock
 
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
-from modules.helper import TorProxyException, TorServiceException, assertMsg, get_tor_proxies, setup_custom_logger
+from modules.helper import TorProxyException, TorServiceException, assert_msg, get_tor_proxies, setup_custom_logger
 
 
 class MockedPsutilProcess:
@@ -64,42 +64,42 @@ class TestCheckerFunctions(unittest.TestCase):
         url = "www.darkspider.com"
         expected = (True, "http://www.darkspider.com")
         result = url_canon(url, www=False)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_url_canon_002(self):
         """url_canon unit test."""
         url = "www.darkspider.com"
         expected = (True, "http://www.darkspider.com")
         result = url_canon(url, www=True)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_url_canon_003(self):
         """url_canon unit test."""
         url = "darkspider.com"
         expected = (True, "http://www.darkspider.com")
         result = url_canon(url, www=True)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_url_canon_004(self):
         """url_canon unit test."""
         url = "http://darkspider.com/"
         expected = (False, "http://darkspider.com")
         result = url_canon(url, www=False)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_extract_domain_001(self):
         """extract_domain test."""
         url = "http://darkspider.com/test/domain-extract/api?id=001"
         expected = "darkspider.com"
         result = extract_domain(url, remove_http=True)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_extract_domain_002(self):
         """extract_domain test."""
         url = "http://darkspider.com/test/domain-extract/api?id=002"
         expected = "http://darkspider.com"
         result = extract_domain(url, remove_http=False)
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_folder_creation_001(self):
         """folder creation test."""
@@ -113,7 +113,7 @@ class TestCheckerFunctions(unittest.TestCase):
         result = folder(_input, True)
         expected = os.path.dirname(_input)
         self.assertTrue(os.path.exists(expected), f"Test Fail:: could not find directory of {_input}")
-        self.assertEqual(expected, result, assertMsg(expected, result))
+        self.assertEqual(expected, result, assert_msg(expected, result))
 
     def test_check_ip_001(self):
         """check_ip test."""

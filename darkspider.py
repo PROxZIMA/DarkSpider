@@ -35,15 +35,17 @@ import argparse
 import logging
 import os
 import sys
+import time
 import warnings
 
 import requests
+from dotenv import load_dotenv
 
 # DarkSpider Modules
 from modules import Crawler
 from modules.checker import check_ip, check_tor, extract_domain, folder, url_canon
 from modules.extractor import Extractor
-from modules.helper import HEADER, Colors, get_tor_proxies, gradient_print, setup_custom_logger
+from modules.helper import HEADER, Colors, DatabaseManager, get_tor_proxies, gradient_print, setup_custom_logger
 from modules.visualization import Visualization
 
 warnings.filterwarnings("ignore", category=UserWarning, module=r"bs4|gooey")
@@ -51,14 +53,14 @@ logging.getLogger("urllib3").setLevel(logging.ERROR)
 requests.urllib3.disable_warnings()
 
 
-def main(gooey_available, baseParser):
+def main(gooey_available: bool, base_parser: argparse.ArgumentParser):
     """Main method of DarkSpider application. Collects and parses arguments and
     instructs the rest of the application on how to run.
     """
 
     # Get arguments with GooeyParser if available else argparse.
     description = "DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python."
-    parser = baseParser(description=description, add_help=False)
+    parser: argparse.ArgumentParser = base_parser(description=description, add_help=False)
 
     # Required
     required_group = parser.add_argument_group("Required Options", "Either argument -u/--url or -i/--input is required")
@@ -223,7 +225,6 @@ def main(gooey_available, baseParser):
 
     args = parser.parse_args()
 
-    print(args.pause)
     if args.url is None and args.input is None:
         parser.error("either argument -u/--url or -i/--input is required to proceed.")
 
@@ -249,7 +250,7 @@ def main(gooey_available, baseParser):
     # Canonicalization of web url and create path for output.
     if args.url:
         canon, website = url_canon(args.url)
-        out_path = extract_domain(website)
+        out_path = f"{extract_domain(website)}.{int(time.time())}"
     elif args.folder:
         out_path = args.folder
 
@@ -277,6 +278,14 @@ def main(gooey_available, baseParser):
     if out_path:
         crawlog.debug("Folder created :: %s", out_path)
 
+    try:
+        load_dotenv()
+        db = DatabaseManager(
+            out_path, os.environ.get("NEO4J_SERVER"), os.environ.get("NEO4J_USER"), os.environ.get("NEO4J_PASSWORD")
+        )
+    except Exception as e:
+        crawlog.error("Error :: Failed to create graph client", exc_info=e)
+        return
     if args.Crawl and website:
         crawler = Crawler(
             website=website,
@@ -287,17 +296,15 @@ def main(gooey_available, baseParser):
             external=getattr(args, "External links"),
             exclusion=args.exclusion,
             thread=args.thread,
+            db=db,
             logger=crawlog,
         )
         json_data = crawler.crawl()
-        crawlog.info(
-            "Network Structure created :: %s",
-            os.path.join(out_path, crawler.network_file),
-        )
+        crawlog.info("Crawling completed successfully")
 
         if args.Visualize:
             obj = Visualization(
-                json_file=os.path.join(out_path, crawler.network_file),
+                json_data=json_data,
                 out_path=out_path,
                 logger=crawlog,
             )
@@ -311,6 +318,7 @@ def main(gooey_available, baseParser):
 
         if args.Extract:
             input_file = os.path.join(out_path, "links.txt")
+            # Input file is present and Craling is done :: Cinex
             extractor = Extractor(
                 website=website,
                 proxies=proxies,
@@ -319,11 +327,15 @@ def main(gooey_available, baseParser):
                 input_file=input_file,
                 out_path=out_path,
                 thread=args.thread,
+                db=db,
                 yara=args.yara,
                 logger=crawlog,
             )
-            extract = extractor.extract()
+            dataset_path = extractor.extract()
     elif args.input or website:
+        # Input file is present but Crawling is not done (O/P to terminal) :: Terminex
+        # No input file so extract the website to output file :: Outex
+        # Even output file is not there then O/P to terminal :: Termex
         extractor = Extractor(
             website=website,
             proxies=proxies,
@@ -332,16 +344,17 @@ def main(gooey_available, baseParser):
             input_file=args.input or "",
             out_path=out_path,
             thread=args.thread,
+            db=db,
             yara=args.yara,
             logger=crawlog,
         )
-        extract = extractor.extract()
+        dataset_path = extractor.extract()
 
 
 GOOEY_AVAILABLE = False
 PARSER = argparse.ArgumentParser
 
-if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
+if "-g" in sys.argv or "--gui" in sys.argv:
     # If we are not attached to a terminal or CLI includes -g/--gui, use Gooey
     try:
         from gooey import Gooey, GooeyParser
@@ -354,7 +367,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
             program_name="DarkSpider",
             image_dir="assets",
             monospace_display=True,
-            tabbed_groups=False,
+            tabbed_groups=True,
             menu=[
                 {
                     "name": "File",
@@ -367,7 +380,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
                             "version": "2.1.0",
                             "copyright": "2023",
                             "website": "https://proxzima.dev/DarkSpider/",
-                            "developer": "https://github.com/PROxZIMA, https://github.com/knightster0804, https://github.com/r0nl, https://github.com/ytatiya3",
+                            "developer": "https://github.com/PROxZIMA \nhttps://github.com/knightster0804 \nhttps://github.com/r0nl \nhttps://github.com/ytatiya3",
                             "license": "GNU General Public License v3.0",
                         },
                         {
@@ -390,7 +403,7 @@ if not sys.stdout.isatty() or "-g" in sys.argv or "--gui" in sys.argv:
             f"[ {Colors.BLUE}INFO {Colors.RESET} ] Install Gooey with 'pip install Gooey' or remove '-g/--gui' argument"
         )
         sys.exit(2)
-else:
+elif "-v" in sys.argv or "--verbose" in sys.argv:
     os.system("cls" if os.name == "nt" else "clear")
 
     gradient_print(
@@ -402,4 +415,4 @@ else:
 
 # Stub to call main method.
 if __name__ == "__main__":
-    main(gooey_available=GOOEY_AVAILABLE, baseParser=PARSER)
+    main(gooey_available=GOOEY_AVAILABLE, base_parser=PARSER)

@@ -10,7 +10,7 @@ permalink: /
 DarkSpider is a multithreaded crawler and extractor for regular or onion webpages through the TOR network, written in Python.
 {: .fs-6 .fw-300 }
 
-[Get started now](Getting-Started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/PROxZIMA/DarkSpider/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Get started now](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/PROxZIMA/DarkSpider/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 {: .warning }
 > Crawling is not illegal, but violating copyright is. It’s always best to double check a website’s T&C before crawling them. Some websites set up what’s called `robots.txt` to tell crawlers not to visit those pages. This crawler will allow you to go around this, but we always recommend respecting `robots.txt`.

@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from collections import Counter
@@ -21,14 +20,10 @@ class Visualization:
         logger: A logger object to log the output.
     """
 
-    def __init__(self, json_file, out_path, logger):
-        self.json_file = json_file
+    def __init__(self, json_data, out_path, logger):
+        self.data = json_data
         self.logger = logger
-
         self.out_path = folder(os.path.join(out_path, "visualization"))
-
-        with open(self.json_file, "r", encoding="UTF-8") as f:
-            self.data = json.load(f)
 
         self.G = nx.DiGraph()
         self.G.add_nodes_from(self.data.keys())

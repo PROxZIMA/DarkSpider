@@ -33,15 +33,15 @@ $ bundle exec jekyll serve -c _config_dev.yml --livereload --open-url
 ```bash
 $ pip install -r requirements_dev.txt
 ```
+- Module-specific test case using
+
+```bash
+$ pytest -q --tb=short modules/tests/test_extractor.py::TestCheckerFunctions::test_outex_002
+```
 - Before committing, make sure to run all the test cases.
 
 ```bash
 $ coverage run -m pytest -q --tb=short modules/tests/
-```
-- Or a module-specific test case using
-
-```bash
-$ pytest -q --tb=short modules/tests/test_extractor.py::TestCheckerFunctions::test_outex_002
 ```
 - Check code coverage
 
