@@ -1,6 +1,7 @@
 import difflib
 import os
 import sys
+from functools import wraps
 from io import StringIO
 from typing import Dict
 
@@ -34,6 +35,7 @@ class Capturing(list):
 def verbose(func):
     """Verbose decorator"""
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         args[0].logger.info("Generating :: %s..", func.__doc__)
         plt.cla()
@@ -43,8 +45,6 @@ def verbose(func):
         plt.savefig(os.path.join(args[0].out_path, f"{func.__name__}.png"), bbox_inches="tight")
         return ret
 
-    wrapper.__doc__ = func.__doc__
-    wrapper.__name__ = func.__name__
     return wrapper
 
 
@@ -81,7 +81,16 @@ def get_tor_proxies(port: int = 9050) -> Dict[str, str]:
     }
 
 
-def assertMsg(expected, result):
+def assert_msg(expected: object, result: object) -> str:
+    """Compare and print difference between 2 objects. Objects must have string reprensentation.
+
+    Args:
+        expected: theoritical value
+        result: observed value
+
+    Returns:
+        Colored text difference between the string representation of the objects.
+    """
     old, new = str(expected), str(result)
 
     bold = lambda text: f"{Colors.BOLD}{text}{Colors.RESET}"

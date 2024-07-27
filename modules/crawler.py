@@ -1,11 +1,11 @@
-import json
-import os
 import re
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import TextIOBase
 from logging import Logger
-from typing import Dict, List, Tuple, Union
+from shutil import get_terminal_size
+from typing import Dict, List, Set, Tuple, Union
 from urllib.parse import urljoin
 
 import requests
@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from requests.models import Response
 
 from modules.checker import url_canon
-from modules.helper import get_requests_header
+from modules.helper import DatabaseManager, get_requests_header
 
 
 class Crawler:
@@ -28,10 +28,10 @@ class Crawler:
         external: True if external links are to be crawled else False.
         exclusion: Paths that you don't want to include.
         thread: Number pages to visit (Threads) at the same time.
+        db: Neo4j :class:`DatabaseManager` object
         logger: A logger object to log the output.
     """
 
-    network_file = "network_structure.json"
     __headers = get_requests_header()
 
     def __init__(
@@ -44,6 +44,7 @@ class Crawler:
         external: bool,
         exclusion: str,
         thread: int,
+        db: DatabaseManager,
         logger: Logger,
     ):
         self.website = website
@@ -54,16 +55,11 @@ class Crawler:
         self.external = external
         self.exclusion = rf"{exclusion}" if exclusion else None
         self.thread = thread
+        self.db = db
         self.logger = logger
+        self.extras = defaultdict(lambda: defaultdict(list))
 
         self.__executor = ThreadPoolExecutor(max_workers=min(32, self.thread))
-        self.__files = {
-            "extlinks": open(os.path.join(self.out_path, "extlinks.txt"), "w+", encoding="UTF-8"),
-            "telephones": open(os.path.join(self.out_path, "telephones.txt"), "w+", encoding="UTF-8"),
-            "mails": open(os.path.join(self.out_path, "mails.txt"), "w+", encoding="UTF-8"),
-            "network_structure": os.path.join(self.out_path, self.network_file),
-            "links": os.path.join(self.out_path, "links.txt"),
-        }
 
     def __get_tor_session(self) -> requests.Session:
         """Get a new session with Tor proxies.
@@ -77,7 +73,7 @@ class Crawler:
         session.verify = False
         return session
 
-    def excludes(self, link: str) -> bool:
+    def excludes(self, link: str, parent_url: str) -> bool:
         """Excludes links that are not required.
 
         Args:
@@ -98,15 +94,15 @@ class Crawler:
         if link.startswith("http") and not link.startswith(self.website):
             if self.external:
                 return False
-            self.__files["extlinks"].write(str(link) + "\n")
+            self.extras["Extlink"][parent_url].append(link)
             return True
         # Telephone Number
         if link.startswith("tel:"):
-            self.__files["telephones"].write(str(link) + "\n")
+            self.extras["Telephone"][parent_url].append(link)
             return True
         # Mails
         if link.startswith("mailto:"):
-            self.__files["mails"].write(str(link) + "\n")
+            self.extras["Mail"][parent_url].append(link)
             return True
         # Type of files
         if re.search("^.*\\.(pdf|jpg|jpeg|png|gif|doc|js|css)$", link, re.IGNORECASE):
@@ -166,7 +162,7 @@ class Crawler:
         for link in soup.findAll("a"):
             link = link.get("href")
 
-            if self.excludes(link):
+            if self.excludes(link, url):
                 continue
 
             ver_link = self.canonical(url, link)
@@ -177,7 +173,7 @@ class Crawler:
         for link in soup.findAll("area"):
             link = link.get("href")
 
-            if self.excludes(link):
+            if self.excludes(link, url):
                 continue
 
             ver_link = self.canonical(url, link)
@@ -201,7 +197,7 @@ class Crawler:
         """
         ord_lst = set([self.website])
         old_level = [self.website]
-        cur_level = set()
+        cur_level: Set[str] = set()
 
         self.logger.info(
             f"Crawler started from {self.website} with {self.depth} depth, "
@@ -209,21 +205,22 @@ class Crawler:
             f"Thread{'s'[:self.thread^1]}. Excluding '{self.exclusion}' links."
         )
 
-        # Json dictionary
-        json_data = {}
         # Depth
         for index in range(0, int(self.depth)):
             session = self.__get_tor_session()
 
             # Sumbit all the links to the thread pool
-            futures = [
-                self.__executor.submit(self.__crawl_link, url=url, session=session)
-                for url in old_level
-                if url not in json_data
-            ]
+            futures = [self.__executor.submit(self.__crawl_link, url=url, session=session) for url in old_level]
+            _flength = len(futures)
+            _i = 0
 
             # Get the results from list of futures and update the json_data
             for future in as_completed(futures):
+                _i += 1
+                _percent = int((_i / _flength) * 100)
+                _width = (_percent + 1) // 4
+                print(" " * get_terminal_size().columns, end="\r", flush=True)
+
                 url, url_data, response_code = future.result()
                 if isinstance(response_code, int):
                     self.logger.debug("%s :: %d", url, response_code)
@@ -234,11 +231,15 @@ class Crawler:
                 # Add url_data to crawled links.
                 cur_level = cur_level.union(url_data)
 
-                print(f"-- Results: {len(cur_level)}\r", end="", flush=True)
+                print(
+                    f"[{'#'*_width}{' '*(25-_width)}]{_percent: >3}% -- Results: {len(cur_level)}",
+                    end="\r",
+                    flush=True,
+                )
 
-                # Adding to json data
-                json_data[url] = list(url_data)
+                self.db.create_linkage(url, list(url_data))
 
+            print(" " * get_terminal_size().columns, end="\r", flush=True)
             # Get the next level withouth duplicates.
             clean_cur_level = cur_level.difference(ord_lst)
             # Merge both ord_lst and cur_level into ord_lst
@@ -249,23 +250,16 @@ class Crawler:
             cur_level = set()
             self.logger.info("Step %d completed :: %d result(s)", index + 1, len(ord_lst))
 
-            # Creating json
-            with open(self.__files["network_structure"], "w", encoding="UTF-8") as lst_file:
-                json.dump(json_data, lst_file, indent=2, sort_keys=False)
+            for label, data in self.extras.items():
+                self.db.create_labeled_link(label, data)
 
-            with open(self.__files["links"], "w+", encoding="UTF-8") as file:
-                for url in sorted(ord_lst):
-                    file.write(f"{url}\n")
+            self.extras = defaultdict(lambda: defaultdict(list))
 
+            session.close()
             # Pause time
             time.sleep(self.pause)
 
         # Close the executor, don't wait for all threads to finish
         self.__executor.shutdown(wait=False)
 
-        # Close the output files and return the json_data
-        for file in self.__files.values():
-            if isinstance(file, TextIOBase):
-                file.close()
-
-        return json_data
+        return self.db.get_network_structure()
