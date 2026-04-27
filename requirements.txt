@@ -1,6 +1,6 @@
 beautifulsoup4>=4.11.1
 Gooey>=1.0.8.1
-matplotlib>=3.6.1
+matplotlib>=3.10.9
 networkx>=2.8.8
 psutil>=5.9.2
 requests>=2.25.1
